@@ -1,86 +1,90 @@
 package com.example.remote.dto.response
 
 import com.example.data.entity.*
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesDetailsResponse(
     val adult: Boolean,
-    @Json(name = "backdrop_path")
+    @SerialName("backdrop_path")
     val backdropPath: String?,
-    @Json(name = "belongs_to_collection")
+    @SerialName("belongs_to_collection")
     val belongsToCollection: GetMoviesDetailCollection?,
     val budget: Int,
     val genres: List<GetMoviesGenre>,
     val homepage: String?,
     val id: Int,
-    @Json(name = "imdb_id")
+    @SerialName("imdb_id")
     val imdbId: String?,
-    @Json(name = "original_language")
+    @SerialName("origin_country")
+    val originCountry: List<String>,
+    @SerialName("original_language")
     val originalLanguage: String,
-    @Json(name = "original_title")
+    @SerialName("original_title")
     val originalTitle: String,
     val overview: String?,
     val popularity: Double,
-    @Json(name = "poster_path")
+    @SerialName("poster_path")
     val posterPath: String?,
-    @Json(name = "production_companies")
+    @SerialName("production_companies")
     val productionCompanies: List<GetMoviesProductionCompany>,
-    @Json(name = "production_countries")
+    @SerialName("production_countries")
     val productionCountries: List<GetMoviesProductionCountry>,
-    @Json(name = "release_date")
+    @SerialName("release_date")
     val releaseDate: String,
     val revenue: Int,
     val runtime: Int?,
-    @Json(name = "spoken_languages")
+    @SerialName("spoken_languages")
     val spokenLanguages: List<GetMoviesSpokenLanguage>,
     val status: String,
     val tagline: String?,
     val title: String,
     val video: Boolean,
-    @Json(name = "vote_average")
+    @SerialName("vote_average")
     val voteAverage: Double,
-    @Json(name = "vote_count")
+    @SerialName("vote_count")
     val voteCount: Int
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesDetailCollection(
     val id: Int,
     val name: String,
-    @Json(name = "poster_path")
+    @SerialName("poster_path")
     val posterPath: String,
-    @Json(name = "backdrop_path")
+    @SerialName("backdrop_path")
     val backdropPath: String
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesGenre(
     val id: Int,
     val name: String
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesProductionCompany(
     val name: String,
     val id: Int,
-    @Json(name = "logo_path")
+    @SerialName("logo_path")
     val logoPath: String?,
-    @Json(name = "origin_country")
+    @SerialName("origin_country")
     val originCountry: String
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesProductionCountry(
-    @Json(name = "iso_3166_1")
+    @SerialName("iso_3166_1")
     val iso: String,
     val name: String
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesSpokenLanguage(
-    @Json(name = "iso_639_1")
+    @SerialName("english_name")
+    val englishName: String,
+    @SerialName("iso_639_1")
     val iso: String,
     val name: String
 )
@@ -132,5 +136,4 @@ fun GetMoviesProductionCountry.toDataMovieProductionCountry() = DataMovieProduct
 fun GetMoviesSpokenLanguage.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
     iso, name
 )
-
 

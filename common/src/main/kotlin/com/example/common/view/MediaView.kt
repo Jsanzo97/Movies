@@ -26,7 +26,7 @@ class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         override fun onLoadFailed(
             e: GlideException?,
             model: Any?,
-            target: Target<Drawable>?,
+            target: Target<Drawable?>,
             isFirstResource: Boolean
         ): Boolean {
             imageLoading.changeVisibility(false)
@@ -36,10 +36,10 @@ class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         }
 
         override fun onResourceReady(
-            resource: Drawable?,
-            model: Any?,
-            target: Target<Drawable>?,
-            dataSource: DataSource?,
+            resource: Drawable,
+            model: Any,
+            target: Target<Drawable?>?,
+            dataSource: DataSource,
             isFirstResource: Boolean
         ): Boolean {
             imageLoading.changeVisibility(false)

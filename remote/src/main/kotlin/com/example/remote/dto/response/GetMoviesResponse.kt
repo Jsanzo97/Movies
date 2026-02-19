@@ -2,42 +2,42 @@ package com.example.remote.dto.response
 
 import com.example.data.entity.DataMovie
 import com.example.data.entity.DataMovieResult
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GetMoviesResponse(
     val page: Int,
     val results: List<MoviesResponseResult>,
-    @Json(name = "total_results")
+    @SerialName("total_results")
     val totalResults: Int,
-    @Json(name = "total_pages")
+    @SerialName("total_pages")
     val totalPages: Int
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class MoviesResponseResult(
-    @Json(name = "poster_path")
+    @SerialName("poster_path")
     val posterPath: String?,
     val adult: Boolean,
     val overview: String,
-    @Json(name = "release_date")
+    @SerialName("release_date")
     val releaseDate: String,
-    @Json(name = "genre_ids")
+    @SerialName("genre_ids")
     val genreIds: List<Int>,
     val id: Int,
-    @Json(name = "original_title")
+    @SerialName("original_title")
     val originalTitle: String,
-    @Json(name = "original_language")
+    @SerialName("original_language")
     val originalLanguage: String,
     val title: String,
-    @Json(name = "backdrop_path")
+    @SerialName("backdrop_path")
     val backdropPath: String?,
     val popularity: Double,
-    @Json(name = "vote_count")
+    @SerialName("vote_count")
     val voteCount: Int,
     val video: Boolean,
-    @Json(name = "vote_average")
+    @SerialName("vote_average")
     val voteAverage: Double
 )
 

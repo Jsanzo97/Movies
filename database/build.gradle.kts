@@ -1,55 +1,37 @@
 plugins {
-    id(Plugins.androidLibrary)
-    id(Plugins.kotlinAndroid)
-    id(Plugins.kapt)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
-    compileSdkVersion(Versions.targetSdk)
+    namespace = "com.example.database"
+    compileSdk = 36
 
     defaultConfig {
-        minSdkVersion(Versions.minSdk)
-        targetSdkVersion(Versions.targetSdk)
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments(
-                    mapOf(
-                        "room.schemaLocation" to "$projectDir/schemas",
-                        "room.incremental" to "true"
-                    )
-                )
-            }
-        }
+        minSdk = 23
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
-        }
-    }
-
-    sourceSets {
-        forEach {
-            it.java.srcDir("src/${it.name}/kotlin")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
     compileOptions {
-        sourceCompatibility = Versions.sourceCompatibility
-        targetCompatibility = Versions.targetCompatibility
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(Libs.kotlinStdlib)
-    implementation(Libs.coroutines)
-    implementation(Libs.arrowCore)
-    implementation(Libs.roomKtx)
-    implementation(Libs.gson)
+    implementation(libs.coroutines.core)
+    implementation(libs.arrow.core)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.kotlinx.serialization.json)
 
-    kapt(Kapt.room)
+    ksp(libs.androidx.room.compiler)
 }
