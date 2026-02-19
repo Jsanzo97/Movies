@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.navigation.safeargs.kotlin)
+    id("common-verification-plugin")
 }
 
 val VERSION_MAJOR: String by project
@@ -39,7 +40,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.movielist"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName

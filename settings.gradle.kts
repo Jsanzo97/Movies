@@ -15,10 +15,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Generic-Project-Structure"
+rootProject.name = "Movies"
 include(":app")
 include(":common")
 include(":data")
 include(":database")
 include(":domain")
 include(":remote")
+includeBuild("build-logic")
