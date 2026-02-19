@@ -1,47 +1,36 @@
 plugins {
-    id(Plugins.androidLibrary)
-    id(Plugins.kotlinAndroid)
-    id(Plugins.kapt)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
-    compileSdkVersion(Versions.targetSdk)
+    namespace = "com.example.remote"
+    compileSdk = 36
 
     defaultConfig {
-        minSdkVersion(Versions.minSdk)
-        targetSdkVersion(Versions.targetSdk)
+        minSdk = 23
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
-        }
-    }
-
-    sourceSets {
-        forEach {
-            it.java.srcDir("src/${it.name}/kotlin")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
     compileOptions {
-        sourceCompatibility = Versions.sourceCompatibility
-        targetCompatibility = Versions.targetCompatibility
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
 dependencies {
     implementation(project(":common"))
     implementation(project(":data"))
-    implementation(Libs.kotlinStdlib)
-    implementation(Libs.coroutines)
-    implementation(Libs.arrowCore)
-    implementation(Libs.moshi)
-    implementation(Libs.retrofit)
-    implementation(Libs.retrofitMoshi)
-    implementation(Libs.okhttp)
-
-    kapt(Kapt.moshiCodegen)
-
+    implementation(libs.coroutines.core)
+    implementation(libs.arrow.core)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit.core)
+    implementation(libs.okhttp.core)
 }

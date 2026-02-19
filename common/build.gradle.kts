@@ -1,45 +1,33 @@
 plugins {
-    id(Plugins.androidLibrary)
-    id(Plugins.kotlinAndroid)
+    alias(libs.plugins.android.library)
 }
 
 android {
-    compileSdkVersion(Versions.targetSdk)
+    namespace = "com.example.common"
+    compileSdk = 36
 
     defaultConfig {
-        minSdkVersion(Versions.minSdk)
-        targetSdkVersion(Versions.targetSdk)
+        minSdk = 23
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
-        }
-    }
-
-    sourceSets {
-        forEach {
-            it.java.srcDir("src/${it.name}/kotlin")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
     compileOptions {
-        sourceCompatibility = Versions.sourceCompatibility
-        targetCompatibility = Versions.targetCompatibility
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
 dependencies {
-    implementation(Libs.kotlinStdlib)
-    implementation(Libs.coreKtx)
-    implementation(Libs.liveDataKtx)
-    implementation(Libs.navigationFragmentKtx)
-    implementation(Libs.arrowCore)
-    implementation(Libs.koinAndroidViewModel)
-    implementation(Libs.timber)
-    implementation(Libs.material)
-    implementation(Libs.constraintLayout)
-    implementation(Libs.glide)
-
+    implementation(libs.coroutines.core)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.google.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.glide)
 }
