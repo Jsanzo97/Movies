@@ -17,6 +17,8 @@ data class GetMoviesDetailsResponse(
     val id: Int,
     @SerialName("imdb_id")
     val imdbId: String?,
+    @SerialName("origin_country")
+    val originCountry: List<String>,
     @SerialName("original_language")
     val originalLanguage: String,
     @SerialName("original_title")
@@ -80,6 +82,8 @@ data class GetMoviesProductionCountry(
 
 @Serializable
 data class GetMoviesSpokenLanguage(
+    @SerialName("english_name")
+    val englishName: String,
     @SerialName("iso_639_1")
     val iso: String,
     val name: String
@@ -132,5 +136,4 @@ fun GetMoviesProductionCountry.toDataMovieProductionCountry() = DataMovieProduct
 fun GetMoviesSpokenLanguage.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
     iso, name
 )
-
 
