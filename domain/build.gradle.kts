@@ -1,15 +1,23 @@
 plugins {
-    id(Plugins.javaLibrary)
-    id(Plugins.kotlin)
+    alias(libs.plugins.android.library)
 }
 
-configure<JavaPluginExtension> {
-    sourceCompatibility = Versions.sourceCompatibility
-    targetCompatibility = Versions.targetCompatibility
+android {
+    namespace = "com.example.domain"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 23
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
 }
 
 dependencies {
-    implementation(Libs.kotlinStdlib)
-    implementation(Libs.coroutines)
-    implementation(Libs.arrowCore)
+    implementation(libs.coroutines.core)
+    implementation(libs.arrow.core)
+    implementation(libs.koin.core)
 }

@@ -1,12 +1,12 @@
 package com.example.remote.dto.response
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
-class ErrorResponse(
-    @Json(name = "status_message")
+@Serializable
+data class ErrorResponse(
+    @SerialName("status_message")
     val statusMessage: String,
-    @Json(name = "status_code")
+    @SerialName("status_code")
     val statusCode: Int
 )

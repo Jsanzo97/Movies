@@ -2,7 +2,9 @@ package com.example.database.entity
 
 import androidx.room.Entity
 import com.example.data.entity.*
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = "Movie details",
     primaryKeys = ["id"]
@@ -35,6 +37,7 @@ data class MovieDetailsEntity(
     val voteCount: Int
 )
 
+@Serializable
 data class MovieCollectionEntity(
     val id: Int,
     val name: String,
@@ -42,11 +45,13 @@ data class MovieCollectionEntity(
     val backdropPath: String
 )
 
+@Serializable
 data class MovieGenreEntity(
     val id: Int,
     val name: String
 )
 
+@Serializable
 data class MovieProductionCompanyEntity(
     val name: String,
     val id: Int,
@@ -54,11 +59,13 @@ data class MovieProductionCompanyEntity(
     val originCountry: String
 )
 
+@Serializable
 data class MovieProductionCountryEntity(
     val iso: String,
     val name: String
 )
 
+@Serializable
 data class MovieSpokenLanguageEntity(
     val iso: String,
     val name: String

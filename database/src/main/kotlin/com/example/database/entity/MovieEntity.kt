@@ -2,7 +2,9 @@ package com.example.database.entity
 
 import androidx.room.Entity
 import com.example.data.entity.DataMovieResult
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = "Movies",
     primaryKeys = ["id"]
