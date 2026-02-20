@@ -74,6 +74,11 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+detekt-gradle-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 navigation-safeargs-kotlin = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigation" }
+
+# Custom Plugins
+setup-android-application = { id = "setup-android-application", version = "unspecified" }
+setup-android-library = { id = "setup-android-library", version = "unspecified" }

@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:paddingBottom="@dimen/small_space">
 
-        <com.example.common.view.MediaView
+        <jsanzo.movies.common.view.MediaView
             android:id="@+id/movie_image"
             android:layout_width="100dp"
             android:layout_height="@dimen/zero"

@@ -1,7 +1,6 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.setup.android.application)
     alias(libs.plugins.navigation.safeargs.kotlin)
-    id("common-verification-plugin")
 }
 
 val VERSION_MAJOR: String by project
@@ -15,38 +14,10 @@ val appVersionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPa
 val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
 
 android {
-    namespace = "com.example.movielist"
-    compileSdk = 36
-
-    buildFeatures {
-        buildConfig = true
-    }
-
-    sourceSets.apply {
-        forEach {
-            it.java.srcDir("src/${it.name}/kotlin")
-        }
-        getByName("main") {
-            val addResources: (Array<File>) -> Unit = { files: Array<File> ->
-                files.filter { it.exists() }
-                    .mapNotNull { it.listFiles { file: File -> file.isDirectory } }
-                    .forEach { folders -> res.srcDirs(*folders) }
-            }
-            val resScreens = file("src/main/res-screens")
-
-            addResources(arrayOf(resScreens))
-        }
-    }
 
     defaultConfig {
-        applicationId = "com.example.movielist"
-        minSdk = 24
-        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
-        multiDexEnabled = true
-        buildConfigField("String", "SERVER_ENDPOINT", "\"https://api.themoviedb.org/3/movie/\"")
-        buildConfigField("String", "SERVER_API_KEY", "\"3ce5fa18330f82a0e8c84eea49508b46\"")
     }
 
     signingConfigs {
@@ -83,25 +54,6 @@ android {
             isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    packaging {
-        resources.excludes.add("META-INF/com.android.tools/proguard/coroutines.pro")
-    }
-
-    lint {
-        abortOnError = false
-    }
-
-    testOptions {
-        unitTests.apply {
-            isIncludeAndroidResources = true
         }
     }
 }

@@ -11,10 +11,19 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        create("SetupModules") {
-            id = "setup-modules-plugin"
-            implementationClass = "com.example.buildlogic.SetupModulesPlugin"
+        create("SetupAndroidApplication") {
+            id = "setup-android-application"
+            implementationClass = "SetupAndroidApplicationPlugin"
+        }
+
+        create("SetupAndroidLibrary") {
+            id = "setup-android-library"
+            implementationClass = "SetupAndroidLibraryPlugin"
+        }
+
+        create("CommonVerifications") {
+            id = "common-verifications"
+            implementationClass = "CommonVerificationsPlugin"
         }
     }
 }
-
