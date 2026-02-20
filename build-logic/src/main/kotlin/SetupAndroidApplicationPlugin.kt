@@ -43,4 +43,16 @@ private fun Project.apply() {
             targetCompatibility = JavaVersion.VERSION_21
         }
     }
+
+    dependencies {
+        "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
+    }
+}
+
+private fun Project.libs(): VersionCatalog {
+    return extensions.getByType<VersionCatalogsExtension>().named("libs")
+}
+
+private fun VersionCatalog.getLibrary(library: String): Provider<MinimalExternalModuleDependency> {
+    return findLibrary(library).get()
 }
