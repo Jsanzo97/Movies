@@ -17,7 +17,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Language | Kotlin 2.3.10 | |
 | UI | XML Views + Fragments | Migrating to Compose (screen by screen) |
 | Architecture | MVVM + Clean Architecture | |
-| DI | Koin 4.1.1 | |
+| DI | Koin 4.1.1 | Using Koin Annotations for DI |
 | Navigation | Jetpack Navigation Component + Safe Args | Migrating to Navigation Compose |
 | Networking | Retrofit 3.0.0 + OkHttp 5.3.2 | |
 | Serialization | Kotlinx Serialization 1.10.0 | |
@@ -36,8 +36,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 
 ```
 Movies/
-├── movies/          # Application module (com.android.application)
-├── common/          # Shared utilities and constants
+├── app/             # Application module (com.android.application)
 ├── domain/          # UseCases, Entities, Repository interfaces, Errors
 ├── data/            # Repository implementations, Data entities
 ├── database/        # Room database, DAOs, DB entities
@@ -48,11 +47,11 @@ Movies/
 ### Dependency Graph
 
 ```
-movies → domain, data, database, common, remote
-data   → domain, database, remote
-remote → domain
-database → domain
-common → (no dependencies)
+app      → domain, data, database, remote
+data     → domain, database, remote
+remote   → domain (for interfaces)
+database → domain (for interfaces)
+domain   → (no dependencies)
 ```
 
 ---
@@ -62,12 +61,11 @@ common → (no dependencies)
 Base package: `jsanzo.movies`
 
 Each module appends its name automatically via `calculateNamespace()` in build-logic:
-- `:common` → `jsanzo.movies.common`
 - `:domain` → `jsanzo.movies.domain`
 - `:data` → `jsanzo.movies.data`
 - `:database` → `jsanzo.movies.database`
 - `:remote` → `jsanzo.movies.remote`
-- `:movies` → `jsanzo.movies` (special case — root app module)
+- `:app` → `jsanzo.movies` (special case — root app module)
 
 ---
 
@@ -76,7 +74,7 @@ Each module appends its name automatically via `calculateNamespace()` in build-l
 ### Domain Layer (`:domain`)
 - **Entities**: Pure Kotlin data classes (`Movie`, `MovieDetails`, `MovieResult`)
 - **UseCases**: Single-responsibility, `suspend operator fun invoke()` pattern
-- **Repository interfaces**: Defined here, implemented in `:data`
+- **Repository/Datastore interfaces**: Defined here, implemented in outer layers (`:data`, `:remote`, `:database`)
 - **Errors**: Sealed classes/objects (`InvalidParametersError`, `NotFoundError`)
 - Zero Android dependencies
 
@@ -87,58 +85,81 @@ class UseCase(private val repository: Repository) {
 }
 ```
 
-UseCases delegate directly to the repository and return `Either<Error, T>` or `Flow<T>` from Arrow.
+#### Arrow extension functions (defined in `:domain`)
+```kotlin
+fun <L, R> Either<L, R>.onSuccess(action: (R) -> Unit): Either<L, R>
+fun <L, R> Either<L, R>.onError(action: (L) -> Unit): Either<L, R>
+fun <T> Option<T>.onSome(action: (T) -> Unit): Option<T>
+fun <T> Option<T>.onNone(action: () -> Unit): Option<T>
+```
 
 ### Data Layer (`:data`)
-- Repository implementations orchestrating `:remote` and `:database`
-- Own data entities (e.g. `DataMovieResult`) with extension functions for mapping
+- Repository implementations orchestrating `:remote` and `:database` datastores.
+- Own data entities with extension functions for mapping.
 
 #### Mapping pattern (extension functions, no dedicated mapper classes)
 ```kotlin
 fun DataMovieResult.toMovieResult() = MovieResult()
 fun MovieResult.toDataMovieResult() = DataMovieResult()
 ```
-
 > Note: Dedicated mapper classes may be introduced in a future refactor.
 
 ### Remote Layer (`:remote`)
-- Retrofit API interface
-- Remote DTOs mapped to domain entities via extension functions
-- Base URL: `https://api.themoviedb.org/3/movie/`, available via `BuildConfig.SERVER_ENDPOINT`
-- API Key available via `BuildConfig.SERVER_API_KEY`
+- Retrofit API interface.
+- Remote DTOs mapped to domain entities via extension functions.
+- Base URL: `https://api.themoviedb.org/3/movie/`, available via `BuildConfig.SERVER_ENDPOINT`.
+- API Key available via `BuildConfig.SERVER_API_KEY`.
 
 ### Database Layer (`:database`)
-- Room database
-- DAOs for local persistence
-- DB entities mapped to domain entities via extension functions
+- Room database with KSP.
+- DAOs for local persistence.
+- DB entities mapped to domain entities via extension functions.
 
-### Presentation Layer (`:movies`)
-- ViewModels expose `StateFlow<ViewState>`
-- Sealed classes for ViewState per screen:
-    - `HomeViewState`: `InitialState`, `MoviesRetrieved`, `ErrorInOperation`, `SavedMovie`
-    - `DetailsViewState`: `InitialState`, `DetailsRetrieved`, `ErrorInOperation`
-- Fragments observe StateFlow
+### Presentation Layer (`:app`)
+- ViewModels expose `StateFlow<ViewState>`.
+- Sealed classes for ViewState per screen.
+- Fragments observe StateFlow.
 
 ---
 
-## Dependency Injection — Koin
+## Dependency Injection — Koin Annotations
 
-Koin is initialized in `MoviesApplication.onCreate()` with the following modules:
+The project uses Koin Annotations for dependency injection, promoting a modular and decentralized approach where each Gradle module is responsible for its own dependency providers.
 
-| Koin Module | Location | Contents |
+Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggregated `AppModule`.
+
+```kotlin
+// In MoviesApplication.kt
+startKoin {
+    androidLogger()
+    androidContext(this@MoviesApplication)
+    modules(AppModule().module) // .module is generated by Koin KSP
+}
+```
+
+### Koin Module Structure
+
+Each feature or layer module defines its own Koin module using the `@Module` annotation. The `@ComponentScan` annotation is used to automatically scan for injectable components within the module's package.
+
+| Koin Module | Location | Purpose |
 |---|---|---|
-| `remoteModule` | `:movies/di/remote` | Common remote dependencies |
-| `appRemoteModule` | `:movies/di/remote` | App-specific remote (debug/release variants) |
-| `localModule` | `:movies/di/local` | Room database, DAOs |
-| `dataModule` | `:movies/di/data` | Repository implementations |
-| `homeModule` | `:movies/di/home` | Home screen ViewModel |
-| `detailsModule` | `:movies/di/details` | Details screen ViewModel |
+| `AppModule` | `:app/di` | Main module, includes all other modules. |
+| `DataModule` | `:data/di` | Provides repository implementations. |
+| `DatabaseModule`| `:database/di`| Provides Room DB, DAOs, and the local datastore. |
+| `RemoteModule` | `:remote/di` | Provides the remote datastore (`MoviesService`). |
+| `NetworkModule`| `:remote/di` | Provides Retrofit and OkHttp dependencies. |
+| `AppRemoteModule`| `:remote/di/`| Provides build-variant specific network config (e.g., Chucker). |
+| `DomainModule` | `:domain/di` | Provides UseCases. |
+| `HomeModule` | `:app/di/home`| Provides Home screen ViewModel and its UseCases. |
+| `DetailsModule`| `:app/di/details`| Provides Details screen ViewModel and its UseCases. |
+
+This structure ensures that dependencies are provided by the modules that own them, improving encapsulation and decoupling.
 
 ---
 
 ## Navigation
 
-Currently uses Jetpack Navigation Component with Safe Args. Navigation is managed via `NavigationManagerViewModel` which wraps `NavController` with safe navigation to avoid crashes on double-tap or back-stack inconsistencies.
+Currently uses Jetpack Navigation Component with Safe Args. Navigation is managed via `NavigationManagerViewModel`.
 
 **Planned**: Migrate to Navigation Compose alongside the Compose UI migration (screen by screen).
 
@@ -149,108 +170,86 @@ Current screens:
 
 ## Build Logic (`build-logic` module)
 
-Convention plugins defined in `build-logic/src/main/kotlin/` and registered in `build-logic/build.gradle.kts`.
+Convention plugins are defined in `build-logic/src/main/kotlin/`.
 
 ### Available Plugins
-
-| Plugin ID                   | Class                           | Purpose                                                                                                     |
-|-----------------------------|---------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `setup-android-application` | `SetupAndroidApplicationPlugin` | compileSdk, minSdk, buildTypes, compileOptions, sourceSets, desugaring, BuildConfig fields                  |
-| `setup-android-library`     | `SetupAndroidLibraryPlugin`     | compileSdk, minSdk, compileOptions, auto namespace                                                          |
-| `common-setup`              | `CommonSetupPlugin`             | Applies Detekt, connects to `check` task, adds koin and make the common setup for libraries and application |
-
-`common-verifications` is applied internally by both application and library plugins — never apply it manually in a module.
+| Plugin ID | Class | Purpose |
+|---|---|---|
+| `setup-android-application` | `SetupAndroidApplicationPlugin` | Base setup for the `:app` module. |
+| `setup-android-library` | `SetupAndroidLibraryPlugin` | Base setup for Android library modules. |
+| `common-setup` | `CommonSetupPlugin` | Applies Detekt, Koin, and other common configurations. |
 
 ### Namespace Auto-calculation
 
 ```kotlin
 internal fun Project.calculateNamespace(): String {
-    val packageName = path.removePrefix(":").split("-", ":").joinToString(".") {
-        if (it == "public") "publicapi" else it
-    }
-    return if (path == ":movies") "jsanzo.movies" else "jsanzo.movies.$packageName"
+    val packageName = path.removePrefix(":").split("-", ":").joinToString(".")
+    return if (path == ":app") "jsanzo.movies" else "jsanzo.movies.$packageName"
 }
+```
+
+### Version helpers
+```kotlin
+internal fun VersionCatalog.getVersion(version: String): Int =
+    findVersion(version).get().requiredVersion.toInt()
 ```
 
 ---
 
 ## Static Analysis — Detekt
 
-Config file: `config/detekt.yml` at project root. Validation is enabled — unknown properties in the yml will fail the build.
+Config file: `config/detekt.yml` at project root.
 
 ### Gradle Tasks
-
 | Task | Description |
 |---|---|
 | `./gradlew detektAll` | Runs Detekt on all modules |
 | `./gradlew :module:detekt` | Runs Detekt on a specific module |
-| `./gradlew check` | All checks including Detekt per module |
+| `./gradlew check` | All checks including Detekt, Spotless and tests per module |
 
-### Key Rules
+## Code Formatting — Spotless
 
-- `CyclomaticComplexMethod` — threshold 15
-- `LongMethod` — threshold 60
-- `LongParameterList` — threshold 6 (functions), 12 (constructors)
-- `TooManyFunctions` — threshold 26
-- `UnusedPrivateMember`, `UnusedPrivateProperty` — enabled
-- `ForbiddenComment` — TODO, FIXME, STOPSHIP forbidden
-- `ReturnCount` — max 2 per function
-- `GlobalCoroutineUsage`, `RedundantSuspendModifier`, `SuspendFunWithFlowReturnType` — enabled
-- `MagicNumber` — disabled
-- `NewLineAtEndOfFile` — enabled
-
-### Detekt Plugins Installed
-
-| Plugin | Artifact | Purpose |
-|---|---|---|
-| Compose rules | `io.nlopez.compose.rules:detekt:0.4.22` | Compose-specific rules (ready for Compose migration) |
-
-> Sections `compiler` and `JUnit` have been removed from `detekt.yml` pending proper plugin identification. Re-add when migrating to JUnit 5.
+- KtLint via Spotless
+- Line endings: `UNIX`
+- Config in `setupSpotless()` in build-logic
+- Connected to `check` task
 
 ---
 
 ## Testing
 
-Tests are colocated in the module they test:
+Tests colocated in the module they test:
 
 ```
 module/src/test/kotlin/        → Unit tests
 module/src/androidTest/kotlin/ → Instrumented tests
 ```
 
-### Current Setup (migrating to JUnit 5)
+### Current Setup
 
-| Library | Usage |
-|---|---|
-| JUnit 4 | Test runner (being replaced) |
-| Mockito + mockito-kotlin | Mocking |
-| Coroutines Test (`runTest`, `StandardTestDispatcher`) | Async testing |
-| Robolectric | Being removed — not needed since ViewModels don't use Android classes directly |
+| Library | Usage                                         |
+|---|-----------------------------------------------|
+| JUnit 5 (Jupiter) | Test runner via `android-junit5` plugin       |
+| MockK | Mocking (`mockk()`, `coEvery`, `coVerify`)    |
+| Kotest | Assertions (`shouldBe`, `shouldBeInstanceOf`) |
+| Coroutines Test | `runTest`, `UnconfinedTestDispatcher`         |
 
-### Target Setup
+### Dispatcher setup
+```kotlin
+private val testDispatcher = StandardTestDispatcher()
 
-- JUnit 5 (Jupiter) via `android-junit5` plugin by Mannodermaus
-- Mockk + kotest
-- Coroutines Test
-- No Robolectric
+@BeforeEach fun setUp() { Dispatchers.setMain(testDispatcher) }
+@AfterEach fun tearDown() { Dispatchers.resetMain() }
+
+// In tests that use viewModelScope.launch:
+testDispatcher.scheduler.advanceUntilIdle()
+```
 
 ### Run Tests
-
 ```bash
 ./gradlew testAll                          # All modules
-./gradlew :movies:testDebugUnitTest        # Specific module
+./gradlew :app:testDebugUnitTest           # Specific module (shows Test Results panel in AS)
 ```
-
----
-
-## API Configuration
-
-```
-Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
-API Key:   BuildConfig.SERVER_API_KEY
-```
-
-Both configured as `buildConfigField` in `SetupAndroidApplicationPlugin`. Never hardcode them.
 
 ---
 
@@ -267,12 +266,66 @@ Both configured as `buildConfigField` in `SetupAndroidApplicationPlugin`. Never 
 | `bugfix/` | Bug fixes |
 | `hotfix/` | Critical production fixes |
 
+### GitHub Actions — PR Validation
+
+File: `.github/workflows/pr-validation.yml`
+
+- Triggers on every PR regardless of branches
+- Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
+- Jobs run in parallel after `check` passes:
+  1. `check` — Detekt + Spotless (runs first)
+  2. `build` — `assembleDebug` (runs after check)
+  3. `tests` — `testAll` (runs after check, parallel to build)
+
+All three jobs are required status checks before merging.
+
+---
+
+## Git Hooks
+
+File: `config/git-hooks/commit-msg`
+
+Install with:
+```bash
+git config core.hooksPath config/git-hooks
+```
+
+Or via Gradle:
+```bash
+./gradlew installGitHooks
+```
+
+### Hook behavior
+- Validates branch name starts with `feature/`, `refactor/`, `bugfix/`, or `hotfix/`
+- Validates commit message is not empty and has minimum 10 characters
+- If commit doesn't start with `[Task - NUMBER]`, auto-increments from last task number in git log
+- Ignores automatic git commits (Merge, Rebase, fixup!, squash!)
+
+### Commit format
+```
+[Task - 123] your commit message here
+```
+
+---
+
+## API Configuration
+
+```
+Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
+API Key:   BuildConfig.SERVER_API_KEY
+```
+Both are configured as `buildConfigField` in `SetupAndroidApplicationPlugin` and should not be hardcoded.
+
+---
+
+## CI/CD & Branching
+
+### Branching Strategy (Git Flow)
+`main`, `develop`, `feature/`, `refactor/`, `bugfix/`, `hotfix/`
+
 ### CI/CD (Planned — GitHub Actions)
-
-- **PR validation pipeline**: Run `check` + `detektAll` + `testAll` on every PR to `develop`
-- **Deploy pipeline**: Build and sign release APK/AAB on merge to `main`
-
-> Solo project — no code review process.
+- **PR validation**: Run `check` + `detektAll` + `testAll` on every PR to `develop`.
+- **Deploy**: Build and sign release AAB on merge to `main`.
 
 ---
 
@@ -286,6 +339,7 @@ All dependencies managed via `gradle/libs.versions.toml`.
 | Kotlin | 2.3.10 |
 | Coroutines | 1.10.2 |
 | Koin | 4.1.1 |
+| Koin Annotations | latest |
 | Retrofit | 3.0.0 |
 | OkHttp | 5.3.2 |
 | Room | 2.8.4 |
@@ -294,6 +348,9 @@ All dependencies managed via `gradle/libs.versions.toml`.
 | Detekt | 1.23.8 |
 | Lifecycle | 2.10.0 |
 | KSP | 2.3.5 |
+| versionMajor | 1 |
+| versionMinor | 0 |
+| versionPatch | 0 |
 
 ---
 
@@ -306,26 +363,28 @@ All dependencies managed via `gradle/libs.versions.toml`.
 
 # Tests
 ./gradlew testAll
-./gradlew :movies:testDebugUnitTest
+./gradlew :app:testDebugUnitTest
 
 # Static analysis
 ./gradlew detektAll
-./gradlew :movies:detekt
+./gradlew :app:detekt
 
 # All checks
 ./gradlew check
 
 # Stop Gradle daemon (Windows file lock workaround)
 ./gradlew --stop
+
+# Install git hooks
+./gradlew installGitHooks
 ```
 
 ---
 
 ## Known Issues & Notes
 
-- **Windows file locking**: Gradle daemon may lock `.jar` files between builds on Windows. Run `./gradlew --stop` if build fails with file access errors. Workaround: `org.gradle.parallel=false` in `gradle.properties`.
-- **Detekt config validation**: `config.validation = true` — any unknown section in `detekt.yml` fails the build. Only add rule sections if the corresponding plugin is installed as `detektPlugins`.
-- **Namespace special case**: `:movies` module has a hardcoded `if` in `calculateNamespace()` because its namespace is `jsanzo.movies`, not `jsanzo.movies.movies`.
+- **Windows file locking**: The Gradle daemon may lock `.jar` files. Run `./gradlew --stop` if the build fails with file access errors.
+- **Namespace special case**: The `:app` module has a hardcoded `if` in `calculateNamespace()` because its namespace is `jsanzo.movies`, not `jsanzo.movies.app`.
 
 ---
 
@@ -338,7 +397,6 @@ All dependencies managed via `gradle/libs.versions.toml`.
 - [ ] Add Detekt JUnit 5 rules plugin
 - [ ] Re-add `compiler` and `JUnit` sections to `detekt.yml` with correct plugins
 - [ ] Set up GitHub Actions CI/CD pipelines (PR validation + deploy)
-- [ ] Move tests to their respective modules (currently all in `:movies`)
-- [ ] Restructure project defining Koin modules on its module instead of app, unidirectional flow approach
+- [x] Restructure project defining Koin modules on its module instead of app, unidirectional flow approach
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)

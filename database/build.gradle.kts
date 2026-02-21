@@ -6,8 +6,6 @@ plugins {
 
 dependencies {
     implementation(project(":data"))
-    implementation(libs.coroutines.core)
-    implementation(libs.arrow.core)
     implementation(libs.androidx.room.ktx)
     implementation(libs.kotlinx.serialization.json)
 

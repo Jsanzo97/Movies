@@ -17,23 +17,13 @@ class MoviesService(
 
     override suspend fun getMovies(page: Int): Either<RemoteDataError, DataMovie> = executeNetworkRequest {
         moviesRemoteWebService.getMovies(page, apiKey)
-    }.fold(
-        ifLeft = { error ->
-            error.left()
-        },
-        ifRight = { response ->
-            response.toDataMovie().right()
-        },
-    )
+    }.map { response ->
+        response.toDataMovie()
+    }
 
     override suspend fun getMovieDetails(movieId: Int) = executeNetworkRequest {
         moviesRemoteWebService.getMovieDetails(movieId, apiKey)
-    }.fold(
-        ifLeft = { error ->
-            error.left()
-        },
-        ifRight = { response ->
-            response.toDataMovieDetails().right()
-        },
-    )
+    }.map { response ->
+        response.toDataMovieDetails()
+    }
 }

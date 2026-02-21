@@ -96,6 +96,7 @@ internal fun Project.setupJunitTests() {
         "testImplementation"(libs().getLibrary("mockk-android"))
         "testImplementation"(libs().getLibrary("kotest-runner-junit5"))
         "testImplementation"(libs().getLibrary("kotest-assertions-core"))
+        "testImplementation"(libs().getLibrary("arrow-core"))
 
         "testRuntimeOnly"(libs().getLibrary("junit-vintage-engine"))
         "testRuntimeOnly"(libs().getLibrary("junit-platform-launcher"))
