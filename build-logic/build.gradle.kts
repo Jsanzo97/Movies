@@ -7,6 +7,7 @@ dependencies {
     implementation(gradleApi())
     implementation(libs.android.gradle.plugin)
     implementation(libs.detekt.gradle.plugin)
+    implementation(libs.spotless.gradle.plugin)
 }
 
 gradlePlugin {

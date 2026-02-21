@@ -1,3 +1,5 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
+import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
@@ -24,6 +26,39 @@ internal fun Project.setupDetekt() {
                 setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "detekt" })
                 dependsOn(tasks.withType<Detekt>())
             }
+        }
+    }
+}
+
+internal fun Project.setupSpotless() {
+    pluginManager.apply("com.diffplug.spotless")
+
+    extensions.configure<SpotlessExtension> {
+        lineEndings = LineEnding.UNIX
+
+        kotlin {
+            target("src/*/kotlin/**/*.kt")
+
+            ktlint(libs().getLibrary("ktlint").get().version)
+                .editorConfigOverride(
+                    mapOf(
+                        "ktlint_standard_filename" to "disabled",
+                        "ktlint_standard_class-naming" to "disabled",
+                        "ktlint_standard_function-naming" to "disabled",
+                        "ktlint_standard_property-naming" to "disabled",
+                        "ktlint_standard_discouraged-comment-location" to "disabled",
+                        "ktlint_standard_no-empty-file" to "disabled",
+                        "ktlint_standard_backing-property-naming" to "disabled",
+                        "ktlint_standard_binary-expression-wrapping" to "disabled",
+                        "ktlint_standard_chain-method-continuation" to "disabled",
+                        "ktlint_standard_class-signature" to "disabled",
+                        "ktlint_standard_condition-wrapping" to "disabled",
+                        "ktlint_standard_function-expression-body" to "disabled",
+                        "ktlint_standard_function-literal" to "disabled",
+                        "ktlint_standard_function-type-modifier-spacing" to "disabled",
+                        "ktlint_standard_multiline-loop" to "disabled",
+                    )
+                )
         }
     }
 }
