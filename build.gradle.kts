@@ -14,3 +14,14 @@ tasks.register("detektAll") {
         if (project.plugins.hasPlugin("io.gitlab.arturbosch.detekt")) detektTask else null
     })
 }
+
+tasks.register("testAll") {
+    group = "verification"
+    description = "Run unit tests on all modules"
+    dependsOn(subprojects.mapNotNull { project ->
+        if (project.plugins.hasPlugin("com.android.library") ||
+            project.plugins.hasPlugin("com.android.application")) {
+            "${project.path}:testDebugUnitTest"
+        } else null
+    })
+}

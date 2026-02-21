@@ -4,46 +4,39 @@ import arrow.core.None
 import arrow.core.left
 import arrow.core.right
 import arrow.core.some
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import jsanzo.movies.common.EMPTY_STRING
 import jsanzo.movies.domain.entity.Movie
 import jsanzo.movies.domain.entity.MovieResult
 import jsanzo.movies.domain.error.InvalidParametersError
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.stopKoin
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Spy
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.robolectric.RobolectricTestRunner
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @ExperimentalCoroutinesApi
-@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var homeViewModel: HomeViewModel
 
-    @Mock
-    private val mockedGetMoviesUseCase = Mockito.mock(GetMoviesUseCase::class.java)
+    private val mockedGetMoviesUseCase: GetMoviesUseCase = mockk()
+    private val mockedSaveMovieUseCase: SaveMovieUseCase = mockk()
 
-    @Mock
-    private val mockedSaveMovieUseCase = Mockito.mock(SaveMovieUseCase::class.java)
-
-    @Spy
     private lateinit var homeViewModelStateFlow: StateFlow<HomeViewState>
 
     private val validPage = 1
@@ -92,99 +85,108 @@ class HomeViewModelTest {
         totalPages = 0,
     )
 
-    @Before
+    @BeforeEach
     fun setUp() {
-        runBlocking {
-            Mockito.`when`(mockedGetMoviesUseCase(validPage)).thenReturn(flowOf(mockedMovie).right())
-            Mockito.`when`(mockedGetMoviesUseCase(validPage + 1)).thenReturn(flowOf(mockedMovie).right())
-            Mockito.`when`(mockedGetMoviesUseCase(invalidPage)).thenReturn(InvalidParametersError.left())
-            Mockito.`when`(mockedSaveMovieUseCase(mockedMovieResult)).thenReturn(None)
-            Mockito.`when`(mockedSaveMovieUseCase(invalidMockedMovieResult)).thenReturn(InvalidParametersError.some())
-        }
+        Dispatchers.setMain(testDispatcher)
+        coEvery { mockedGetMoviesUseCase(validPage) } returns flowOf(mockedMovie).right()
+        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns flowOf(mockedMovie).right()
+        coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
+        coEvery { mockedSaveMovieUseCase(mockedMovieResult) } returns None
+        coEvery { mockedSaveMovieUseCase(invalidMockedMovieResult) } returns InvalidParametersError.some()
 
         homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
         homeViewModelStateFlow = homeViewModel.homeViewModelSateFlow
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
-        stopKoin()
+        Dispatchers.resetMain()
     }
 
     @Test
     fun `we are always in InitialState at the beginning`() {
-        Assert.assertTrue(homeViewModelStateFlow.value is InitialState)
+        homeViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
     }
 
     @Test
     fun `we are in MoviesRetrieved state after call getMovies() with valid page, also we get the movie list`() = runTest {
         homeViewModel.getMovies(validPage)
 
-        verify(mockedGetMoviesUseCase, times(1))(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(homeViewModelStateFlow.value is MoviesRetrieved)
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
 
         val state = homeViewModelStateFlow.value as? MoviesRetrieved
 
-        assertNotNull(state)
-        assertEquals(mockedMovie.results, state?.movies)
+        state?.movies shouldBe mockedMovie.results
     }
 
     @Test
     fun `we are in ErrorInOperation state after call getMovies() with invalid page`() = runTest {
         homeViewModel.getMovies(invalidPage)
 
-        verify(mockedGetMoviesUseCase, times(1))(invalidPage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(homeViewModelStateFlow.value is ErrorInOperation)
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(invalidPage) }
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
     }
 
     @Test
     fun `we are in SavedMovie state after call saveMovie() with valid movie result`() = runTest {
         homeViewModel.saveMovie(mockedMovieResult)
 
-        verify(mockedSaveMovieUseCase, times(1))(mockedMovieResult)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(homeViewModelStateFlow.value is SavedMovie)
+        coVerify(exactly = 1) { mockedSaveMovieUseCase(mockedMovieResult) }
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<SavedMovie>()
     }
 
     @Test
     fun `we are in ErrorInOperation state after call saveMovie() with invalid movie result`() = runTest {
         homeViewModel.saveMovie(invalidMockedMovieResult)
 
-        verify(mockedSaveMovieUseCase, times(1))(invalidMockedMovieResult)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        Assert.assertTrue(homeViewModelStateFlow.value is ErrorInOperation)
+        coVerify(exactly = 1) { mockedSaveMovieUseCase(invalidMockedMovieResult) }
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
     }
 
     @Test
     fun `we are in the initial state after call onStop()`() {
         homeViewModel.onStop()
-        assertTrue(homeViewModelStateFlow.value is InitialState)
+        homeViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
     }
 
     @Test
     fun `getMovies() called after notifyLastElementVisible() when we need new page with movies`() = runTest {
         homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
 
-        verify(mockedGetMoviesUseCase, times(1))(validPage + 1)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(homeViewModelStateFlow.value is MoviesRetrieved)
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
 
         val state = homeViewModelStateFlow.value as? MoviesRetrieved
 
-        assertNotNull(state)
-        assertEquals(mockedMovie.results, state?.movies)
+        state?.movies shouldBe mockedMovie.results
     }
 
     @Test
     fun `getMovies() not called more after notifyLastElementVisible() called when we not need new page with movies`() = runTest {
         homeViewModel.getMovies(validPage)
-        verify(mockedGetMoviesUseCase, times(1))(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
 
         homeViewModel.notifyLastElementVisible(lastElementVisibleToNotNeedMore)
-        verify(mockedGetMoviesUseCase, times(1))(validPage + 1)
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
 
-        assertTrue(homeViewModelStateFlow.value is MoviesRetrieved)
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
     }
 }

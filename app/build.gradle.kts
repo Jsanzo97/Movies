@@ -86,12 +86,5 @@ dependencies {
 
     debugImplementation(libs.chucker)
 
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.kotlin)
-    testImplementation(libs.mockito.inline)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.coroutines.test)
-    testImplementation(libs.junit)
-
     androidTestImplementation(libs.androidx.junit.ext)
 }

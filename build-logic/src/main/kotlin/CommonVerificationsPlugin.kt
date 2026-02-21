@@ -5,5 +5,6 @@ class CommonVerificationsPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.setupDetekt()
         target.setupSpotless()
+        target.setupJunitTests()
     }
 }

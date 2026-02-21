@@ -2,40 +2,35 @@ package jsanzo.movies.ui.details
 
 import arrow.core.left
 import arrow.core.right
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import jsanzo.movies.common.EMPTY_STRING
 import jsanzo.movies.domain.entity.MovieDetails
 import jsanzo.movies.domain.error.NotFoundError
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.stopKoin
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.`when`
-import org.mockito.Spy
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.robolectric.RobolectricTestRunner
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @ExperimentalCoroutinesApi
-@RunWith(RobolectricTestRunner::class)
 class DetailsViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var detailsViewModel: DetailsViewModel
 
-    @Mock
-    private val mockedGetMovieDetailsUseCase = Mockito.mock(GetMovieDetailsUseCase::class.java)
+    private val mockedGetMovieDetailsUseCase: GetMovieDetailsUseCase = mockk()
 
-    @Spy
     private lateinit var detailsViewModelStateFlow: StateFlow<DetailsViewState>
 
     private val movieDetails = MovieDetails(
@@ -69,47 +64,49 @@ class DetailsViewModelTest {
     private val validMovieId = 0
     private val invalidMovieId = -1
 
-    @Before
+    @BeforeEach
     fun setUp() {
-        runBlocking {
-            `when`(mockedGetMovieDetailsUseCase(invalidMovieId)).thenReturn(NotFoundError.left())
-            `when`(mockedGetMovieDetailsUseCase(validMovieId)).thenReturn(movieDetails.right())
-        }
+        Dispatchers.setMain(testDispatcher)
+        coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
+        coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns movieDetails.right()
 
         detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase)
         detailsViewModelStateFlow = detailsViewModel.detailsViewModelSateFlow
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
-        stopKoin()
+        Dispatchers.resetMain()
     }
 
     @Test
     fun `we are always in InitialState at the beginning`() {
-        assertTrue(detailsViewModelStateFlow.value is InitialState)
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
     }
 
     @Test
     fun `we are in DetailsRetrieved state after call getDetails() with valid id, also we get the movie details`() = runTest {
         detailsViewModel.getDetails(validMovieId)
 
-        verify(mockedGetMovieDetailsUseCase, times(1))(validMovieId)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(detailsViewModelStateFlow.value is DetailsRetrieved)
+        coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(validMovieId) }
+
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsRetrieved>()
 
         val state = detailsViewModelStateFlow.value as? DetailsRetrieved
 
-        assertNotNull(state)
-        assertEquals(state?.movieDetails, movieDetails)
+        state?.movieDetails shouldBe movieDetails
     }
 
     @Test
     fun `we are in ErrorInOperationState state after call getDetails() with invalid id`() = runTest {
         detailsViewModel.getDetails(invalidMovieId)
 
-        verify(mockedGetMovieDetailsUseCase, times(1))(invalidMovieId)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(detailsViewModelStateFlow.value is ErrorInOperation)
+        coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
+
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
     }
 }

@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.TestedExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.Detekt
@@ -65,5 +67,34 @@ internal fun Project.setupSpotless() {
                     )
                 )
         }
+    }
+}
+
+internal fun Project.setupJunitTests() {
+    afterEvaluate {
+        extensions.findByName("android")?.let { ext ->
+            when (ext) {
+                is com.android.build.api.dsl.ApplicationExtension -> {
+                    ext.testOptions.unitTests.all { it.useJUnitPlatform() }
+                }
+                is com.android.build.api.dsl.LibraryExtension -> {
+                    ext.testOptions.unitTests.all { it.useJUnitPlatform() }
+                }
+            }
+        }
+    }
+
+    dependencies {
+        "testImplementation"(platform(libs().getLibrary("junit-bom")))
+        "testImplementation"(libs().getLibrary("junit-jupiter-api"))
+        "testImplementation"(libs().getLibrary("junit-jupiter-engine"))
+        "testImplementation"(libs().getLibrary("coroutines-test"))
+        "testImplementation"(libs().getLibrary("mockk"))
+        "testImplementation"(libs().getLibrary("mockk-android"))
+        "testImplementation"(libs().getLibrary("kotest-runner-junit5"))
+        "testImplementation"(libs().getLibrary("kotest-assertions-core"))
+
+        "testRuntimeOnly"(libs().getLibrary("junit-vintage-engine"))
+        "testRuntimeOnly"(libs().getLibrary("junit-platform-launcher"))
     }
 }
