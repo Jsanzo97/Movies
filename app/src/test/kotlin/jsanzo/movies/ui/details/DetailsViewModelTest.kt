@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,7 +63,7 @@ class DetailsViewModelTest {
         title = EMPTY_STRING,
         video = false,
         voteAverage = 0.0,
-        voteCount = 0
+        voteCount = 0,
     )
 
     private val validMovieId = 0
@@ -102,7 +104,6 @@ class DetailsViewModelTest {
         assertEquals(state?.movieDetails, movieDetails)
     }
 
-
     @Test
     fun `we are in ErrorInOperationState state after call getDetails() with invalid id`() = runTest {
         detailsViewModel.getDetails(invalidMovieId)
@@ -111,5 +112,4 @@ class DetailsViewModelTest {
 
         assertTrue(detailsViewModelStateFlow.value is ErrorInOperation)
     }
-
 }

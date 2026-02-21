@@ -1,6 +1,11 @@
 package jsanzo.movies.remote.dto.response
 
-import jsanzo.movies.data.entity.*
+import jsanzo.movies.data.entity.DataMovieCollection
+import jsanzo.movies.data.entity.DataMovieDetails
+import jsanzo.movies.data.entity.DataMovieGenre
+import jsanzo.movies.data.entity.DataMovieProductionCompany
+import jsanzo.movies.data.entity.DataMovieProductionCountry
+import jsanzo.movies.data.entity.DataMovieSpokenLanguage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -44,7 +49,7 @@ data class GetMoviesDetailsResponse(
     @SerialName("vote_average")
     val voteAverage: Double,
     @SerialName("vote_count")
-    val voteCount: Int
+    val voteCount: Int,
 )
 
 @Serializable
@@ -54,13 +59,13 @@ data class GetMoviesDetailCollection(
     @SerialName("poster_path")
     val posterPath: String,
     @SerialName("backdrop_path")
-    val backdropPath: String
+    val backdropPath: String,
 )
 
 @Serializable
 data class GetMoviesGenre(
     val id: Int,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -70,14 +75,14 @@ data class GetMoviesProductionCompany(
     @SerialName("logo_path")
     val logoPath: String?,
     @SerialName("origin_country")
-    val originCountry: String
+    val originCountry: String,
 )
 
 @Serializable
 data class GetMoviesProductionCountry(
     @SerialName("iso_3166_1")
     val iso: String,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -86,7 +91,7 @@ data class GetMoviesSpokenLanguage(
     val englishName: String,
     @SerialName("iso_639_1")
     val iso: String,
-    val name: String
+    val name: String,
 )
 
 fun GetMoviesDetailsResponse.toDataMovieDetails() = DataMovieDetails(
@@ -114,26 +119,34 @@ fun GetMoviesDetailsResponse.toDataMovieDetails() = DataMovieDetails(
     title,
     video,
     voteAverage,
-    voteCount
+    voteCount,
 )
 
 fun GetMoviesDetailCollection.toDataMovieCollection() = DataMovieCollection(
-    id, name, posterPath, backdropPath
+    id,
+    name,
+    posterPath,
+    backdropPath,
 )
 
 fun GetMoviesGenre.toDataMovieGenre() = DataMovieGenre(
-    id, name
+    id,
+    name,
 )
 
 fun GetMoviesProductionCompany.toDataMovieProductionCompany() = DataMovieProductionCompany(
-    name, id, logoPath, originCountry
+    name,
+    id,
+    logoPath,
+    originCountry,
 )
 
 fun GetMoviesProductionCountry.toDataMovieProductionCountry() = DataMovieProductionCountry(
-    iso, name
+    iso,
+    name,
 )
 
 fun GetMoviesSpokenLanguage.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
-    iso, name
+    iso,
+    name,
 )
-

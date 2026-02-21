@@ -21,5 +21,4 @@ interface MoviesDao {
 
     @Query("select * from `Movie details` where id == :movieId")
     fun getMovieDetails(movieId: Int): MovieDetailsEntity
-
 }

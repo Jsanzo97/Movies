@@ -837,47 +837,47 @@ style:
     excludeImports:
       - 'java.util.*'
 
-compiler:
-  CompilerInfo:
-    active: false
-    ignoreDiagnostic: []
-  CompilerWarning:
-    active: true
-    ignoreDiagnostic:
-      - 'OPT_IN_IS_NOT_ENABLED'
+#compiler:
+#  CompilerInfo:
+#    active: false
+#    ignoreDiagnostic: []
+#  CompilerWarning:
+#    active: true
+#    ignoreDiagnostic:
+#      - 'OPT_IN_IS_NOT_ENABLED'
 
-JUnit:
-  active: true
-  MissingTestAnnotation:
-    active: true
-  TestFunctionsShouldReturnUnit:
-    active: true
-  UnnecessaryNested:
-    active: true
+#JUnit:
+#  active: true
+#  MissingTestAnnotation:
+#    active: true
+#  TestFunctionsShouldReturnUnit:
+#    active: true
+#  UnnecessaryNested:
+#    active: true
 
-compose:
-  ReusedModifierInstance:
-    active: true
-  UnnecessaryEventHandlerParameter:
-    active: true
-  ComposableEventParameterNaming:
-    active: true
-  ModifierHeightWithText:
-    active: true
-  ModifierParameterPosition:
-    active: true
-  PublicComposablePreview:
-    active: true
-  ComposableParametersOrdering:
-    active: true
-  ModifierDefaultValue:
-    active: true
-  MissingModifierDefaultValue:
-    active: true
-  TopLevelComposableFunctions:
-    active: false
-  ComposableFunctionName:
-    active: true
-  ConditionCouldBeLifted:
-    active: true
-    ignoreCallsWithArgumentNames: [ 'modifier' ]
+#compose:
+#  ReusedModifierInstance:
+#    active: true
+#  UnnecessaryEventHandlerParameter:
+#    active: true
+#  ComposableEventParameterNaming:
+#    active: true
+#  ModifierHeightWithText:
+#    active: true
+#  ModifierParameterPosition:
+#    active: true
+#  PublicComposablePreview:
+#    active: true
+#  ComposableParametersOrdering:
+#    active: true
+#  ModifierDefaultValue:
+#    active: true
+#  MissingModifierDefaultValue:
+#    active: true
+#  TopLevelComposableFunctions:
+#    active: false
+#  ComposableFunctionName:
+#    active: true
+#  ConditionCouldBeLifted:
+#    active: true
+#    ignoreCallsWithArgumentNames: [ 'modifier' ]

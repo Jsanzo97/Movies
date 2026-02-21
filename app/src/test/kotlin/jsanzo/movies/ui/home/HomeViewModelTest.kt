@@ -10,7 +10,6 @@ import jsanzo.movies.domain.entity.MovieResult
 import jsanzo.movies.domain.error.InvalidParametersError
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
-import junit.framework.TestCase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -18,6 +17,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,7 +65,7 @@ class HomeViewModelTest {
         popularity = 0.0,
         voteCount = 0,
         video = false,
-        voteAverage = 0.0
+        voteAverage = 0.0,
     )
 
     private val mockedMovieResult = MovieResult(
@@ -80,14 +82,14 @@ class HomeViewModelTest {
         popularity = 0.0,
         voteCount = 0,
         video = false,
-        voteAverage = 0.0
+        voteAverage = 0.0,
     )
 
     private val mockedMovie = Movie(
         page = 0,
         results = listOf(mockedMovieResult, mockedMovieResult),
         totalResults = 0,
-        totalPages = 0
+        totalPages = 0,
     )
 
     @Before
@@ -185,5 +187,4 @@ class HomeViewModelTest {
 
         assertTrue(homeViewModelStateFlow.value is MoviesRetrieved)
     }
-
 }

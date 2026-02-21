@@ -16,7 +16,7 @@ data class DataMovieResult(
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,
-    val voteAverage: Double
+    val voteAverage: Double,
 )
 
 fun DataMovieResult.toMovieResult() = MovieResult(
@@ -33,7 +33,7 @@ fun DataMovieResult.toMovieResult() = MovieResult(
     popularity,
     voteCount,
     video,
-    voteAverage
+    voteAverage,
 )
 
 fun MovieResult.toDataMovieResult() = DataMovieResult(
@@ -50,5 +50,5 @@ fun MovieResult.toDataMovieResult() = DataMovieResult(
     popularity,
     voteCount,
     video,
-    voteAverage
+    voteAverage,
 )

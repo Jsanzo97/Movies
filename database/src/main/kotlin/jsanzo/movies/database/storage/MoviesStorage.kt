@@ -1,6 +1,11 @@
 package jsanzo.movies.database.storage
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.left
+import arrow.core.right
+import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.entity.DataMovie
 import jsanzo.movies.data.entity.DataMovieDetails
@@ -15,8 +20,8 @@ import jsanzo.movies.database.entity.toMovieDetailsEntity
 import jsanzo.movies.database.entity.toMovieEntity
 
 class MoviesStorage(
-    private val moviesDao: MoviesDao
-): LocalMoviesDatastore {
+    private val moviesDao: MoviesDao,
+) : LocalMoviesDatastore {
 
     override suspend fun getMovies(): Either<LocalDataError, DataMovie> {
         return try {
@@ -34,7 +39,7 @@ class MoviesStorage(
     override suspend fun getMovieDetails(movieId: Int): Either<LocalDataError, DataMovieDetails> {
         return try {
             moviesDao.getMovieDetails(movieId).toDataMovieDetails().right()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ReadingError.left()
         }
     }
@@ -43,7 +48,7 @@ class MoviesStorage(
         return try {
             moviesDao.saveMovie(dataMovie.toMovieEntity())
             None
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             WritingError.some()
         }
     }
@@ -52,9 +57,8 @@ class MoviesStorage(
         return try {
             moviesDao.saveMovieDetails(dataMovieDetails.toMovieDetailsEntity())
             None
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ReadingError.some()
         }
     }
-
 }

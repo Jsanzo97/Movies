@@ -1,13 +1,18 @@
 package jsanzo.movies.database.entity
 
 import androidx.room.Entity
-import jsanzo.movies.data.entity.*
+import jsanzo.movies.data.entity.DataMovieCollection
+import jsanzo.movies.data.entity.DataMovieDetails
+import jsanzo.movies.data.entity.DataMovieGenre
+import jsanzo.movies.data.entity.DataMovieProductionCompany
+import jsanzo.movies.data.entity.DataMovieProductionCountry
+import jsanzo.movies.data.entity.DataMovieSpokenLanguage
 import kotlinx.serialization.Serializable
 
 @Serializable
 @Entity(
     tableName = "Movie details",
-    primaryKeys = ["id"]
+    primaryKeys = ["id"],
 )
 data class MovieDetailsEntity(
     val adult: Boolean,
@@ -34,7 +39,7 @@ data class MovieDetailsEntity(
     val title: String,
     val video: Boolean,
     val voteAverage: Double,
-    val voteCount: Int
+    val voteCount: Int,
 )
 
 @Serializable
@@ -42,13 +47,13 @@ data class MovieCollectionEntity(
     val id: Int,
     val name: String,
     val posterPath: String,
-    val backdropPath: String
+    val backdropPath: String,
 )
 
 @Serializable
 data class MovieGenreEntity(
     val id: Int,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -56,19 +61,19 @@ data class MovieProductionCompanyEntity(
     val name: String,
     val id: Int,
     val logoPath: String?,
-    val originCountry: String
+    val originCountry: String,
 )
 
 @Serializable
 data class MovieProductionCountryEntity(
     val iso: String,
-    val name: String
+    val name: String,
 )
 
 @Serializable
 data class MovieSpokenLanguageEntity(
     val iso: String,
-    val name: String
+    val name: String,
 )
 
 fun DataMovieDetails.toMovieDetailsEntity() = MovieDetailsEntity(
@@ -96,7 +101,7 @@ fun DataMovieDetails.toMovieDetailsEntity() = MovieDetailsEntity(
     title,
     video,
     voteAverage,
-    voteCount
+    voteCount,
 )
 
 fun MovieDetailsEntity.toDataMovieDetails() = DataMovieDetails(
@@ -124,45 +129,63 @@ fun MovieDetailsEntity.toDataMovieDetails() = DataMovieDetails(
     title,
     video,
     voteAverage,
-    voteCount
+    voteCount,
 )
 
 fun DataMovieCollection.toMovieCollectionEntity() = MovieCollectionEntity(
-    id, name, posterPath, backdropPath
+    id,
+    name,
+    posterPath,
+    backdropPath,
 )
 
 fun MovieCollectionEntity.toDataMovieCollection() = DataMovieCollection(
-    id, name, posterPath, backdropPath
+    id,
+    name,
+    posterPath,
+    backdropPath,
 )
 
 fun DataMovieGenre.toMovieGenreEntity() = MovieGenreEntity(
-    id, name
+    id,
+    name,
 )
 
 fun MovieGenreEntity.toDataMovieGenre() = DataMovieGenre(
-    id, name
+    id,
+    name,
 )
 
 fun DataMovieProductionCompany.toMovieProductionCompanyEntity() = MovieProductionCompanyEntity(
-    name, id, logoPath, originCountry
+    name,
+    id,
+    logoPath,
+    originCountry,
 )
 
 fun MovieProductionCompanyEntity.toDataMovieCollectionEntity() = DataMovieProductionCompany(
-    name, id, logoPath, originCountry
+    name,
+    id,
+    logoPath,
+    originCountry,
 )
 
 fun DataMovieProductionCountry.toMovieProductionCountryEntity() = MovieProductionCountryEntity(
-    iso, name
+    iso,
+    name,
 )
 
 fun MovieProductionCountryEntity.toDataMovieProductionCountry() = DataMovieProductionCountry(
-    iso, name
+    iso,
+    name,
 )
 
 fun DataMovieSpokenLanguage.toMovieSpokenLanguageEntity() = MovieSpokenLanguageEntity(
-    iso, name
+    iso,
+    name,
 )
 
 fun MovieSpokenLanguageEntity.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
-    iso, name
+    iso,
+    name,
 )

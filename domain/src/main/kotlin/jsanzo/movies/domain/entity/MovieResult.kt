@@ -14,5 +14,5 @@ data class MovieResult(
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,
-    val voteAverage: Double
+    val voteAverage: Double,
 )

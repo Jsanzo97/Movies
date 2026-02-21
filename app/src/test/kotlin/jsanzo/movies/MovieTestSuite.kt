@@ -10,6 +10,6 @@ import org.junit.runners.Suite
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
     HomeViewModelTest::class,
-    DetailsViewModelTest::class
+    DetailsViewModelTest::class,
 )
 class MovieTestSuite

@@ -4,10 +4,10 @@ import jsanzo.movies.domain.entity.MovieProductionCountry
 
 data class DataMovieProductionCountry(
     val iso: String,
-    val name: String
+    val name: String,
 )
 
 fun DataMovieProductionCountry.toMovieProductionCountry() = MovieProductionCountry(
-    iso, name
+    iso,
+    name,
 )
-

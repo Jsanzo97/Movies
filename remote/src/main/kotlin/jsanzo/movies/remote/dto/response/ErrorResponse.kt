@@ -8,5 +8,5 @@ data class ErrorResponse(
     @SerialName("status_message")
     val statusMessage: String,
     @SerialName("status_code")
-    val statusCode: Int
+    val statusCode: Int,
 )

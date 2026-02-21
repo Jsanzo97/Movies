@@ -5,21 +5,26 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import jsanzo.movies.database.dao.MoviesDao
-import jsanzo.movies.database.entity.*
-import kotlinx.serialization.encodeToString
+import jsanzo.movies.database.entity.MovieCollectionEntity
+import jsanzo.movies.database.entity.MovieDetailsEntity
+import jsanzo.movies.database.entity.MovieEntity
+import jsanzo.movies.database.entity.MovieGenreEntity
+import jsanzo.movies.database.entity.MovieProductionCompanyEntity
+import jsanzo.movies.database.entity.MovieProductionCountryEntity
+import jsanzo.movies.database.entity.MovieSpokenLanguageEntity
 import kotlinx.serialization.json.Json
 
 @Database(
     entities = [
         MovieEntity::class,
-        MovieDetailsEntity::class
+        MovieDetailsEntity::class,
     ],
-    version = 1
+    version = 1,
 )
 @TypeConverters(
-    Converters::class
+    Converters::class,
 )
-abstract class LocalDatabase: RoomDatabase() {
+abstract class LocalDatabase : RoomDatabase() {
     abstract fun moviesDao(): MoviesDao
 }
 

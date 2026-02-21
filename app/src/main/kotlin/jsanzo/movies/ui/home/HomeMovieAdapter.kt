@@ -7,22 +7,25 @@ import android.widget.Filter
 import android.widget.Filterable
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import jsanzo.movies.common.view.MediaView
-import jsanzo.movies.domain.entity.MovieResult
-import jsanzo.movies.R
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textview.MaterialTextView
+import jsanzo.movies.R
+import jsanzo.movies.common.view.MediaView
+import jsanzo.movies.domain.entity.MovieResult
 
 class HomeMovieAdapter(
-    private val listener: HomeMoviesAdapterListener
-): ListAdapter<MovieResult, HomeMovieAdapter.ViewHolder>(HomeMoviesDiffUtilCallback()), Filterable {
+    private val listener: HomeMoviesAdapterListener,
+) : ListAdapter<MovieResult, HomeMovieAdapter.ViewHolder>(HomeMoviesDiffUtilCallback()), Filterable {
 
     private val movieList = mutableListOf<MovieResult>()
     private var filteredList = listOf<MovieResult>()
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, p1: Int): ViewHolder {
-        val v = LayoutInflater.from(viewGroup.context).inflate(R.layout.home_movie_view, viewGroup,
-            false)
+        val v = LayoutInflater.from(viewGroup.context).inflate(
+            R.layout.home_movie_view,
+            viewGroup,
+            false,
+        )
         return ViewHolder(v)
     }
 
@@ -68,7 +71,6 @@ class HomeMovieAdapter(
                 }
                 submitList(filteredList)
             }
-
         }
     }
 

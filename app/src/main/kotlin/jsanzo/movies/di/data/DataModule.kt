@@ -1,13 +1,13 @@
 package jsanzo.movies.di.data
 
+import jsanzo.movies.BuildConfig
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
 import jsanzo.movies.data.repository.MoviesDataRepository
 import jsanzo.movies.database.storage.MoviesStorage
-import jsanzo.movies.domain.repository.MoviesRepository
-import jsanzo.movies.BuildConfig
 import jsanzo.movies.di.remote.APP_OK_HTTP_CLIENT
 import jsanzo.movies.di.remote.APP_WS
+import jsanzo.movies.domain.repository.MoviesRepository
 import jsanzo.movies.remote.service.movies.MoviesService
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.qualifier.named
@@ -26,5 +26,4 @@ val dataModule = module {
     }
 
     single<LocalMoviesDatastore> { MoviesStorage(get()) }
-
 }

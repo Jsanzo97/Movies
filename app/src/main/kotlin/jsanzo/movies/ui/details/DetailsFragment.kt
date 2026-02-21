@@ -4,17 +4,21 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.textview.MaterialTextView
+import jsanzo.movies.R
 import jsanzo.movies.common.extensions.lazyBindView
 import jsanzo.movies.common.extensions.toFormattedString
 import jsanzo.movies.common.fragment.CustomFragment
 import jsanzo.movies.common.view.MediaView
-import jsanzo.movies.domain.entity.*
-import jsanzo.movies.R
-import com.google.android.material.textview.MaterialTextView
-import kotlinx.coroutines.flow.collect
+import jsanzo.movies.domain.entity.MovieDetails
+import jsanzo.movies.domain.entity.MovieGenre
+import jsanzo.movies.domain.entity.MovieProductionCompany
+import jsanzo.movies.domain.entity.MovieProductionCountry
+import jsanzo.movies.domain.entity.MovieSpokenLanguage
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlin.collections.map
 
-class DetailsFragment: CustomFragment(R.layout.details_fragment) {
+class DetailsFragment : CustomFragment(R.layout.details_fragment) {
 
     private val viewModel: DetailsViewModel by viewModel()
     private val args: DetailsFragmentArgs by navArgs()
@@ -33,7 +37,6 @@ class DetailsFragment: CustomFragment(R.layout.details_fragment) {
     private val movieDetailsStatus: MaterialTextView by lazyBindView(R.id.movie_details_status_value_text)
     private val movieDetailsRevenue: MaterialTextView by lazyBindView(R.id.movie_details_revenue_value_text)
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -47,11 +50,14 @@ class DetailsFragment: CustomFragment(R.layout.details_fragment) {
             viewModel.detailsViewModelSateFlow.collect { state ->
                 when (state) {
                     is InitialState -> { /* no-op */ }
+
                     is RetrievingDetails -> showProgressDialog()
+
                     is DetailsRetrieved -> {
                         updateDetails(state.movieDetails)
                         hideProgressDialog()
                     }
+
                     is ErrorInOperation -> showError(state.message)
                 }
             }
@@ -74,26 +80,19 @@ class DetailsFragment: CustomFragment(R.layout.details_fragment) {
         movieDetailsRevenue.text = getString(R.string.movie_details_revenue_value, movieDetails.revenue)
     }
 
-    private fun formatLanguages(languages: List<MovieSpokenLanguage>) =
-        languages.map { language ->
-            language.name
-        }.toFormattedString()
+    private fun formatLanguages(languages: List<MovieSpokenLanguage>) = languages.map { language ->
+        language.name
+    }.toFormattedString()
 
+    private fun formatGenres(genres: List<MovieGenre>) = genres.map { genre ->
+        genre.name
+    }.toFormattedString()
 
-    private fun formatGenres(genres: List<MovieGenre>) =
-        genres.map { genre ->
-            genre.name
-        }.toFormattedString()
+    private fun formatProductions(productions: List<MovieProductionCompany>) = productions.map { productionCompany ->
+        productionCompany.name
+    }.toFormattedString()
 
-
-    private fun formatProductions(productions: List<MovieProductionCompany>) =
-        productions.map { productionCompany ->
-            productionCompany.name
-        }.toFormattedString()
-
-    private fun formatCountries(countries: List<MovieProductionCountry>) =
-        countries.map { productionCountry ->
-            productionCountry.name
-        }.toFormattedString()
-
+    private fun formatCountries(countries: List<MovieProductionCountry>) = countries.map { productionCountry ->
+        productionCountry.name
+    }.toFormattedString()
 }

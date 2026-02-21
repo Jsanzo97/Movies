@@ -13,5 +13,4 @@ interface MoviesRepository {
     suspend fun getMovies(page: Int): Either<MovieError, Flow<Movie>>
     suspend fun getMovieDetails(movieId: Int): Either<MovieError, MovieDetails>
     suspend fun saveMovie(movie: MovieResult): Option<MovieError>
-
 }

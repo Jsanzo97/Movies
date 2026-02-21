@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Entity(
     tableName = "Movies",
-    primaryKeys = ["id"]
+    primaryKeys = ["id"],
 )
 data class MovieEntity(
     val posterPath: String?,
@@ -23,7 +23,7 @@ data class MovieEntity(
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,
-    val voteAverage: Double
+    val voteAverage: Double,
 )
 
 fun DataMovieResult.toMovieEntity() = MovieEntity(
@@ -40,7 +40,7 @@ fun DataMovieResult.toMovieEntity() = MovieEntity(
     popularity,
     voteCount,
     video,
-    voteAverage
+    voteAverage,
 )
 
 fun MovieEntity.toDataMovieResult() = DataMovieResult(
@@ -57,5 +57,5 @@ fun MovieEntity.toDataMovieResult() = DataMovieResult(
     popularity,
     voteCount,
     video,
-    voteAverage
+    voteAverage,
 )

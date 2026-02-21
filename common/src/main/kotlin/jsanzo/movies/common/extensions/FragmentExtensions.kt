@@ -9,8 +9,8 @@ import androidx.lifecycle.OnLifecycleEvent
 
 class LazyFragmentViewBinder<T>(
     private val fragment: Fragment,
-    private val idRes: Int
-): Lazy<T>, LifecycleObserver {
+    private val idRes: Int,
+) : Lazy<T>, LifecycleObserver {
 
     private var _value: Any? = null
 
@@ -37,6 +37,6 @@ class LazyFragmentViewBinder<T>(
     }
 }
 
-fun <T: View> Fragment.lazyBindView(@IdRes idRes: Int): LazyFragmentViewBinder<T> {
+fun <T : View> Fragment.lazyBindView(@IdRes idRes: Int): LazyFragmentViewBinder<T> {
     return LazyFragmentViewBinder(this, idRes)
 }

@@ -27,7 +27,7 @@ data class DataMovieDetails(
     val title: String,
     val video: Boolean,
     val voteAverage: Double,
-    val voteCount: Int
+    val voteCount: Int,
 )
 
 fun DataMovieDetails.toMovieDetails() = MovieDetails(
@@ -55,6 +55,5 @@ fun DataMovieDetails.toMovieDetails() = MovieDetails(
     title,
     video,
     voteAverage,
-    voteCount
+    voteCount,
 )
-

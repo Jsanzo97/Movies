@@ -15,12 +15,10 @@ val localModule = module {
             .build()
     }
 
-
     /* DAO */
 
     single {
         val database = get<LocalDatabase>()
         database.moviesDao()
     }
-
 }

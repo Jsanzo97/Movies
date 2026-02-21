@@ -1,6 +1,10 @@
 package jsanzo.movies.data.repository
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.None
+import arrow.core.left
+import arrow.core.right
+import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
 import jsanzo.movies.data.entity.toDataMovieResult
@@ -20,8 +24,8 @@ import kotlinx.coroutines.withContext
 class MoviesDataRepository(
     private val remoteMoviesDatastore: RemoteMoviesDatastore,
     private val localMoviesDatastore: LocalMoviesDatastore,
-    private val dispatcher: CoroutineDispatcher
-): MoviesRepository {
+    private val dispatcher: CoroutineDispatcher,
+) : MoviesRepository {
 
     override suspend fun getMovies(page: Int): Either<MovieError, Flow<Movie>> = withContext(dispatcher) {
         remoteMoviesDatastore.getMovies(page).fold(
@@ -32,16 +36,16 @@ class MoviesDataRepository(
                     },
                     ifRight = { dataMovieResult ->
                         flowOf(
-                            dataMovieResult.toMovie()
+                            dataMovieResult.toMovie(),
                         ).right()
-                    }
+                    },
                 )
             },
             ifRight = { dataMovie ->
                 flowOf(
-                    dataMovie.toMovie()
+                    dataMovie.toMovie(),
                 ).right()
-            }
+            },
         )
     }
 
@@ -54,9 +58,9 @@ class MoviesDataRepository(
                     },
                     ifRight = { dataMovieDetails ->
                         dataMovieDetails.toMovieDetails().right()
-                    }
+                    },
                 )
-             },
+            },
             ifRight = { dataMovieDetails ->
                 localMoviesDatastore.saveMovieDetails(dataMovieDetails).fold(
                     ifEmpty = {
@@ -64,10 +68,9 @@ class MoviesDataRepository(
                     },
                     ifSome = { error ->
                         error.toMovieError().left()
-                    }
+                    },
                 )
-
-            }
+            },
         )
     }
 
@@ -78,8 +81,7 @@ class MoviesDataRepository(
             },
             ifEmpty = {
                 None
-            }
+            },
         )
     }
-
 }

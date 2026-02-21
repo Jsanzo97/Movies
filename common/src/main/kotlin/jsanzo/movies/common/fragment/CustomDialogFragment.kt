@@ -5,18 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textview.MaterialTextView
 import jsanzo.movies.common.EMPTY_STRING
 import jsanzo.movies.common.R
 import jsanzo.movies.common.extensions.changeVisibility
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textview.MaterialTextView
 
 class CustomDialogFragment(
     private val title: String = EMPTY_STRING,
     private val message: String,
     private val positiveButtonAction: () -> Unit = {},
     private val showOkButton: Boolean = true,
-    private val showCancelButton: Boolean = false
+    private val showCancelButton: Boolean = false,
 ) : DialogFragment() {
 
     private lateinit var dialogOkButton: MaterialButton
@@ -46,5 +46,4 @@ class CustomDialogFragment(
             this.dismiss()
         }
     }
-
 }

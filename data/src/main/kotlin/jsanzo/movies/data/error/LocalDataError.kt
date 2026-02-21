@@ -5,9 +5,9 @@ import jsanzo.movies.domain.error.UnknownIOError
 
 sealed class LocalDataError
 
-object WritingError: LocalDataError()
-object ReadingError: LocalDataError()
-object UnknownError: LocalDataError()
+object WritingError : LocalDataError()
+object ReadingError : LocalDataError()
+object UnknownError : LocalDataError()
 
 fun LocalDataError.toMovieError() = when (this) {
     WritingError -> IOOperationError

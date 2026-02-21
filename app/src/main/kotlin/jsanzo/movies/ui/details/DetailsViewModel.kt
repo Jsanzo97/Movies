@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class DetailsViewModel(
-    private val getMovieDetailsUseCase: GetMovieDetailsUseCase
-): ViewModel() {
+    private val getMovieDetailsUseCase: GetMovieDetailsUseCase,
+) : ViewModel() {
 
     private val _detailsViewModelStateFlow = MutableStateFlow<DetailsViewState>(InitialState)
     val detailsViewModelSateFlow: StateFlow<DetailsViewState> get() = _detailsViewModelStateFlow
@@ -24,7 +24,7 @@ class DetailsViewModel(
                 },
                 ifRight = { movieDetails ->
                     _detailsViewModelStateFlow.value = DetailsRetrieved(movieDetails)
-                }
+                },
             )
         }
     }

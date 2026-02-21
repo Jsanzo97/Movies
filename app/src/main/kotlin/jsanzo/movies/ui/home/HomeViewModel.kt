@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val getMoviesUseCase: GetMoviesUseCase,
-    private val saveMovieUseCase: SaveMovieUseCase
-): ViewModel() {
+    private val saveMovieUseCase: SaveMovieUseCase,
+) : ViewModel() {
 
     private val _homeViewModelStateFlow = MutableStateFlow<HomeViewState>(InitialState)
     val homeViewModelSateFlow: StateFlow<HomeViewState> get() = _homeViewModelStateFlow
@@ -44,7 +44,7 @@ class HomeViewModel(
                         }
                         _homeViewModelStateFlow.value = MoviesRetrieved(moviesRetrieved)
                     }
-                }
+                },
             )
         }
     }
@@ -57,7 +57,7 @@ class HomeViewModel(
                 },
                 ifSome = { error ->
                     _homeViewModelStateFlow.value = ErrorInOperation(error.toString())
-                }
+                },
             )
         }
     }
@@ -69,7 +69,7 @@ class HomeViewModel(
     private fun checkNeedNewPage() {
         if (lastVisible + threshold >= lastElementRetrieved) {
             lastElementRetrieved += pageSize
-            nextPageToRetrieve ++
+            nextPageToRetrieve++
             getMovies()
         }
     }

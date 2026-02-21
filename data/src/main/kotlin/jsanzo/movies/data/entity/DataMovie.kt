@@ -6,12 +6,12 @@ data class DataMovie(
     val page: Int,
     val results: List<DataMovieResult>,
     val totalResults: Int,
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 fun DataMovie.toMovie() = Movie(
     page,
     results.map { it.toMovieResult() },
     totalResults,
-    totalPages
+    totalPages,
 )

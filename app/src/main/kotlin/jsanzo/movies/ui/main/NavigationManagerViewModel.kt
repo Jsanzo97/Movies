@@ -6,7 +6,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.NavGraph
 import jsanzo.movies.ui.home.HomeFragmentDirections
 
-class NavigationManagerViewModel: ViewModel() {
+class NavigationManagerViewModel : ViewModel() {
 
     fun navigateToDetails(navController: NavController, movieId: Int) {
         val direction = HomeFragmentDirections.actionHomeFragmentToDetailsFragment(movieId)

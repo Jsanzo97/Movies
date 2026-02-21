@@ -5,7 +5,11 @@ import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
 import jsanzo.movies.common.EMPTY_STRING
-import jsanzo.movies.data.error.*
+import jsanzo.movies.data.error.InvalidCredentials
+import jsanzo.movies.data.error.InvalidRequest
+import jsanzo.movies.data.error.NotFound
+import jsanzo.movies.data.error.RemoteDataError
+import jsanzo.movies.data.error.UnrecognizedRemoteError
 import jsanzo.movies.remote.dto.response.ErrorResponse
 import kotlinx.serialization.json.Json
 import okhttp3.ResponseBody
@@ -37,7 +41,7 @@ internal suspend fun <T : Any> processResponse(response: Response<T>): Either<Re
             },
             {
                 UnrecognizedRemoteError(it.statusMessage)
-            }
+            },
         )
 
         error.left()

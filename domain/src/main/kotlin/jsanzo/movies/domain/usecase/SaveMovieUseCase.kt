@@ -6,5 +6,4 @@ import jsanzo.movies.domain.repository.MoviesRepository
 class SaveMovieUseCase(private val movieRepository: MoviesRepository) {
 
     suspend operator fun invoke(movie: MovieResult) = movieRepository.saveMovie(movie)
-
 }

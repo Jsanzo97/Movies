@@ -12,7 +12,7 @@ data class GetMoviesResponse(
     @SerialName("total_results")
     val totalResults: Int,
     @SerialName("total_pages")
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 @Serializable
@@ -38,14 +38,14 @@ data class MoviesResponseResult(
     val voteCount: Int,
     val video: Boolean,
     @SerialName("vote_average")
-    val voteAverage: Double
+    val voteAverage: Double,
 )
 
 fun GetMoviesResponse.toDataMovie() = DataMovie(
     page,
     results.map { it.toDataMovie() },
     totalResults,
-    totalPages
+    totalPages,
 )
 
 fun MoviesResponseResult.toDataMovie() = DataMovieResult(
@@ -62,5 +62,5 @@ fun MoviesResponseResult.toDataMovie() = DataMovieResult(
     popularity,
     voteCount,
     video,
-    voteAverage
+    voteAverage,
 )

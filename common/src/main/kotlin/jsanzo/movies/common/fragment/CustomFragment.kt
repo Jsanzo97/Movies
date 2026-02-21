@@ -6,9 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.google.android.material.textview.MaterialTextView
 import jsanzo.movies.common.DIALOG_FRAGMENT_TAG
 import jsanzo.movies.common.R
-import com.google.android.material.textview.MaterialTextView
 
 abstract class CustomFragment(private val contentLayoutId: Int) : Fragment() {
 
@@ -18,7 +18,7 @@ abstract class CustomFragment(private val contentLayoutId: Int) : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         return inflater.inflate(contentLayoutId, container, false)
     }
@@ -27,7 +27,7 @@ abstract class CustomFragment(private val contentLayoutId: Int) : Fragment() {
         hideProgressDialog()
         CustomDialogFragment(
             message = message,
-            title = getString(R.string.error)
+            title = getString(R.string.error),
         ).show(parentFragmentManager, DIALOG_FRAGMENT_TAG)
     }
 
@@ -49,5 +49,4 @@ abstract class CustomFragment(private val contentLayoutId: Int) : Fragment() {
             progressDialog.dismiss()
         }
     }
-
 }

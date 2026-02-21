@@ -16,22 +16,21 @@ import jsanzo.movies.common.BASE_IMAGE_URL_ORIGINAL
 import jsanzo.movies.common.R
 import jsanzo.movies.common.extensions.changeVisibility
 
-class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0):
+class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
     FrameLayout(context, attrs, defStyleAttr) {
 
     private val imageView: ImageView by lazy { findViewById(R.id.media_image) }
     private val imageLoading: ProgressBar by lazy { findViewById(R.id.media_loading) }
 
-    private val listener: RequestListener<Drawable> = object: RequestListener<Drawable> {
+    private val listener: RequestListener<Drawable> = object : RequestListener<Drawable> {
         override fun onLoadFailed(
             e: GlideException?,
             model: Any?,
             target: Target<Drawable?>,
-            isFirstResource: Boolean
+            isFirstResource: Boolean,
         ): Boolean {
             imageLoading.changeVisibility(false)
-            imageView.setImageDrawable(
-                ResourcesCompat.getDrawable(context.resources, R.drawable.ic_error_load, null))
+            imageView.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_error_load, null))
             return true
         }
 
@@ -40,7 +39,7 @@ class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             model: Any,
             target: Target<Drawable?>?,
             dataSource: DataSource,
-            isFirstResource: Boolean
+            isFirstResource: Boolean,
         ): Boolean {
             imageLoading.changeVisibility(false)
             return false
@@ -58,5 +57,4 @@ class MediaView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             .listener(listener)
             .into(imageView)
     }
-
 }
