@@ -6,5 +6,6 @@ class CommonVerificationsPlugin : Plugin<Project> {
         target.setupDetekt()
         target.setupSpotless()
         target.setupJunitTests()
+        target.setupCheck()
     }
 }

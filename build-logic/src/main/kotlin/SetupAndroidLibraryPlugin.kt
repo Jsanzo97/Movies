@@ -3,6 +3,8 @@ import com.android.build.gradle.ProguardFiles.getDefaultProguardFile
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.dependencies
+import org.jetbrains.kotlin.analysis.api.components.compile
 
 class SetupAndroidLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -16,10 +18,10 @@ private fun Project.apply() {
 
     extensions.configure<LibraryExtension>("android") {
         namespace = calculateNamespace()
-        compileSdk = 36
+        compileSdk = sdkCompile
 
         defaultConfig {
-            minSdk = 24
+            minSdk = sdkMin
         }
 
         buildTypes {
@@ -30,9 +32,14 @@ private fun Project.apply() {
         }
 
         compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
+            isCoreLibraryDesugaringEnabled = true
+            sourceCompatibility = JavaVersion.toVersion(javaSourceMin)
+            targetCompatibility = JavaVersion.toVersion(jdkVersion)
         }
+    }
+
+    dependencies {
+        "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
     }
 }
 

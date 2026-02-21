@@ -28,13 +28,6 @@ internal fun Project.setupDetekt() {
         jvmTarget = "17"
         exclude { it.file.absolutePath.contains("/build/generated") }
     }
-
-    afterEvaluate {
-        tasks.named("check").configure {
-            setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "detekt" })
-            dependsOn(tasks.withType<Detekt>())
-        }
-    }
 }
 
 internal fun Project.setupSpotless() {
@@ -66,6 +59,16 @@ internal fun Project.setupSpotless() {
                         "ktlint_standard_multiline-loop" to "disabled",
                     )
                 )
+        }
+    }
+}
+
+internal fun Project.setupCheck() {
+    afterEvaluate {
+        tasks.named("check").configure {
+            setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "detekt" })
+            dependsOn(tasks.withType<Detekt>())
+            dependsOn(tasks.named("spotlessCheck"))
         }
     }
 }

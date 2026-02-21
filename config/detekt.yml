@@ -436,12 +436,13 @@ potential-bugs:
     active: true
   IteratorNotThrowingNoSuchElementException:
     active: true
-  LateinitUsage:
-    active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
-    ignoreAnnotated:
-      - 'javax.inject.Inject'
-    ignoreOnClassesPattern: ''
+# Activate after compose migration
+#  LateinitUsage:
+#    active: true
+#    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+#    ignoreAnnotated:
+#      - 'javax.inject.Inject'
+#    ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
   MissingPackageDeclaration:
@@ -593,8 +594,9 @@ style:
         value: 'com.google.accompanist.web.*'
       - reason: 'Deprecated at Accompanist. More info at: https://medium.com/androiddevelopers/an-update-on-jetpack-compose-accompanist-libraries-august-2023-ac4cbbf059f1'
         value: 'com.google.accompanist.systemuicontroller.*'
-      - reason: 'Avoid creating new fragments and use compose instead'
-        value: 'androidx.fragment.app.Fragment'
+# Activate after compose migration
+#      - reason: 'Avoid creating new fragments and use compose instead'
+#        value: 'androidx.fragment.app.Fragment'
     forbiddenPatterns: ''
     excludes: [ '**/androidTest/**' ]
   ForbiddenMethodCall:

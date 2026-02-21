@@ -18,13 +18,13 @@ private fun Project.apply() {
 
     extensions.configure<ApplicationExtension>("android") {
         namespace = calculateNamespace()
-        compileSdk = 36
+        compileSdk = sdkCompile
 
         defaultConfig {
-            minSdk = 24
-            targetSdk = 36
-            versionCode = 1
-            versionName = "1.0.0"
+            minSdk = sdkMin
+            targetSdk = sdkTarget
+            versionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPatch
+            versionName = "$versionMajor.$versionMinor.$versionPatch"
             buildConfigField("String", "SERVER_ENDPOINT", "\"https://api.themoviedb.org/3/movie/\"")
             buildConfigField("String", "SERVER_API_KEY", "\"3ce5fa18330f82a0e8c84eea49508b46\"")
         }
@@ -34,10 +34,20 @@ private fun Project.apply() {
             resValues = true
         }
 
+        buildTypes {
+            getByName("debug") {
+                applicationIdSuffix = ".debug"
+            }
+            getByName("release") {
+                isMinifyEnabled = true
+                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            }
+        }
+
         compileOptions {
             isCoreLibraryDesugaringEnabled = true
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
+            sourceCompatibility = JavaVersion.toVersion(javaSourceMin)
+            targetCompatibility = JavaVersion.toVersion(jdkVersion)
         }
 
         packaging {

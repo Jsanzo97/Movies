@@ -7,7 +7,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 
-class LazyFragmentViewBinder<T>(
+class FragmentExtensions<T>(
     private val fragment: Fragment,
     private val idRes: Int,
 ) : Lazy<T>, LifecycleObserver {
@@ -20,7 +20,7 @@ class LazyFragmentViewBinder<T>(
         })
     }
 
-    override fun isInitialized() = (null == _value)
+    override fun isInitialized() = null == _value
 
     override val value: T get() {
         if (_value == null) {
@@ -37,6 +37,6 @@ class LazyFragmentViewBinder<T>(
     }
 }
 
-fun <T : View> Fragment.lazyBindView(@IdRes idRes: Int): LazyFragmentViewBinder<T> {
-    return LazyFragmentViewBinder(this, idRes)
+fun <T : View> Fragment.lazyBindView(@IdRes idRes: Int): FragmentExtensions<T> {
+    return FragmentExtensions(this, idRes)
 }
