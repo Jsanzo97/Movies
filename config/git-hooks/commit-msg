@@ -1,0 +1,53 @@
+#!/bin/bash
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+TASK_PATTERN="^\[Task - [0-9]+\]"
+
+# Commit is not empty
+if [ -z "$COMMIT_MSG" ]; then
+    echo "❌ Commit message cannot be empty."
+    exit 1
+fi
+
+# Ignore automatic commits from git (merge, rebase, etc.)
+if echo "$COMMIT_MSG" | grep -qE "^(Merge|Rebase|fixup!|squash!)"; then
+    exit 0
+fi
+
+# Validate branch name
+BRANCH=$(git symbolic-ref --short HEAD)
+BRANCH_PATTERN="^(feature|refactor|bugfix|hotfix)/"
+
+if ! echo "$BRANCH" | grep -qE "$BRANCH_PATTERN"; then
+    echo "❌ Branch name '$BRANCH' is not valid."
+    echo "Branch must start with one of: feature/, refactor/, bugfix/, hotfix/"
+    echo "Example: feature/add-home-screen"
+    exit 1
+fi
+
+# Validate minimum commit length
+if [ ${#COMMIT_MSG} -lt 10 ]; then
+    echo "❌ Commit message is too short. Please be more descriptive."
+    exit 1
+fi
+
+if echo "$COMMIT_MSG" | grep -qE "$TASK_PATTERN"; then
+    echo "✅ Commit message format is valid."
+    exit 0
+fi
+
+# Find last task number in commit history and increment
+LAST_TASK=$(git log --format="%B" | grep -oE "\[Task - [0-9]+\]" | grep -oE "[0-9]+" | sort -n | tail -1)
+
+if [ -z "$LAST_TASK" ]; then
+    NEXT_TASK=1
+else
+    NEXT_TASK=$((LAST_TASK + 1))
+fi
+
+NEW_MSG="[Task - $NEXT_TASK] $COMMIT_MSG"
+echo "$NEW_MSG" > "$COMMIT_MSG_FILE"
+
+echo "✅ Commit message updated to: $NEW_MSG"
+exit 0
