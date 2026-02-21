@@ -1,33 +1,20 @@
 package jsanzo.movies
 
 import android.app.Application
-import jsanzo.movies.di.data.dataModule
-import jsanzo.movies.di.details.detailsModule
-import jsanzo.movies.di.home.homeModule
-import jsanzo.movies.di.local.localModule
-import jsanzo.movies.di.remote.appRemoteModule
-import jsanzo.movies.di.remote.remoteModule
+import jsanzo.movies.di.AppModule
 import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
+import org.koin.ksp.generated.module
 
 class MoviesApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
         startKoin {
+            androidLogger()
             androidContext(this@MoviesApplication)
-
-            modules(
-                listOf(
-                    remoteModule,
-                    appRemoteModule,
-                    localModule,
-                    dataModule,
-                    homeModule,
-                    detailsModule,
-                ),
-            )
+            modules(AppModule().module)
         }
     }
 }

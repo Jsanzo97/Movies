@@ -153,11 +153,11 @@ Convention plugins defined in `build-logic/src/main/kotlin/` and registered in `
 
 ### Available Plugins
 
-| Plugin ID | Class | Purpose |
-|---|---|---|
-| `setup-android-application` | `SetupAndroidApplicationPlugin` | compileSdk, minSdk, buildTypes, compileOptions, sourceSets, desugaring, BuildConfig fields |
-| `setup-android-library` | `SetupAndroidLibraryPlugin` | compileSdk, minSdk, compileOptions, auto namespace |
-| `common-verifications` | `CommonVerificationsPlugin` | Applies Detekt, connects to `check` task |
+| Plugin ID                   | Class                           | Purpose                                                                                                     |
+|-----------------------------|---------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `setup-android-application` | `SetupAndroidApplicationPlugin` | compileSdk, minSdk, buildTypes, compileOptions, sourceSets, desugaring, BuildConfig fields                  |
+| `setup-android-library`     | `SetupAndroidLibraryPlugin`     | compileSdk, minSdk, compileOptions, auto namespace                                                          |
+| `common-setup`              | `CommonSetupPlugin`             | Applies Detekt, connects to `check` task, adds koin and make the common setup for libraries and application |
 
 `common-verifications` is applied internally by both application and library plugins — never apply it manually in a module.
 

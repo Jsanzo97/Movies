@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.detekt.rules.compose)
     implementation(libs.spotless.gradle.plugin)
+    implementation(libs.ksp.gradle.plugin)
 }
 
 gradlePlugin {
@@ -23,9 +24,9 @@ gradlePlugin {
             implementationClass = "SetupAndroidLibraryPlugin"
         }
 
-        create("CommonVerifications") {
-            id = "common-verifications"
-            implementationClass = "CommonVerificationsPlugin"
+        create("CommonSetup") {
+            id = "common-setup"
+            implementationClass = "CommonSetupPlugin"
         }
     }
 }

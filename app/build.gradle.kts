@@ -1,13 +1,13 @@
 plugins {
     alias(libs.plugins.setup.android.application)
     alias(libs.plugins.navigation.safeargs.kotlin)
+    alias(libs.plugins.ksp)
 }
 
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":database"))
-    implementation(project(":common"))
     implementation(project(":remote"))
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
@@ -20,16 +20,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
     implementation(libs.arrow.core)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.okhttp.core)
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.kotlinx.serialization.json)
-
-    debugImplementation(libs.chucker)
+    implementation(libs.glide)
 
     androidTestImplementation(libs.androidx.junit.ext)
 }
