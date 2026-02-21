@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google()
         mavenCentral()
@@ -15,10 +16,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Generic-Project-Structure"
+rootProject.name = "Movies"
 include(":app")
 include(":common")
 include(":data")
 include(":database")
 include(":domain")
 include(":remote")
+

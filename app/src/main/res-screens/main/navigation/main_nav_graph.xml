@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.example.movielist.ui.home.HomeFragment"
+        android:name="jsanzo.movies.ui.home.HomeFragment"
         android:label="Home" >
 
         <action
@@ -18,7 +18,7 @@
 
     <fragment
         android:id="@+id/detailsFragment"
-        android:name="com.example.movielist.ui.details.DetailsFragment"
+        android:name="jsanzo.movies.ui.details.DetailsFragment"
         android:label="Details" >
 
         <argument

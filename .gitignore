@@ -12,3 +12,5 @@ local.properties
 .Trashes
 /versions/*
 secret/
+keystore.jks
+*.jks
