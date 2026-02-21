@@ -25,3 +25,13 @@ tasks.register("testAll") {
         } else null
     })
 }
+
+tasks.register("installGitHooks", Copy::class) {
+    group = "setup"
+    description = "Installs git hooks for the project"
+    from("config/git-hooks")
+    into(".git/hooks")
+    filePermissions {
+        unix("755")
+    }
+}
