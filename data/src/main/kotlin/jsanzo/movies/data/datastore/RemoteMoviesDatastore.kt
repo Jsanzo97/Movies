@@ -1,12 +1,12 @@
 package jsanzo.movies.data.datastore
 
 import arrow.core.Either
-import jsanzo.movies.data.entity.DataMovie
-import jsanzo.movies.data.entity.DataMovieDetails
-import jsanzo.movies.data.error.RemoteDataError
+import jsanzo.movies.data.error.DataError
+import jsanzo.movies.data.model.DataMovie
+import jsanzo.movies.data.model.DataMovieDetails
 
 interface RemoteMoviesDatastore {
 
-    suspend fun getMovies(page: Int): Either<RemoteDataError, DataMovie>
-    suspend fun getMovieDetails(movieId: Int): Either<RemoteDataError, DataMovieDetails>
+    suspend fun getMovies(page: Int): Either<DataError, DataMovie>
+    suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails>
 }

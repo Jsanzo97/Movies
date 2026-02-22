@@ -1,6 +1,6 @@
-package jsanzo.movies.data.entity
+package jsanzo.movies.data.model
 
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.domain.model.DomainMovieResult
 
 data class DataMovieResult(
     val posterPath: String?,
@@ -19,7 +19,7 @@ data class DataMovieResult(
     val voteAverage: Double,
 )
 
-fun DataMovieResult.toMovieResult() = MovieResult(
+fun DataMovieResult.toMovieResult() = DomainMovieResult(
     posterPath,
     adult,
     overview,
@@ -36,7 +36,7 @@ fun DataMovieResult.toMovieResult() = MovieResult(
     voteAverage,
 )
 
-fun MovieResult.toDataMovieResult() = DataMovieResult(
+fun DomainMovieResult.toDataMovieResult() = DataMovieResult(
     posterPath,
     adult,
     overview,

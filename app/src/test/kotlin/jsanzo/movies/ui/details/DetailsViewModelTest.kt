@@ -8,8 +8,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import jsanzo.movies.common.EMPTY_STRING
-import jsanzo.movies.domain.entity.MovieDetails
 import jsanzo.movies.domain.error.NotFoundError
+import jsanzo.movies.domain.model.DomainMovieDetails
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,7 +33,7 @@ class DetailsViewModelTest {
 
     private lateinit var detailsViewModelStateFlow: StateFlow<DetailsViewState>
 
-    private val movieDetails = MovieDetails(
+    private val domainMovieDetails = DomainMovieDetails(
         adult = false,
         backdropPath = null,
         belongsToCollection = null,
@@ -68,7 +68,7 @@ class DetailsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
-        coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns movieDetails.right()
+        coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns domainMovieDetails.right()
 
         detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase)
         detailsViewModelStateFlow = detailsViewModel.detailsViewModelSateFlow
@@ -96,7 +96,7 @@ class DetailsViewModelTest {
 
         val state = detailsViewModelStateFlow.value as? DetailsRetrieved
 
-        state?.movieDetails shouldBe movieDetails
+        state?.domainMovieDetails shouldBe domainMovieDetails
     }
 
     @Test

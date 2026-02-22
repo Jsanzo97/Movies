@@ -6,7 +6,6 @@ import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.database.LocalDatabase
 import jsanzo.movies.database.dao.MoviesDao
 import jsanzo.movies.database.storage.MoviesStorage
-import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 

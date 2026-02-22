@@ -1,6 +1,6 @@
-package jsanzo.movies.domain.entity
+package jsanzo.movies.domain.model
 
-data class MovieCollection(
+data class DomainMovieCollection(
     val id: Int,
     val name: String,
     val posterPath: String,

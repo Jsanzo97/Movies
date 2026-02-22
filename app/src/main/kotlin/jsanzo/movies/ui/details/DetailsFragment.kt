@@ -10,11 +10,11 @@ import jsanzo.movies.common.extensions.lazyBindView
 import jsanzo.movies.common.extensions.toFormattedString
 import jsanzo.movies.common.fragment.CustomFragment
 import jsanzo.movies.common.view.MediaView
-import jsanzo.movies.domain.entity.MovieDetails
-import jsanzo.movies.domain.entity.MovieGenre
-import jsanzo.movies.domain.entity.MovieProductionCompany
-import jsanzo.movies.domain.entity.MovieProductionCountry
-import jsanzo.movies.domain.entity.MovieSpokenLanguage
+import jsanzo.movies.domain.model.DomainMovieDetails
+import jsanzo.movies.domain.model.DomainMovieGenre
+import jsanzo.movies.domain.model.DomainMovieProductionCompany
+import jsanzo.movies.domain.model.DomainMovieProductionCountry
+import jsanzo.movies.domain.model.DomainMovieSpokenLanguage
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.collections.map
 
@@ -54,7 +54,7 @@ class DetailsFragment : CustomFragment(R.layout.details_fragment) {
                     is RetrievingDetails -> showProgressDialog()
 
                     is DetailsRetrieved -> {
-                        updateDetails(state.movieDetails)
+                        updateDetails(state.domainMovieDetails)
                         hideProgressDialog()
                     }
 
@@ -64,35 +64,35 @@ class DetailsFragment : CustomFragment(R.layout.details_fragment) {
         }
     }
 
-    private fun updateDetails(movieDetails: MovieDetails) {
-        movieDetailsImage.loadImage(movieDetails.posterPath)
-        movieDetailsTitle.text = movieDetails.title
-        movieDetailsPunctuation.text = movieDetails.voteAverage.toString()
-        movieDetailsReleaseDate.text = movieDetails.releaseDate
-        movieDetailsLanguage.text = formatLanguages(movieDetails.spokenLanguages)
-        movieDetailsDuration.text = getString(R.string.movie_details_duration_value, movieDetails.runtime)
-        movieDetailsGenres.text = formatGenres(movieDetails.genres)
-        movieDetailsWebpage.text = movieDetails.homepage
-        movieDetailsOverview.text = movieDetails.overview
-        movieDetailsProduction.text = formatProductions(movieDetails.productionCompanies)
-        movieDetailsCountry.text = formatCountries(movieDetails.productionCountries)
-        movieDetailsStatus.text = movieDetails.status
-        movieDetailsRevenue.text = getString(R.string.movie_details_revenue_value, movieDetails.revenue)
+    private fun updateDetails(domainMovieDetails: DomainMovieDetails) {
+        movieDetailsImage.loadImage(domainMovieDetails.posterPath)
+        movieDetailsTitle.text = domainMovieDetails.title
+        movieDetailsPunctuation.text = domainMovieDetails.voteAverage.toString()
+        movieDetailsReleaseDate.text = domainMovieDetails.releaseDate
+        movieDetailsLanguage.text = formatLanguages(domainMovieDetails.spokenLanguages)
+        movieDetailsDuration.text = getString(R.string.movie_details_duration_value, domainMovieDetails.runtime)
+        movieDetailsGenres.text = formatGenres(domainMovieDetails.genres)
+        movieDetailsWebpage.text = domainMovieDetails.homepage
+        movieDetailsOverview.text = domainMovieDetails.overview
+        movieDetailsProduction.text = formatProductions(domainMovieDetails.productionCompanies)
+        movieDetailsCountry.text = formatCountries(domainMovieDetails.productionCountries)
+        movieDetailsStatus.text = domainMovieDetails.status
+        movieDetailsRevenue.text = getString(R.string.movie_details_revenue_value, domainMovieDetails.revenue)
     }
 
-    private fun formatLanguages(languages: List<MovieSpokenLanguage>) = languages.map { language ->
+    private fun formatLanguages(languages: List<DomainMovieSpokenLanguage>) = languages.map { language ->
         language.name
     }.toFormattedString()
 
-    private fun formatGenres(genres: List<MovieGenre>) = genres.map { genre ->
+    private fun formatGenres(genres: List<DomainMovieGenre>) = genres.map { genre ->
         genre.name
     }.toFormattedString()
 
-    private fun formatProductions(productions: List<MovieProductionCompany>) = productions.map { productionCompany ->
+    private fun formatProductions(productions: List<DomainMovieProductionCompany>) = productions.map { productionCompany ->
         productionCompany.name
     }.toFormattedString()
 
-    private fun formatCountries(countries: List<MovieProductionCountry>) = countries.map { productionCountry ->
+    private fun formatCountries(countries: List<DomainMovieProductionCountry>) = countries.map { productionCountry ->
         productionCountry.name
     }.toFormattedString()
 }

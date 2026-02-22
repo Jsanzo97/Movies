@@ -1,6 +1,6 @@
-package jsanzo.movies.domain.entity
+package jsanzo.movies.domain.model
 
-data class MovieResult(
+data class DomainMovieResult(
     val posterPath: String?,
     val adult: Boolean,
     val overview: String,

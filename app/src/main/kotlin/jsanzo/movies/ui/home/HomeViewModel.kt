@@ -2,14 +2,13 @@ package jsanzo.movies.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import jsanzo.movies.domain.utils.onError
 import jsanzo.movies.domain.utils.onSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -27,7 +26,7 @@ class HomeViewModel(
     private var nextPageToRetrieve = 1
     private var lastElementRetrieved = 0
     private var lastVisible = 0
-    private val moviesRetrieved = mutableListOf<MovieResult>()
+    private val moviesRetrieved = mutableListOf<DomainMovieResult>()
 
     fun getMovies(page: Int = nextPageToRetrieve) {
         viewModelScope.launch {
@@ -50,7 +49,7 @@ class HomeViewModel(
         }
     }
 
-    fun saveMovie(movie: MovieResult) {
+    fun saveMovie(movie: DomainMovieResult) {
         viewModelScope.launch {
             saveMovieUseCase(movie)
                 .onSuccess { _homeViewModelStateFlow.value = SavedMovie(movie.id) }

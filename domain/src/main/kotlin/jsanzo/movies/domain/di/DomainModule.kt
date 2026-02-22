@@ -4,7 +4,6 @@ import jsanzo.movies.domain.repository.MoviesRepository
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
-import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 

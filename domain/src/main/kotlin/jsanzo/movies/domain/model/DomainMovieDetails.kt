@@ -1,11 +1,11 @@
-package jsanzo.movies.domain.entity
+package jsanzo.movies.domain.model
 
-data class MovieDetails(
+data class DomainMovieDetails(
     val adult: Boolean,
     val backdropPath: String?,
-    val belongsToCollection: MovieCollection?,
+    val belongsToCollection: DomainMovieCollection?,
     val budget: Int,
-    val genres: List<MovieGenre>,
+    val genres: List<DomainMovieGenre>,
     val homepage: String?,
     val id: Int,
     val imdbId: String?,
@@ -14,12 +14,12 @@ data class MovieDetails(
     val overview: String?,
     val popularity: Double,
     val posterPath: String?,
-    val productionCompanies: List<MovieProductionCompany>,
-    val productionCountries: List<MovieProductionCountry>,
+    val productionCompanies: List<DomainMovieProductionCompany>,
+    val productionCountries: List<DomainMovieProductionCountry>,
     val releaseDate: String,
     val revenue: Int,
     val runtime: Int?,
-    val spokenLanguages: List<MovieSpokenLanguage>,
+    val spokenLanguages: List<DomainMovieSpokenLanguage>,
     val status: String,
     val tagline: String?,
     val title: String,

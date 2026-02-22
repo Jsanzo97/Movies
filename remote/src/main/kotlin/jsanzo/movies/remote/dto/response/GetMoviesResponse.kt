@@ -1,7 +1,7 @@
 package jsanzo.movies.remote.dto.response
 
-import jsanzo.movies.data.entity.DataMovie
-import jsanzo.movies.data.entity.DataMovieResult
+import jsanzo.movies.data.model.DataMovie
+import jsanzo.movies.data.model.DataMovieResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -4,10 +4,10 @@ import arrow.core.Either
 import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
+import jsanzo.movies.data.error.DataError
 import jsanzo.movies.data.error.InvalidCredentials
 import jsanzo.movies.data.error.InvalidRequest
 import jsanzo.movies.data.error.NotFound
-import jsanzo.movies.data.error.RemoteDataError
 import jsanzo.movies.data.error.UnrecognizedRemoteError
 import jsanzo.movies.remote.dto.response.ErrorResponse
 import kotlinx.serialization.json.Json
@@ -19,7 +19,7 @@ import java.net.HttpURLConnection
 
 private val json = Json { ignoreUnknownKeys = true }
 
-internal suspend fun <T : Any> executeNetworkRequest(f: suspend () -> Response<T>): Either<RemoteDataError, T> {
+internal suspend fun <T : Any> executeNetworkRequest(f: suspend () -> Response<T>): Either<DataError, T> {
     return try {
         processResponse(f())
     } catch (error: IOException) {
@@ -29,7 +29,7 @@ internal suspend fun <T : Any> executeNetworkRequest(f: suspend () -> Response<T
     }
 }
 
-internal fun <T : Any> processResponse(response: Response<T>): Either<RemoteDataError, T> {
+internal fun <T : Any> processResponse(response: Response<T>): Either<DataError, T> {
     return if (response.isSuccessful) {
         response.body()?.right() ?: UnrecognizedRemoteError().left()
     } else {
