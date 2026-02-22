@@ -22,6 +22,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.compose.ComposeActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

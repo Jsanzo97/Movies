@@ -1,10 +1,8 @@
 import com.android.build.api.dsl.LibraryExtension
-import com.android.build.gradle.ProguardFiles.getDefaultProguardFile
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
-import org.jetbrains.kotlin.analysis.api.components.compile
 
 class SetupAndroidLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
