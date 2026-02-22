@@ -15,14 +15,15 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Area | Technology | Notes |
 |---|---|---|
 | Language | Kotlin 2.3.10 | |
-| UI | XML Views + Fragments | Migrating to Compose (screen by screen) |
+| UI | Jetpack Compose | Migration from XML/Fragments complete for Home screen |
 | Architecture | MVVM + Clean Architecture | |
 | DI | Koin 4.1.1 | Using Koin Annotations for DI |
-| Navigation | Jetpack Navigation Component + Safe Args | Migrating to Navigation Compose |
+| Navigation | Navigation Compose | Migrated from Jetpack Navigation Component + Safe Args |
 | Networking | Retrofit 3.0.0 + OkHttp 5.3.2 | |
-| Serialization | Kotlinx Serialization 1.10.0 | |
+| Serialization | Kotlinx Serialization 1.10.0 | Applied via CommonSetupPlugin to all modules |
 | Database | Room 2.8.4 | |
 | Async | Coroutines 1.10.2 + Flow + StateFlow | |
+| Image loading | Coil 2.7.0 | Replaces Glide for Compose screens |
 | Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
@@ -81,16 +82,17 @@ Each module appends its name automatically via `calculateNamespace()` in build-l
 #### UseCase pattern
 ```kotlin
 class UseCase(private val repository: Repository) {
-  suspend operator fun invoke() = repository.function()
+    suspend operator fun invoke() = repository.function()
 }
 ```
 
 #### Arrow extension functions (defined in `:domain`)
+All Arrow extension functions are `suspend` to allow calling suspend functions inside their lambdas:
 ```kotlin
-fun <L, R> Either<L, R>.onSuccess(action: (R) -> Unit): Either<L, R>
-fun <L, R> Either<L, R>.onError(action: (L) -> Unit): Either<L, R>
-fun <T> Option<T>.onSome(action: (T) -> Unit): Option<T>
-fun <T> Option<T>.onNone(action: () -> Unit): Option<T>
+suspend fun <L, R> Either<L, R>.onSuccess(action: suspend (R) -> Unit): Either<L, R>
+suspend fun <L, R> Either<L, R>.onError(action: suspend (L) -> Unit): Either<L, R>
+suspend fun <T> Option<T>.onSome(action: suspend (T) -> Unit): Option<T>
+suspend fun <T> Option<T>.onNone(action: suspend () -> Unit): Option<T>
 ```
 
 ### Data Layer (`:data`)
@@ -118,8 +120,7 @@ fun MovieResult.toDataMovieResult() = DataMovieResult()
 ### Presentation Layer (`:app`)
 - ViewModels expose `StateFlow<ViewState>`.
 - Sealed classes for ViewState per screen.
-- Fragments observe StateFlow.
-- New Compose screens live in `ui/compose/` (parallel to existing Fragments during migration).
+- Compose screens in `ui/compose/`.
 
 ---
 
@@ -141,6 +142,12 @@ Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key deci
 "implementation"(libs().getLibrary("compose-material3"))
 "implementation"(libs().getLibrary("compose-ui-tooling-preview"))
 "implementation"(libs().getLibrary("navigation-compose"))
+"implementation"(libs().getLibrary("androidx-lifecycle-runtime-compose"))
+"implementation"(libs().getLibrary("koin-compose"))
+"implementation"(libs().getLibrary("coil-compose"))
+"implementation"(libs().getLibrary("material-icons-core"))
+"implementation"(libs().getLibrary("accompanist-systemuicontroller"))
+"implementation"(libs().getLibrary("accompanist-permissions"))
 "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
 ```
 
@@ -150,47 +157,54 @@ app/src/main/kotlin/jsanzo/movies/
 └── ui/
     └── compose/
         ├── ComposeActivity.kt
-        └── navigation/
+        ├── theme/
+        │   └── MoviesTheme.kt
+        ├── navigation/
         │   ├── AppDestinations.kt
         │   └── AppNavigation.kt
         └── screens/
             ├── home/
-            │   └── HomeScreen.kt
+            │   ├── HomeScreen.kt
+            │   ├── HomeViewModel.kt
+            │   └── HomeViewState.kt
             └── details/
                 └── DetailsScreen.kt
 ```
 
 ### Navigation
-Type-safe Navigation Compose using `@Serializable` data objects:
+Type-safe Navigation Compose using `@Serializable` data objects/classes:
 ```kotlin
 sealed interface AppDestinations {
     @Serializable data object Home : AppDestinations
-    @Serializable data object Details : AppDestinations
+    @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
 
-`ComposeActivity` is registered in `AndroidManifest.xml` with `android:exported="false"`. It runs parallel to the existing XML/Fragment flow during migration.
+`ComposeActivity` is the launcher Activity. `MainActivity` remains registered in the manifest but is no longer the launcher.
+
+---
+
+## Theme
+
+`MoviesTheme` in `ui/compose/theme/MoviesTheme.kt` defines light and dark color schemes based on the existing XML theme colors. Respects system dark mode via `isSystemInDarkTheme()`. Status bar color is set via `accompanist-systemuicontroller`.
+
+Colors:
+- Primary: `#FF6200EE` (Purple500)
+- PrimaryContainer: `#FF3700B3` (Purple700)
+- Secondary: `#FF03DAC5` (Teal200)
+- SecondaryContainer: `#FF018786` (Teal700)
+
+`ComposeActivity` uses `@style/AppTheme.NoActionBar` in the manifest to avoid a black background flash before Compose renders.
 
 ---
 
 ## Dependency Injection — Koin Annotations
 
-The project uses Koin Annotations for dependency injection, promoting a modular and decentralized approach where each Gradle module is responsible for its own dependency providers.
+The project uses Koin Annotations for dependency injection. Each Gradle module is responsible for its own dependency providers. `@KoinViewModel` is used for ViewModels, with `@ComponentScan` for automatic scanning.
 
 Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggregated `AppModule`.
 
-```kotlin
-// In MoviesApplication.kt
-startKoin {
-    androidLogger()
-    androidContext(this@MoviesApplication)
-    modules(AppModule().module) // .module is generated by Koin KSP
-}
-```
-
 ### Koin Module Structure
-
-Each feature or layer module defines its own Koin module using the `@Module` annotation. The `@ComponentScan` annotation is used to automatically scan for injectable components within the module's package.
 
 | Koin Module | Location | Purpose |
 |---|---|---|
@@ -201,22 +215,61 @@ Each feature or layer module defines its own Koin module using the `@Module` ann
 | `NetworkModule`| `:remote/di` | Provides Retrofit and OkHttp dependencies. |
 | `AppRemoteModule`| `:remote/di/`| Provides build-variant specific network config (e.g., Chucker). |
 | `DomainModule` | `:domain/di` | Provides UseCases. |
-| `HomeModule` | `:app/di/home`| Provides Home screen ViewModel and its UseCases. |
-| `DetailsModule`| `:app/di/details`| Provides Details screen ViewModel and its UseCases. |
 
 ---
 
-## Navigation
+## Home Screen — Compose Implementation
 
-Currently uses Jetpack Navigation Component with Safe Args for the existing XML/Fragment flow. Navigation is managed via `NavigationManagerViewModel`.
+### ViewState
+Simplified from the original XML states:
+```kotlin
+@Stable
+sealed class HomeViewState
+data object Loading : HomeViewState()
 
-New Compose flow uses Navigation Compose with type-safe destinations (`AppDestinations`).
+@Immutable
+data class MoviesSuccess(val movies: List<DomainMovieResult>) : HomeViewState()
 
-**Planned**: Migrate all screens to Navigation Compose (screen by screen).
+@Immutable
+data class MoviesError(val message: String) : HomeViewState()
+```
 
-Current screens:
-- `HomeFragment` → `DetailsFragment` (via `actionHomeFragmentToDetailsFragment(movieId)`)
-- `HomeScreen` → `DetailsScreen` (Compose, via `AppNavigation`)
+Navigation to details is handled as a side effect via `SharedFlow<Int>` instead of a ViewState.
+
+### ViewModel key decisions
+- `loadingJob` pattern to prevent duplicate page requests during fast scroll:
+```kotlin
+private var loadingJob: Job? = null
+
+fun getMovies(page: Int = nextPageToRetrieve) {
+    if (loadingJob?.isActive == true) return
+    loadingJob = viewModelScope.launch { ... }
+}
+```
+- Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
+- Pagination based on `moviesRetrieved.size` (not a separate counter) to account for filtered duplicates
+- `nextPageToRetrieve` incremented only on `onSuccess`
+- Loading state only emitted on page 1 to avoid hiding the list during pagination
+
+### Pagination logic
+```kotlin
+private fun checkNeedNewPage() {
+    val totalLoaded = moviesRetrieved.size
+    if (lastVisible + threshold >= totalLoaded) {
+        getMovies()
+    }
+}
+```
+
+### UI key decisions
+- `SearchBar` with `RectangleShape` and `expanded = false` (never expands, no suggestions)
+- `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
+- `LinearProgressIndicator` at top of screen for page loading
+- `@Stable` / `@Immutable` annotations on ViewState for Compose stability
+- `key = { _, movie -> movie.id }` in `itemsIndexed` to prevent duplicate key crashes
+- `remember(state, searchQuery)` for filtered movie list to avoid recalculation on every recomposition
+- `windowInsetsPadding(WindowInsets.statusBars)` to avoid content going under status bar
+- `Column` as root container with `SearchBar` fixed at top and `LazyColumn` below
 
 ---
 
@@ -227,24 +280,17 @@ Convention plugins are defined in `build-logic/src/main/kotlin/`.
 ### Available Plugins
 | Plugin ID | Class | Purpose |
 |---|---|---|
-| `setup-android-application` | `SetupAndroidApplicationPlugin` | Base setup for the `:app` module. Includes Compose config. |
+| `setup-android-application` | `SetupAndroidApplicationPlugin` | Base setup for `:app`. Includes Compose config and dependencies. |
 | `setup-android-library` | `SetupAndroidLibraryPlugin` | Base setup for Android library modules. |
-| `common-setup` | `CommonSetupPlugin` | Applies Detekt, Koin, and other common configurations. |
+| `common-setup` | `CommonSetupPlugin` | Applies Detekt, Spotless, Serialization, Koin, JUnit and other common configurations. |
 
-### Namespace Auto-calculation
-
-```kotlin
-internal fun Project.calculateNamespace(): String {
-    val packageName = path.removePrefix(":").split("-", ":").joinToString(".")
-    return if (path == ":app") "jsanzo.movies" else "jsanzo.movies.$packageName"
-}
-```
-
-### Version helpers
-```kotlin
-internal fun VersionCatalog.getVersion(version: String): Int =
-    findVersion(version).get().requiredVersion.toInt()
-```
+### CommonSetupPlugin responsibilities
+- `setupDetekt()` — applies Detekt plugin and `detektPlugins(detekt-rules-compose)`
+- `setupSpotless()` — applies KtLint via Spotless
+- `setupCheck()` — wires `check` task to Detekt and Spotless
+- `setupJunitTests()` — configures JUnit 5
+- `setupSerialization()` — applies `org.jetbrains.kotlin.plugin.serialization` to all modules
+- `setupKoin()` — configures Koin
 
 ---
 
@@ -286,12 +332,12 @@ module/src/androidTest/kotlin/ → Instrumented tests
 
 ### Current Setup
 
-| Library | Usage                                         |
-|---|-----------------------------------------------|
-| JUnit 5 (Jupiter) | Test runner via `android-junit5` plugin       |
-| MockK | Mocking (`mockk()`, `coEvery`, `coVerify`)    |
+| Library | Usage |
+|---|---|
+| JUnit 5 (Jupiter) | Test runner via `android-junit5` plugin |
+| MockK | Mocking (`mockk()`, `coEvery`, `coVerify`) |
 | Kotest | Assertions (`shouldBe`, `shouldBeInstanceOf`) |
-| Coroutines Test | `runTest`, `UnconfinedTestDispatcher`         |
+| Coroutines Test | `runTest`, `UnconfinedTestDispatcher` |
 
 ### Dispatcher setup
 ```kotlin
@@ -307,7 +353,7 @@ testDispatcher.scheduler.advanceUntilIdle()
 ### Run Tests
 ```bash
 ./gradlew testAll                          # All modules
-./gradlew :app:testDebugUnitTest           # Specific module (shows Test Results panel in AS)
+./gradlew :app:testDebugUnitTest           # Specific module
 ```
 
 ---
@@ -331,12 +377,10 @@ File: `.github/workflows/pr-validation.yml`
 
 - Triggers on every PR regardless of branches
 - Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
-- Jobs run in parallel after `check` passes:
+- Jobs:
   1. `check` — Detekt + Spotless (runs first)
   2. `build` — `assembleDebug` (runs after check)
   3. `tests` — `testAll` (runs after check, parallel to build)
-
-All three jobs are required status checks before merging.
 
 ---
 
@@ -344,21 +388,7 @@ All three jobs are required status checks before merging.
 
 File: `config/git-hooks/commit-msg`
 
-Install with:
-```bash
-git config core.hooksPath config/git-hooks
-```
-
-Or via Gradle:
-```bash
-./gradlew installGitHooks
-```
-
-### Hook behavior
-- Validates branch name starts with `feature/`, `refactor/`, `bugfix/`, or `hotfix/`
-- Validates commit message is not empty and has minimum 10 characters
-- If commit doesn't start with `[Task - NUMBER]`, auto-increments from last task number in git log
-- Ignores automatic git commits (Merge, Rebase, fixup!, squash!)
+Install: `./gradlew installGitHooks`
 
 ### Commit format
 ```
@@ -373,13 +403,10 @@ Or via Gradle:
 Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
 API Key:   BuildConfig.SERVER_API_KEY
 ```
-Both are configured as `buildConfigField` in `SetupAndroidApplicationPlugin` and should not be hardcoded.
 
 ---
 
 ## Version Catalog
-
-All dependencies managed via `gradle/libs.versions.toml`.
 
 | Library | Version |
 |---|---|
@@ -391,17 +418,15 @@ All dependencies managed via `gradle/libs.versions.toml`.
 | Retrofit | 3.0.0 |
 | OkHttp | 5.3.2 |
 | Room | 2.8.4 |
-| Navigation | 2.9.7 |
 | Navigation Compose | 2.9.0 |
 | Compose BOM | 2025.06.00 |
+| Coil | 2.7.0 |
+| Accompanist | 0.36.0 |
 | Arrow | 2.2.1.1 |
 | Detekt | 1.23.8 |
 | detekt-rules-compose | 0.4.27 |
 | Lifecycle | 2.10.0 |
 | KSP | 2.3.5 |
-| versionMajor | 1 |
-| versionMinor | 0 |
-| versionPatch | 0 |
 
 ---
 
@@ -443,15 +468,19 @@ All dependencies managed via `gradle/libs.versions.toml`.
 
 ## Pending Migrations
 
-- [ ] Migrate UI to Jetpack Compose (screen by screen) — HomeScreen next
-- [ ] Migrate Navigation to Navigation Compose
+- [x] Migrate Home screen to Jetpack Compose
+- [ ] Migrate Details screen to Jetpack Compose
+- [ ] Migrate Navigation to Navigation Compose (partially done — Compose flow uses Navigation Compose, XML flow still uses Safe Args pending Details migration)
+- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
 - [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
 - [ ] Remove Robolectric dependency
 - [ ] Add Detekt JUnit 5 rules plugin
-- [ ] Re-add `compiler` and `JUnit` sections to `detekt.yml` with correct plugins
 - [ ] Set up GitHub Actions CI/CD pipelines (PR validation + deploy)
-- [x] Restructure project defining Koin modules on its module instead of app, unidirectional flow approach
+- [x] Restructure project defining Koin modules on its module instead of app
 - [x] Add Compose + Navigation Compose setup
 - [x] Add detekt-rules-compose with Compose rules in detekt.yml
+- [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)
+- [ ] Remove Glide dependency once all screens are migrated to Compose (replaced by Coil)
+- [ ] Remove XML navigation, fragments and related dependencies once Details screen is migrated

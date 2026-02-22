@@ -5,22 +5,22 @@ import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
 
-fun <L, R> Either<L, R>.onSuccess(action: (R) -> Unit): Either<L, R> {
+suspend fun <L, R> Either<L, R>.onSuccess(action: suspend (R) -> Unit): Either<L, R> {
     if (this is Either.Right) action(value)
     return this
 }
 
-fun <L, R> Either<L, R>.onError(action: (L) -> Unit): Either<L, R> {
+suspend fun <L, R> Either<L, R>.onError(action: suspend (L) -> Unit): Either<L, R> {
     if (this is Either.Left) action(value)
     return this
 }
 
-fun <T> Option<T>.onError(action: (T) -> Unit): Option<T> {
+suspend fun <T> Option<T>.onError(action: suspend (T) -> Unit): Option<T> {
     if (this is Some) action(value)
     return this
 }
 
-fun <T> Option<T>.onSuccess(action: () -> Unit): Option<T> {
+suspend fun <T> Option<T>.onSuccess(action: suspend () -> Unit): Option<T> {
     if (this is None) action()
     return this
 }

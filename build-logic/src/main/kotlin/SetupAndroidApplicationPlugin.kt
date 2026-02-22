@@ -88,12 +88,18 @@ private fun Project.apply() {
 
     dependencies {
         "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
+
         "implementation"(libs().getLibrary("coroutines.core"))
         "implementation"(platform(libs().getLibrary("compose-bom")))
         "implementation"(libs().getLibrary("compose-ui"))
         "implementation"(libs().getLibrary("compose-material3"))
         "implementation"(libs().getLibrary("compose-ui-tooling-preview"))
         "implementation"(libs().getLibrary("navigation-compose"))
+        "implementation"(libs().getLibrary("androidx-lifecycle-runtime-compose"))
+        "implementation"(libs().getLibrary("koin-compose"))
+        "implementation"(libs().getLibrary("coil-compose"))
+        "implementation"(libs().getLibrary("material-icons-core"))
+        "implementation"(libs().getLibrary("accompanist-permissions"))
 
         "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
     }
