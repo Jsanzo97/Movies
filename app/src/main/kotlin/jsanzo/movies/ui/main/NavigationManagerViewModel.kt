@@ -5,7 +5,9 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDirections
 import androidx.navigation.NavGraph
 import jsanzo.movies.ui.home.HomeFragmentDirections
+import org.koin.android.annotation.KoinViewModel
 
+@KoinViewModel
 class NavigationManagerViewModel : ViewModel() {
 
     fun navigateToDetails(navController: NavController, movieId: Int) {

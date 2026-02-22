@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <dimen name="progress_bar_size">15sp</dimen>
+    <dimen name="progress_bar_padding">5dp</dimen>
+    <dimen name="progress_bar_width">100dp</dimen>
+    <dimen name="progress_bar_height">100dp</dimen>
+
+    <dimen name="card_button_font_size">12dp</dimen>
+
+    <dimen name="zero">0dp</dimen>
+    <dimen name="small_space">8dp</dimen>
+    <dimen name="medium_space">16dp</dimen>
+
+    <dimen name="custom_dialog_button_text_size">18sp</dimen>
+
     <dimen name="cardView_corner_radius">8dp</dimen>
     <dimen name="cardView_elevation">4dp</dimen>
 
