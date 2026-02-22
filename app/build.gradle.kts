@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.setup.android.application)
     alias(libs.plugins.navigation.safeargs.kotlin)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.compose.compiler)
 }
 
 dependencies {
