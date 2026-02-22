@@ -3,6 +3,8 @@ package jsanzo.movies.ui.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
+import jsanzo.movies.domain.utils.onError
+import jsanzo.movies.domain.utils.onSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,14 +22,13 @@ class DetailsViewModel(
         _detailsViewModelStateFlow.value = RetrievingDetails
 
         viewModelScope.launch {
-            getMovieDetailsUseCase(movieId).fold(
-                ifLeft = { error ->
-                    _detailsViewModelStateFlow.value = ErrorInOperation(error.toString())
-                },
-                ifRight = { movieDetails ->
+            getMovieDetailsUseCase(movieId)
+                .onSuccess { movieDetails ->
                     _detailsViewModelStateFlow.value = DetailsRetrieved(movieDetails)
-                },
-            )
+                }
+                .onError { error ->
+                    _detailsViewModelStateFlow.value = ErrorInOperation(error.toString())
+                }
         }
     }
 }

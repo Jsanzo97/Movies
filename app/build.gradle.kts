@@ -9,7 +9,6 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":database"))
     implementation(project(":remote"))
-    implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -20,8 +19,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
-    implementation(libs.arrow.core)
-    implementation(libs.androidx.room.ktx)
     implementation(libs.glide)
 
     androidTestImplementation(libs.androidx.junit.ext)

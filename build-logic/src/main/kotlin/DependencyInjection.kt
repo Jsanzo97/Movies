@@ -18,3 +18,9 @@ internal fun Project.setupKoin() {
 
     }
 }
+
+internal fun Project.setupArrow() {
+    dependencies {
+        "implementation"(libs().getLibrary("arrow.core"))
+    }
+}

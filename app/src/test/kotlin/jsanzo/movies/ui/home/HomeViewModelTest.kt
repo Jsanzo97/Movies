@@ -88,8 +88,8 @@ class HomeViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { mockedGetMoviesUseCase(validPage) } returns flowOf(mockedMovie).right()
-        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns flowOf(mockedMovie).right()
+        coEvery { mockedGetMoviesUseCase(validPage) } returns mockedMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns mockedMovie.right()
         coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
         coEvery { mockedSaveMovieUseCase(mockedMovieResult) } returns None
         coEvery { mockedSaveMovieUseCase(invalidMockedMovieResult) } returns InvalidParametersError.some()

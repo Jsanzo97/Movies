@@ -19,8 +19,6 @@ extensions.configure<LibraryExtension>("android") {
 
 dependencies {
     implementation(project(":data"))
-    implementation(libs.coroutines.core)
-    implementation(libs.arrow.core)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.core)
