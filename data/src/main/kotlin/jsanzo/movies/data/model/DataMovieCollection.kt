@@ -1,6 +1,6 @@
-package jsanzo.movies.data.entity
+package jsanzo.movies.data.model
 
-import jsanzo.movies.domain.entity.MovieCollection
+import jsanzo.movies.domain.model.DomainMovieCollection
 
 data class DataMovieCollection(
     val id: Int,
@@ -9,7 +9,7 @@ data class DataMovieCollection(
     val backdropPath: String,
 )
 
-fun DataMovieCollection.toMovieCollection() = MovieCollection(
+fun DataMovieCollection.toMovieCollection() = DomainMovieCollection(
     id,
     name,
     posterPath,

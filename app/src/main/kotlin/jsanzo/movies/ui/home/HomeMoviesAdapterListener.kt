@@ -1,8 +1,8 @@
 package jsanzo.movies.ui.home
 
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.domain.model.DomainMovieResult
 
 interface HomeMoviesAdapterListener {
 
-    fun onItemClick(element: MovieResult)
+    fun onItemClick(element: DomainMovieResult)
 }

@@ -10,15 +10,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import jsanzo.movies.common.EMPTY_STRING
-import jsanzo.movies.domain.entity.Movie
-import jsanzo.movies.domain.entity.MovieResult
 import jsanzo.movies.domain.error.InvalidParametersError
+import jsanzo.movies.domain.model.DomainMovie
+import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -44,7 +43,7 @@ class HomeViewModelTest {
     private val lastElementVisibleToNeedMore = 10
     private val lastElementVisibleToNotNeedMore = 1
 
-    private val invalidMockedMovieResult = MovieResult(
+    private val invalidMockedDomainMovieResult = DomainMovieResult(
         posterPath = null,
         adult = false,
         overview = EMPTY_STRING,
@@ -61,7 +60,7 @@ class HomeViewModelTest {
         voteAverage = 0.0,
     )
 
-    private val mockedMovieResult = MovieResult(
+    private val mockedDomainMovieResult = DomainMovieResult(
         posterPath = null,
         adult = false,
         overview = EMPTY_STRING,
@@ -78,9 +77,9 @@ class HomeViewModelTest {
         voteAverage = 0.0,
     )
 
-    private val mockedMovie = Movie(
+    private val mockedDomainMovie = DomainMovie(
         page = 0,
-        results = listOf(mockedMovieResult, mockedMovieResult),
+        results = listOf(mockedDomainMovieResult, mockedDomainMovieResult),
         totalResults = 0,
         totalPages = 0,
     )
@@ -88,11 +87,11 @@ class HomeViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { mockedGetMoviesUseCase(validPage) } returns mockedMovie.right()
-        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns mockedMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage) } returns mockedDomainMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns mockedDomainMovie.right()
         coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
-        coEvery { mockedSaveMovieUseCase(mockedMovieResult) } returns None
-        coEvery { mockedSaveMovieUseCase(invalidMockedMovieResult) } returns InvalidParametersError.some()
+        coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns None
+        coEvery { mockedSaveMovieUseCase(invalidMockedDomainMovieResult) } returns InvalidParametersError.some()
 
         homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
         homeViewModelStateFlow = homeViewModel.homeViewModelSateFlow
@@ -120,7 +119,7 @@ class HomeViewModelTest {
 
         val state = homeViewModelStateFlow.value as? MoviesRetrieved
 
-        state?.movies shouldBe mockedMovie.results
+        state?.movies shouldBe mockedDomainMovie.results
     }
 
     @Test
@@ -136,22 +135,22 @@ class HomeViewModelTest {
 
     @Test
     fun `we are in SavedMovie state after call saveMovie() with valid movie result`() = runTest {
-        homeViewModel.saveMovie(mockedMovieResult)
+        homeViewModel.saveMovie(mockedDomainMovieResult)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { mockedSaveMovieUseCase(mockedMovieResult) }
+        coVerify(exactly = 1) { mockedSaveMovieUseCase(mockedDomainMovieResult) }
 
         homeViewModelStateFlow.value.shouldBeInstanceOf<SavedMovie>()
     }
 
     @Test
     fun `we are in ErrorInOperation state after call saveMovie() with invalid movie result`() = runTest {
-        homeViewModel.saveMovie(invalidMockedMovieResult)
+        homeViewModel.saveMovie(invalidMockedDomainMovieResult)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { mockedSaveMovieUseCase(invalidMockedMovieResult) }
+        coVerify(exactly = 1) { mockedSaveMovieUseCase(invalidMockedDomainMovieResult) }
 
         homeViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
     }
@@ -174,7 +173,7 @@ class HomeViewModelTest {
 
         val state = homeViewModelStateFlow.value as? MoviesRetrieved
 
-        state?.movies shouldBe mockedMovie.results
+        state?.movies shouldBe mockedDomainMovie.results
     }
 
     @Test

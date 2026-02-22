@@ -10,14 +10,14 @@ import arrow.core.right
 import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
-import jsanzo.movies.data.entity.toDataMovieResult
-import jsanzo.movies.data.entity.toMovie
-import jsanzo.movies.data.entity.toMovieDetails
 import jsanzo.movies.data.error.toMovieError
-import jsanzo.movies.domain.entity.Movie
-import jsanzo.movies.domain.entity.MovieDetails
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.data.model.toDataMovieResult
+import jsanzo.movies.data.model.toMovie
+import jsanzo.movies.data.model.toMovieDetails
 import jsanzo.movies.domain.error.MovieError
+import jsanzo.movies.domain.model.DomainMovie
+import jsanzo.movies.domain.model.DomainMovieDetails
+import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -28,7 +28,7 @@ class MoviesDataRepository(
     private val dispatcher: CoroutineDispatcher,
 ) : MoviesRepository {
 
-    override suspend fun getMovies(page: Int): Either<MovieError, Movie> = withContext(dispatcher) {
+    override suspend fun getMovies(page: Int): Either<MovieError, DomainMovie> = withContext(dispatcher) {
         remoteMoviesDatastore.getMovies(page)
             .map { it.toMovie() }
             .recover {
@@ -39,7 +39,7 @@ class MoviesDataRepository(
             }
     }
 
-    override suspend fun getMovieDetails(movieId: Int): Either<MovieError, MovieDetails> = withContext(dispatcher) {
+    override suspend fun getMovieDetails(movieId: Int): Either<MovieError, DomainMovieDetails> = withContext(dispatcher) {
         remoteMoviesDatastore.getMovieDetails(movieId)
             .flatMap { dataMovieDetails ->
                 localMoviesDatastore.saveMovieDetails(dataMovieDetails)
@@ -54,7 +54,7 @@ class MoviesDataRepository(
             }
     }
 
-    override suspend fun saveMovie(movie: MovieResult) = withContext(dispatcher) {
+    override suspend fun saveMovie(movie: DomainMovieResult) = withContext(dispatcher) {
         localMoviesDatastore.saveMovie(movie.toDataMovieResult())
             .map { error -> error.toMovieError().some() }
             .getOrElse { None }

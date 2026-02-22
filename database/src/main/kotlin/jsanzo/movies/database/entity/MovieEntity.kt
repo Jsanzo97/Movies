@@ -1,7 +1,7 @@
 package jsanzo.movies.database.entity
 
 import androidx.room.Entity
-import jsanzo.movies.data.entity.DataMovieResult
+import jsanzo.movies.data.model.DataMovieResult
 import kotlinx.serialization.Serializable
 
 @Serializable

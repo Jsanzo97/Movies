@@ -3,7 +3,6 @@ package jsanzo.movies.remote.di
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
 import jsanzo.movies.remote.BuildConfig
 import jsanzo.movies.remote.service.movies.MoviesService
-import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single

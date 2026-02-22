@@ -11,14 +11,14 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textview.MaterialTextView
 import jsanzo.movies.R
 import jsanzo.movies.common.view.MediaView
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.domain.model.DomainMovieResult
 
 class HomeMovieAdapter(
     private val listener: HomeMoviesAdapterListener,
-) : ListAdapter<MovieResult, HomeMovieAdapter.ViewHolder>(HomeMoviesDiffUtilCallback()), Filterable {
+) : ListAdapter<DomainMovieResult, HomeMovieAdapter.ViewHolder>(HomeMoviesDiffUtilCallback()), Filterable {
 
-    private val movieList = mutableListOf<MovieResult>()
-    private var filteredList = listOf<MovieResult>()
+    private val movieList = mutableListOf<DomainMovieResult>()
+    private var filteredList = listOf<DomainMovieResult>()
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, p1: Int): ViewHolder {
         val v = LayoutInflater.from(viewGroup.context).inflate(
@@ -29,7 +29,7 @@ class HomeMovieAdapter(
         return ViewHolder(v)
     }
 
-    fun onNewData(movies: List<MovieResult>) {
+    fun onNewData(movies: List<DomainMovieResult>) {
         movies.forEach { movieResult ->
             if (!movieList.contains(movieResult)) {
                 movieList.add(movieResult)
@@ -67,7 +67,7 @@ class HomeMovieAdapter(
                     mutableListOf()
                 } else {
                     @Suppress("UNCHECKED_CAST")
-                    results.values as List<MovieResult>
+                    results.values as List<DomainMovieResult>
                 }
                 submitList(filteredList)
             }

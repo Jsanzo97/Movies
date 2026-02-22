@@ -1,6 +1,6 @@
-package jsanzo.movies.data.entity
+package jsanzo.movies.data.model
 
-import jsanzo.movies.domain.entity.MovieDetails
+import jsanzo.movies.domain.model.DomainMovieDetails
 
 data class DataMovieDetails(
     val adult: Boolean,
@@ -30,7 +30,7 @@ data class DataMovieDetails(
     val voteCount: Int,
 )
 
-fun DataMovieDetails.toMovieDetails() = MovieDetails(
+fun DataMovieDetails.toMovieDetails() = DomainMovieDetails(
     adult,
     backdropPath,
     belongsToCollection?.toMovieCollection(),
