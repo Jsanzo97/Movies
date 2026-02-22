@@ -857,29 +857,36 @@ style:
 #  UnnecessaryNested:
 #    active: true
 
-#compose:
-#  ReusedModifierInstance:
-#    active: true
-#  UnnecessaryEventHandlerParameter:
-#    active: true
-#  ComposableEventParameterNaming:
-#    active: true
-#  ModifierHeightWithText:
-#    active: true
-#  ModifierParameterPosition:
-#    active: true
-#  PublicComposablePreview:
-#    active: true
-#  ComposableParametersOrdering:
-#    active: true
-#  ModifierDefaultValue:
-#    active: true
-#  MissingModifierDefaultValue:
-#    active: true
-#  TopLevelComposableFunctions:
-#    active: false
-#  ComposableFunctionName:
-#    active: true
-#  ConditionCouldBeLifted:
-#    active: true
-#    ignoreCallsWithArgumentNames: [ 'modifier' ]
+Compose:
+  CompositionLocalAllowlist:
+    active: true
+  CompositionLocalNaming:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+  ModifierComposable:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableStateAutoboxing:
+    active: true
+  MutableStateParam:
+    active: true
+  PreviewAnnotationNaming:
+    active: true
+  PreviewPublic:
+    active: true
+  RememberMissing:
+    active: true
+  UnstableCollections:
+    active: true
+  ViewModelForwarding:
+    active: true
+  ViewModelInjection:
+    active: true

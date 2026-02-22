@@ -29,6 +29,7 @@ private fun Project.apply() {
         }
 
         buildFeatures {
+            compose = true
             buildConfig = true
             resValues = true
         }
@@ -88,6 +89,13 @@ private fun Project.apply() {
     dependencies {
         "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
         "implementation"(libs().getLibrary("coroutines.core"))
+        "implementation"(platform(libs().getLibrary("compose-bom")))
+        "implementation"(libs().getLibrary("compose-ui"))
+        "implementation"(libs().getLibrary("compose-material3"))
+        "implementation"(libs().getLibrary("compose-ui-tooling-preview"))
+        "implementation"(libs().getLibrary("navigation-compose"))
+
+        "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
     }
 }
 

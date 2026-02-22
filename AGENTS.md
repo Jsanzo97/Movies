@@ -81,7 +81,7 @@ Each module appends its name automatically via `calculateNamespace()` in build-l
 #### UseCase pattern
 ```kotlin
 class UseCase(private val repository: Repository) {
-    suspend operator fun invoke() = repository.function()
+  suspend operator fun invoke() = repository.function()
 }
 ```
 
@@ -119,6 +119,57 @@ fun MovieResult.toDataMovieResult() = DataMovieResult()
 - ViewModels expose `StateFlow<ViewState>`.
 - Sealed classes for ViewState per screen.
 - Fragments observe StateFlow.
+- New Compose screens live in `ui/compose/` (parallel to existing Fragments during migration).
+
+---
+
+## Compose Setup
+
+Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key decisions:
+
+### Plugin setup
+- `buildFeatures.compose = true` is set inside `SetupAndroidApplicationPlugin`
+- The `org.jetbrains.kotlin.plugin.compose` plugin is declared with `apply false` in the **root** `build.gradle.kts` to make it available on the classpath without triggering classpath conflicts
+- It is then applied explicitly in `app/build.gradle.kts` via `alias(libs.plugins.compose.compiler)`
+
+> **Why not apply it from the convention plugin?** Applying it programmatically via `pluginManager.apply()` from `build-logic` causes `org.jetbrains:annotations` version conflicts with AGP 9.0.1 and Kotlin 2.x embedded in Gradle. The `apply false` in root + explicit apply in `:app` is the correct workaround.
+
+### Compose dependencies (added in `SetupAndroidApplicationPlugin`)
+```kotlin
+"implementation"(platform(libs().getLibrary("compose-bom")))
+"implementation"(libs().getLibrary("compose-ui"))
+"implementation"(libs().getLibrary("compose-material3"))
+"implementation"(libs().getLibrary("compose-ui-tooling-preview"))
+"implementation"(libs().getLibrary("navigation-compose"))
+"debugImplementation"(libs().getLibrary("compose-ui-tooling"))
+```
+
+### Compose screen structure in `:app`
+```
+app/src/main/kotlin/jsanzo/movies/
+└── ui/
+    └── compose/
+        ├── ComposeActivity.kt
+        └── navigation/
+        │   ├── AppDestinations.kt
+        │   └── AppNavigation.kt
+        └── screens/
+            ├── home/
+            │   └── HomeScreen.kt
+            └── details/
+                └── DetailsScreen.kt
+```
+
+### Navigation
+Type-safe Navigation Compose using `@Serializable` data objects:
+```kotlin
+sealed interface AppDestinations {
+    @Serializable data object Home : AppDestinations
+    @Serializable data object Details : AppDestinations
+}
+```
+
+`ComposeActivity` is registered in `AndroidManifest.xml` with `android:exported="false"`. It runs parallel to the existing XML/Fragment flow during migration.
 
 ---
 
@@ -153,18 +204,19 @@ Each feature or layer module defines its own Koin module using the `@Module` ann
 | `HomeModule` | `:app/di/home`| Provides Home screen ViewModel and its UseCases. |
 | `DetailsModule`| `:app/di/details`| Provides Details screen ViewModel and its UseCases. |
 
-This structure ensures that dependencies are provided by the modules that own them, improving encapsulation and decoupling.
-
 ---
 
 ## Navigation
 
-Currently uses Jetpack Navigation Component with Safe Args. Navigation is managed via `NavigationManagerViewModel`.
+Currently uses Jetpack Navigation Component with Safe Args for the existing XML/Fragment flow. Navigation is managed via `NavigationManagerViewModel`.
 
-**Planned**: Migrate to Navigation Compose alongside the Compose UI migration (screen by screen).
+New Compose flow uses Navigation Compose with type-safe destinations (`AppDestinations`).
+
+**Planned**: Migrate all screens to Navigation Compose (screen by screen).
 
 Current screens:
 - `HomeFragment` → `DetailsFragment` (via `actionHomeFragmentToDetailsFragment(movieId)`)
+- `HomeScreen` → `DetailsScreen` (Compose, via `AppNavigation`)
 
 ---
 
@@ -175,7 +227,7 @@ Convention plugins are defined in `build-logic/src/main/kotlin/`.
 ### Available Plugins
 | Plugin ID | Class | Purpose |
 |---|---|---|
-| `setup-android-application` | `SetupAndroidApplicationPlugin` | Base setup for the `:app` module. |
+| `setup-android-application` | `SetupAndroidApplicationPlugin` | Base setup for the `:app` module. Includes Compose config. |
 | `setup-android-library` | `SetupAndroidLibraryPlugin` | Base setup for Android library modules. |
 | `common-setup` | `CommonSetupPlugin` | Applies Detekt, Koin, and other common configurations. |
 
@@ -199,6 +251,13 @@ internal fun VersionCatalog.getVersion(version: String): Int =
 ## Static Analysis — Detekt
 
 Config file: `config/detekt.yml` at project root.
+
+### Detekt Compose rules
+- Plugin: `io.nlopez.compose.rules:detekt:0.4.27` (latest version compatible with Detekt 1.23.8)
+- Version `0.5.x+` requires Detekt 2.x (still in alpha, not yet available in public repos)
+- Declared as `compileOnly` in `build-logic/build.gradle.kts` to avoid classpath conflicts
+- Added as `detektPlugins` in `CommonSetupPlugin.setupDetekt()` so all modules get it
+- Rules configured under the `Compose:` section in `config/detekt.yml`
 
 ### Gradle Tasks
 | Task | Description |
@@ -318,17 +377,6 @@ Both are configured as `buildConfigField` in `SetupAndroidApplicationPlugin` and
 
 ---
 
-## CI/CD & Branching
-
-### Branching Strategy (Git Flow)
-`main`, `develop`, `feature/`, `refactor/`, `bugfix/`, `hotfix/`
-
-### CI/CD (Planned — GitHub Actions)
-- **PR validation**: Run `check` + `detektAll` + `testAll` on every PR to `develop`.
-- **Deploy**: Build and sign release AAB on merge to `main`.
-
----
-
 ## Version Catalog
 
 All dependencies managed via `gradle/libs.versions.toml`.
@@ -339,13 +387,16 @@ All dependencies managed via `gradle/libs.versions.toml`.
 | Kotlin | 2.3.10 |
 | Coroutines | 1.10.2 |
 | Koin | 4.1.1 |
-| Koin Annotations | latest |
+| Koin Annotations | 2.3.1 |
 | Retrofit | 3.0.0 |
 | OkHttp | 5.3.2 |
 | Room | 2.8.4 |
 | Navigation | 2.9.7 |
+| Navigation Compose | 2.9.0 |
+| Compose BOM | 2025.06.00 |
 | Arrow | 2.2.1.1 |
 | Detekt | 1.23.8 |
+| detekt-rules-compose | 0.4.27 |
 | Lifecycle | 2.10.0 |
 | KSP | 2.3.5 |
 | versionMajor | 1 |
@@ -385,12 +436,14 @@ All dependencies managed via `gradle/libs.versions.toml`.
 
 - **Windows file locking**: The Gradle daemon may lock `.jar` files. Run `./gradlew --stop` if the build fails with file access errors.
 - **Namespace special case**: The `:app` module has a hardcoded `if` in `calculateNamespace()` because its namespace is `jsanzo.movies`, not `jsanzo.movies.app`.
+- **Compose compiler plugin classpath conflict**: With AGP 9.0.1 + Kotlin 2.x, applying `org.jetbrains.kotlin.plugin.compose` via `pluginManager.apply()` from a convention plugin in an included build causes `org.jetbrains:annotations` version conflicts. Workaround: declare it with `apply false` in the root `build.gradle.kts` and apply it explicitly in `app/build.gradle.kts`.
+- **detekt-rules-compose version cap**: Versions `0.5.x+` depend on `dev.detekt 2.0.0-alpha.2` which is not yet published in public repos. Max compatible version with Detekt 1.23.8 is `0.4.27`.
 
 ---
 
 ## Pending Migrations
 
-- [ ] Migrate UI to Jetpack Compose (screen by screen)
+- [ ] Migrate UI to Jetpack Compose (screen by screen) — HomeScreen next
 - [ ] Migrate Navigation to Navigation Compose
 - [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
 - [ ] Remove Robolectric dependency
@@ -398,5 +451,7 @@ All dependencies managed via `gradle/libs.versions.toml`.
 - [ ] Re-add `compiler` and `JUnit` sections to `detekt.yml` with correct plugins
 - [ ] Set up GitHub Actions CI/CD pipelines (PR validation + deploy)
 - [x] Restructure project defining Koin modules on its module instead of app, unidirectional flow approach
+- [x] Add Compose + Navigation Compose setup
+- [x] Add detekt-rules-compose with Compose rules in detekt.yml
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)
