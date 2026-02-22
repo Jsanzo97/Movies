@@ -1,11 +1,11 @@
 package jsanzo.movies.remote.dto.response
 
-import jsanzo.movies.data.entity.DataMovieCollection
-import jsanzo.movies.data.entity.DataMovieDetails
-import jsanzo.movies.data.entity.DataMovieGenre
-import jsanzo.movies.data.entity.DataMovieProductionCompany
-import jsanzo.movies.data.entity.DataMovieProductionCountry
-import jsanzo.movies.data.entity.DataMovieSpokenLanguage
+import jsanzo.movies.data.model.DataMovieCollection
+import jsanzo.movies.data.model.DataMovieDetails
+import jsanzo.movies.data.model.DataMovieGenre
+import jsanzo.movies.data.model.DataMovieProductionCompany
+import jsanzo.movies.data.model.DataMovieProductionCountry
+import jsanzo.movies.data.model.DataMovieSpokenLanguage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -7,12 +7,12 @@ import arrow.core.left
 import arrow.core.right
 import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
-import jsanzo.movies.data.entity.DataMovie
-import jsanzo.movies.data.entity.DataMovieDetails
-import jsanzo.movies.data.entity.DataMovieResult
-import jsanzo.movies.data.error.LocalDataError
+import jsanzo.movies.data.error.DataError
 import jsanzo.movies.data.error.ReadingError
 import jsanzo.movies.data.error.WritingError
+import jsanzo.movies.data.model.DataMovie
+import jsanzo.movies.data.model.DataMovieDetails
+import jsanzo.movies.data.model.DataMovieResult
 import jsanzo.movies.database.dao.MoviesDao
 import jsanzo.movies.database.entity.toDataMovieDetails
 import jsanzo.movies.database.entity.toDataMovieResult
@@ -23,7 +23,7 @@ class MoviesStorage(
     private val moviesDao: MoviesDao,
 ) : LocalMoviesDatastore {
 
-    override suspend fun getMovies(): Either<LocalDataError, DataMovie> {
+    override suspend fun getMovies(): Either<DataError, DataMovie> {
         return try {
             DataMovie(
                 0,
@@ -36,7 +36,7 @@ class MoviesStorage(
         }
     }
 
-    override suspend fun getMovieDetails(movieId: Int): Either<LocalDataError, DataMovieDetails> {
+    override suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails> {
         return try {
             moviesDao.getMovieDetails(movieId).toDataMovieDetails().right()
         } catch (_: Exception) {
@@ -44,7 +44,7 @@ class MoviesStorage(
         }
     }
 
-    override suspend fun saveMovie(dataMovie: DataMovieResult): Option<LocalDataError> {
+    override suspend fun saveMovie(dataMovie: DataMovieResult): Option<DataError> {
         return try {
             moviesDao.saveMovie(dataMovie.toMovieEntity())
             None
@@ -53,7 +53,7 @@ class MoviesStorage(
         }
     }
 
-    override suspend fun saveMovieDetails(dataMovieDetails: DataMovieDetails): Option<LocalDataError> {
+    override suspend fun saveMovieDetails(dataMovieDetails: DataMovieDetails): Option<DataError> {
         return try {
             moviesDao.saveMovieDetails(dataMovieDetails.toMovieDetailsEntity())
             None

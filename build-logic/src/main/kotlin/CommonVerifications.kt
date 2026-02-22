@@ -57,6 +57,7 @@ internal fun Project.setupSpotless() {
                         "ktlint_standard_function-literal" to "disabled",
                         "ktlint_standard_function-type-modifier-spacing" to "disabled",
                         "ktlint_standard_multiline-loop" to "disabled",
+                        "ktlint_standard_no-unused-imports" to "enabled",
                     )
                 )
         }

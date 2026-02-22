@@ -1,6 +1,6 @@
-package jsanzo.movies.data.entity
+package jsanzo.movies.data.model
 
-import jsanzo.movies.domain.entity.Movie
+import jsanzo.movies.domain.model.DomainMovie
 
 data class DataMovie(
     val page: Int,
@@ -9,7 +9,7 @@ data class DataMovie(
     val totalPages: Int,
 )
 
-fun DataMovie.toMovie() = Movie(
+fun DataMovie.toMovie() = DomainMovie(
     page,
     results.map { it.toMovieResult() },
     totalResults,

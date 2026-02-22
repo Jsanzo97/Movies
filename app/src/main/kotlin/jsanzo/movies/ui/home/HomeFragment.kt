@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import jsanzo.movies.R
 import jsanzo.movies.common.extensions.lazyBindView
 import jsanzo.movies.common.fragment.CustomFragment
-import jsanzo.movies.domain.entity.MovieResult
+import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.ui.main.NavigationManagerViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -35,7 +35,7 @@ class HomeFragment : CustomFragment(R.layout.home_fragment) {
     }
 
     private val homeAdapterListener = object : HomeMoviesAdapterListener {
-        override fun onItemClick(element: MovieResult) {
+        override fun onItemClick(element: DomainMovieResult) {
             viewModel.saveMovie(element)
         }
     }
@@ -107,7 +107,7 @@ class HomeFragment : CustomFragment(R.layout.home_fragment) {
         viewModel.onStop()
     }
 
-    private fun updateMovies(movieList: List<MovieResult>) {
+    private fun updateMovies(movieList: List<DomainMovieResult>) {
         val adapter = movieListRecycler.adapter as HomeMovieAdapter
         adapter.onNewData(movieList)
     }

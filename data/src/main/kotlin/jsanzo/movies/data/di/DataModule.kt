@@ -5,7 +5,6 @@ import jsanzo.movies.data.datastore.RemoteMoviesDatastore
 import jsanzo.movies.data.repository.MoviesDataRepository
 import jsanzo.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.Dispatchers
-import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 

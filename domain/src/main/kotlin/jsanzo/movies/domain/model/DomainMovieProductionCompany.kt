@@ -1,6 +1,6 @@
-package jsanzo.movies.domain.entity
+package jsanzo.movies.domain.model
 
-data class MovieProductionCompany(
+data class DomainMovieProductionCompany(
     val name: String,
     val id: Int,
     val logoPath: String?,
