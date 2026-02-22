@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import jsanzo.movies.domain.entity.MovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import jsanzo.movies.domain.utils.onError
+import jsanzo.movies.domain.utils.onSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -33,34 +35,26 @@ class HomeViewModel(
                 _homeViewModelStateFlow.value = RetrievingMovies
             }
 
-            getMoviesUseCase(page).fold(
-                ifLeft = { error ->
-                    _homeViewModelStateFlow.value = ErrorInOperation(error.toString())
-                },
-                ifRight = { flow ->
-                    flow.collect { movies ->
-                        movies.results.forEach { movieResult ->
-                            if (!moviesRetrieved.contains(movieResult)) {
-                                moviesRetrieved.addAll(movies.results)
-                            }
+            getMoviesUseCase(page)
+                .onSuccess { movies ->
+                    movies.results.forEach { movieResult ->
+                        if (!moviesRetrieved.contains(movieResult)) {
+                            moviesRetrieved.addAll(movies.results)
                         }
-                        _homeViewModelStateFlow.value = MoviesRetrieved(moviesRetrieved)
                     }
-                },
-            )
+                    _homeViewModelStateFlow.value = MoviesRetrieved(moviesRetrieved)
+                }
+                .onError { error ->
+                    _homeViewModelStateFlow.value = ErrorInOperation(error.toString())
+                }
         }
     }
 
     fun saveMovie(movie: MovieResult) {
         viewModelScope.launch {
-            saveMovieUseCase(movie).fold(
-                ifEmpty = {
-                    _homeViewModelStateFlow.value = SavedMovie(movie.id)
-                },
-                ifSome = { error ->
-                    _homeViewModelStateFlow.value = ErrorInOperation(error.toString())
-                },
-            )
+            saveMovieUseCase(movie)
+                .onSuccess { _homeViewModelStateFlow.value = SavedMovie(movie.id) }
+                .onError { _homeViewModelStateFlow.value = ErrorInOperation(it.toString()) }
         }
     }
 

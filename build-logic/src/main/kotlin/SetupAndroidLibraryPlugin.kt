@@ -40,6 +40,7 @@ private fun Project.apply() {
 
     dependencies {
         "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
+        "implementation"(libs().getLibrary("coroutines.core"))
     }
 }
 

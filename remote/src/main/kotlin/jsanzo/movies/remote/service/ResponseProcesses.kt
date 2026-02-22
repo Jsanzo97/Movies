@@ -29,7 +29,7 @@ internal suspend fun <T : Any> executeNetworkRequest(f: suspend () -> Response<T
     }
 }
 
-internal suspend fun <T : Any> processResponse(response: Response<T>): Either<RemoteDataError, T> {
+internal fun <T : Any> processResponse(response: Response<T>): Either<RemoteDataError, T> {
     return if (response.isSuccessful) {
         response.body()?.right() ?: UnrecognizedRemoteError().left()
     } else {
