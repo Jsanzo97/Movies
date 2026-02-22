@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import java.io.File
+import com.google.devtools.ksp.gradle.KspExtension
 
 class SetupAndroidApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -14,7 +15,7 @@ class SetupAndroidApplicationPlugin : Plugin<Project> {
 
 private fun Project.apply() {
     pluginManager.apply("com.android.application")
-    pluginManager.apply("common-verifications")
+    pluginManager.apply("common-setup")
 
     extensions.configure<ApplicationExtension>("android") {
         namespace = calculateNamespace()
@@ -25,8 +26,6 @@ private fun Project.apply() {
             targetSdk = sdkTarget
             versionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPatch
             versionName = "$versionMajor.$versionMinor.$versionPatch"
-            buildConfigField("String", "SERVER_ENDPOINT", "\"https://api.themoviedb.org/3/movie/\"")
-            buildConfigField("String", "SERVER_API_KEY", "\"3ce5fa18330f82a0e8c84eea49508b46\"")
         }
 
         buildFeatures {
@@ -79,6 +78,11 @@ private fun Project.apply() {
                 addResources(arrayOf(resScreens))
             }
         }
+    }
+
+    extensions.configure<KspExtension>("ksp") {
+        arg("KOIN_CONFIG_CHECK", "true")
+        arg("KOIN_DEFAULT_MODULE", "false")
     }
 
     dependencies {

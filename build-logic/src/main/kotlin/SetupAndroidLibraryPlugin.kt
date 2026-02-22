@@ -14,7 +14,7 @@ class SetupAndroidLibraryPlugin : Plugin<Project> {
 
 private fun Project.apply() {
     pluginManager.apply("com.android.library")
-    pluginManager.apply("common-verifications")
+    pluginManager.apply("common-setup")
 
     extensions.configure<LibraryExtension>("android") {
         namespace = calculateNamespace()

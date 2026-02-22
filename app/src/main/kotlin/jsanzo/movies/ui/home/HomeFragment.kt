@@ -13,7 +13,6 @@ import jsanzo.movies.common.extensions.lazyBindView
 import jsanzo.movies.common.fragment.CustomFragment
 import jsanzo.movies.domain.entity.MovieResult
 import jsanzo.movies.ui.main.NavigationManagerViewModel
-import kotlinx.coroutines.flow.collect
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class HomeFragment : CustomFragment(R.layout.home_fragment) {

@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.koin.android.annotation.KoinViewModel
 
+@KoinViewModel
 class HomeViewModel(
     private val getMoviesUseCase: GetMoviesUseCase,
     private val saveMovieUseCase: SaveMovieUseCase,
