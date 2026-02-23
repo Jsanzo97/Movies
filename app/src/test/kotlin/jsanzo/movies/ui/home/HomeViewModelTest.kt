@@ -9,17 +9,16 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import jsanzo.movies.common.EMPTY_STRING
 import jsanzo.movies.domain.error.InvalidParametersError
 import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
-import jsanzo.movies.ui.compose.screens.home.HomeViewModel
-import jsanzo.movies.ui.compose.screens.home.HomeViewState
-import jsanzo.movies.ui.compose.screens.home.Loading
-import jsanzo.movies.ui.compose.screens.home.MoviesError
-import jsanzo.movies.ui.compose.screens.home.MoviesSuccess
+import jsanzo.movies.ui.screens.home.HomeViewModel
+import jsanzo.movies.ui.screens.home.HomeViewState
+import jsanzo.movies.ui.screens.home.Loading
+import jsanzo.movies.ui.screens.home.MoviesError
+import jsanzo.movies.ui.screens.home.MoviesSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
@@ -50,13 +49,13 @@ class HomeViewModelTest {
     private val mockedDomainMovieResult = DomainMovieResult(
         posterPath = null,
         adult = false,
-        overview = EMPTY_STRING,
-        releaseDate = EMPTY_STRING,
+        overview = "",
+        releaseDate = "",
         genreIds = listOf(),
         id = 1,
-        originalTitle = EMPTY_STRING,
-        originalLanguage = EMPTY_STRING,
-        title = EMPTY_STRING,
+        originalTitle = "",
+        originalLanguage = "",
+        title = "",
         backdropPath = null,
         popularity = 0.0,
         voteCount = 0,

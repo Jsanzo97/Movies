@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.compose.screens.home
+package jsanzo.movies.ui.screens.home
 
 import jsanzo.movies.domain.model.DomainMovieResult
 

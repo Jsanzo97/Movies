@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.compose.theme
+package jsanzo.movies.ui.theme
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
