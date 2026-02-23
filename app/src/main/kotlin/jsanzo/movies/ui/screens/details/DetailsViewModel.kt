@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.details
+package jsanzo.movies.ui.screens.details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,19 +15,19 @@ class DetailsViewModel(
     private val getMovieDetailsUseCase: GetMovieDetailsUseCase,
 ) : ViewModel() {
 
-    private val _detailsViewModelStateFlow = MutableStateFlow<DetailsViewState>(InitialState)
-    val detailsViewModelSateFlow: StateFlow<DetailsViewState> get() = _detailsViewModelStateFlow
+    private val _state = MutableStateFlow<DetailsViewState>(Loading)
+    val state: StateFlow<DetailsViewState> get() = _state
 
     fun getDetails(movieId: Int) {
-        _detailsViewModelStateFlow.value = RetrievingDetails
+        _state.value = Loading
 
         viewModelScope.launch {
             getMovieDetailsUseCase(movieId)
                 .onSuccess { movieDetails ->
-                    _detailsViewModelStateFlow.value = DetailsRetrieved(movieDetails)
+                    _state.value = DetailsSuccess(movieDetails)
                 }
                 .onError { error ->
-                    _detailsViewModelStateFlow.value = ErrorInOperation(error.toString())
+                    _state.value = DetailsError(error.toString())
                 }
         }
     }

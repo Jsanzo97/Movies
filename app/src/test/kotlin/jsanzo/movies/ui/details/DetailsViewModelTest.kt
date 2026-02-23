@@ -7,10 +7,14 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import jsanzo.movies.common.EMPTY_STRING
 import jsanzo.movies.domain.error.NotFoundError
 import jsanzo.movies.domain.model.DomainMovieDetails
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
+import jsanzo.movies.ui.screens.details.DetailsError
+import jsanzo.movies.ui.screens.details.DetailsSuccess
+import jsanzo.movies.ui.screens.details.DetailsViewModel
+import jsanzo.movies.ui.screens.details.DetailsViewState
+import jsanzo.movies.ui.screens.details.Loading
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
@@ -42,20 +46,20 @@ class DetailsViewModelTest {
         homepage = null,
         id = 1,
         imdbId = null,
-        originalLanguage = EMPTY_STRING,
-        originalTitle = EMPTY_STRING,
+        originalLanguage = "",
+        originalTitle = "",
         overview = null,
         popularity = 0.0,
         posterPath = null,
         productionCompanies = listOf(),
         productionCountries = listOf(),
-        releaseDate = EMPTY_STRING,
+        releaseDate = "",
         revenue = 0,
         runtime = null,
         spokenLanguages = listOf(),
-        status = EMPTY_STRING,
+        status = "",
         tagline = null,
-        title = EMPTY_STRING,
+        title = "",
         video = false,
         voteAverage = 0.0,
         voteCount = 0,
@@ -71,7 +75,7 @@ class DetailsViewModelTest {
         coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns domainMovieDetails.right()
 
         detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase)
-        detailsViewModelStateFlow = detailsViewModel.detailsViewModelSateFlow
+        detailsViewModelStateFlow = detailsViewModel.state
     }
 
     @AfterEach
@@ -80,33 +84,33 @@ class DetailsViewModelTest {
     }
 
     @Test
-    fun `we are always in InitialState at the beginning`() {
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
+    fun `we are always in Loading state at the beginning`() {
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<Loading>()
     }
 
     @Test
-    fun `we are in DetailsRetrieved state after call getDetails() with valid id, also we get the movie details`() = runTest {
+    fun `we are in DetailsSuccess state after call getDetails() with valid id, also we get the movie details`() = runTest {
         detailsViewModel.getDetails(validMovieId)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(validMovieId) }
 
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsRetrieved>()
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsSuccess>()
 
-        val state = detailsViewModelStateFlow.value as? DetailsRetrieved
+        val state = detailsViewModelStateFlow.value as? DetailsSuccess
 
-        state?.domainMovieDetails shouldBe domainMovieDetails
+        state?.movieDetails shouldBe domainMovieDetails
     }
 
     @Test
-    fun `we are in ErrorInOperationState state after call getDetails() with invalid id`() = runTest {
+    fun `we are in DetailsError state after call getDetails() with invalid id`() = runTest {
         detailsViewModel.getDetails(invalidMovieId)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
 
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
+        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsError>()
     }
 }

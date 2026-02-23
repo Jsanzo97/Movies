@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.compose.navigation
+package jsanzo.movies.ui.navigation
 
 import kotlinx.serialization.Serializable
 

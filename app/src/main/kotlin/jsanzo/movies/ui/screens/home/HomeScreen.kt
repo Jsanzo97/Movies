@@ -1,6 +1,7 @@
-package jsanzo.movies.ui.compose.screens.home
+package jsanzo.movies.ui.screens.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,9 +9,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
@@ -51,8 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import jsanzo.movies.R
-import jsanzo.movies.common.BASE_IMAGE_URL_ORIGINAL
 import jsanzo.movies.domain.model.DomainMovieResult
+import jsanzo.movies.ui.BASE_IMAGE_URL_ORIGINAL
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.androidx.compose.koinViewModel
 
@@ -114,7 +117,7 @@ private fun HomeContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars),
+            .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         SearchBar(
             inputField = {
@@ -152,14 +155,15 @@ private fun HomeContent(
 
             if (state is Loading) {
                 CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
 
             if (state is MoviesError) {
                 Text(
                     text = state.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
@@ -167,6 +171,7 @@ private fun HomeContent(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun MovieItem(
     movie: DomainMovieResult,
@@ -178,7 +183,7 @@ private fun MovieItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         Row(
             modifier = Modifier
@@ -211,19 +216,35 @@ private fun MovieItem(
                 },
                 modifier = Modifier
                     .width(100.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(12.dp)),
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                LabeledText(label = stringResource(R.string.movie_title), value = movie.title)
-                LabeledText(label = stringResource(R.string.movie_score), value = movie.voteAverage.toString())
-                LabeledText(label = stringResource(R.string.movie_date), value = movie.releaseDate)
-                LabeledText(label = stringResource(R.string.movie_language), value = movie.originalLanguage.uppercase())
+                Text(
+                    text = movie.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                LabeledText(
+                    label = stringResource(R.string.movie_score),
+                    value = movie.voteAverage.toString(),
+                )
+                LabeledText(
+                    label = stringResource(R.string.movie_date),
+                    value = movie.releaseDate,
+                )
+                LabeledText(
+                    label = stringResource(R.string.movie_language),
+                    value = movie.originalLanguage.uppercase(),
+                )
             }
         }
     }
@@ -237,18 +258,17 @@ private fun LabeledText(
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = label,
+            text = "$label ",
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
-        Spacer(modifier = Modifier.width(4.dp))
-
         Text(
             text = value,
+            style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -268,7 +288,7 @@ private fun HomeContentPreview(
 }
 
 private class HomeViewStateProvider : PreviewParameterProvider<HomeViewState> {
-    override val values: Sequence<HomeViewState> = sequenceOf<HomeViewState>(
+    override val values: Sequence<HomeViewState> = sequenceOf(
         Loading,
         MoviesSuccess(
             movies = listOf(

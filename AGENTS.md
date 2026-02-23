@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-Multi-module Android application built with Kotlin that displays movies using The Movie Database (TMDB) API. Follows Clean Architecture with MVVM presentation pattern. Currently being modernized: migrating from XML/Fragments to Jetpack Compose, and from JUnit 4 to JUnit 5.
+Multi-module Android application built with Kotlin that displays movies using The Movie Database (TMDB) API. Follows Clean Architecture with MVVM presentation pattern. Fully migrated to Jetpack Compose and Navigation Compose. Migrating from JUnit 4 to JUnit 5.
 
 ---
 
@@ -15,15 +15,15 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Area | Technology | Notes |
 |---|---|---|
 | Language | Kotlin 2.3.10 | |
-| UI | Jetpack Compose | Migration from XML/Fragments complete for Home screen |
+| UI | Jetpack Compose | Migration from XML/Fragments complete |
 | Architecture | MVVM + Clean Architecture | |
 | DI | Koin 4.1.1 | Using Koin Annotations for DI |
-| Navigation | Navigation Compose | Migrated from Jetpack Navigation Component + Safe Args |
+| Navigation | Navigation Compose | Migration from Jetpack Navigation Component + Safe Args complete |
 | Networking | Retrofit 3.0.0 + OkHttp 5.3.2 | |
 | Serialization | Kotlinx Serialization 1.10.0 | Applied via CommonSetupPlugin to all modules |
 | Database | Room 2.8.4 | |
 | Async | Coroutines 1.10.2 + Flow + StateFlow | |
-| Image loading | Coil 2.7.0 | Replaces Glide for Compose screens |
+| Image loading | Coil 2.7.0 | Replaced Glide |
 | Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
@@ -154,21 +154,26 @@ Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key deci
 ### Compose screen structure in `:app`
 ```
 app/src/main/kotlin/jsanzo/movies/
-└── ui/
-    └── compose/
-        ├── ComposeActivity.kt
-        ├── theme/
-        │   └── MoviesTheme.kt
-        ├── navigation/
-        │   ├── AppDestinations.kt
-        │   └── AppNavigation.kt
-        └── screens/
-            ├── home/
-            │   ├── HomeScreen.kt
-            │   ├── HomeViewModel.kt
-            │   └── HomeViewState.kt
-            └── details/
-                └── DetailsScreen.kt
+├── di/
+│   └── AppModule.kt
+├── ui/
+│   ├── navigation/
+│   │   ├── AppDestinations.kt
+│   │   └── AppNavigation.kt
+│   └── screens/
+│       ├── home/
+│       │   ├── HomeScreen.kt
+│       │   ├── HomeViewModel.kt
+│       │   └── HomeViewState.kt
+│       └── details/
+│           ├── DetailsScreen.kt
+│           ├── DetailsViewModel.kt
+│           └── DetailsViewState.kt
+├── theme/
+│   └── MoviesTheme.kt
+├── ComposeActivity.kt
+├── Constants.kt
+└── MoviesApplication.kt
 ```
 
 ### Navigation
@@ -180,13 +185,13 @@ sealed interface AppDestinations {
 }
 ```
 
-`ComposeActivity` is the launcher Activity. `MainActivity` remains registered in the manifest but is no longer the launcher.
+`ComposeActivity` is the sole launcher Activity. All XML navigation, Fragments, Safe Args, and related dependencies have been removed.
 
 ---
 
 ## Theme
 
-`MoviesTheme` in `ui/compose/theme/MoviesTheme.kt` defines light and dark color schemes based on the existing XML theme colors. Respects system dark mode via `isSystemInDarkTheme()`. Status bar color is set via `accompanist-systemuicontroller`.
+`MoviesTheme` in `ui/theme/MoviesTheme.kt` defines light and dark color schemes based on the existing XML theme colors. Respects system dark mode via `isSystemInDarkTheme()`. Status bar color is set via `accompanist-systemuicontroller`.
 
 Colors:
 - Primary: `#FF6200EE` (Purple500)
@@ -195,6 +200,17 @@ Colors:
 - SecondaryContainer: `#FF018786` (Teal700)
 
 `ComposeActivity` uses `@style/AppTheme.NoActionBar` in the manifest to avoid a black background flash before Compose renders.
+
+---
+
+## ViewState pattern
+
+Each screen defines its own sealed class in `ScreenViewState.kt`:
+- `Loading` — data object, shown while fetching
+- `ScreenSuccess` — data class with `@Immutable`, holds domain model
+- `ScreenError` — data class with `@Immutable`, holds error message string
+
+Navigation side effects (e.g. navigate to details) are handled via `SharedFlow<T>` instead of ViewState.
 
 ---
 
@@ -218,10 +234,9 @@ Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggre
 
 ---
 
-## Home Screen — Compose Implementation
+## Home Screen
 
 ### ViewState
-Simplified from the original XML states:
 ```kotlin
 @Stable
 sealed class HomeViewState
@@ -243,7 +258,7 @@ private var loadingJob: Job? = null
 
 fun getMovies(page: Int = nextPageToRetrieve) {
     if (loadingJob?.isActive == true) return
-    loadingJob = viewModelScope.launch { ... }
+    loadingJob = viewModelScope.launch {  }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -270,6 +285,32 @@ private fun checkNeedNewPage() {
 - `remember(state, searchQuery)` for filtered movie list to avoid recalculation on every recomposition
 - `windowInsetsPadding(WindowInsets.statusBars)` to avoid content going under status bar
 - `Column` as root container with `SearchBar` fixed at top and `LazyColumn` below
+
+---
+
+## Details Screen
+
+### ViewState
+```kotlin
+@Stable
+sealed class DetailsViewState
+data object Loading : DetailsViewState()
+
+@Immutable
+data class DetailsSuccess(val movieDetails: DomainMovieDetails) : DetailsSuccess()
+
+@Immutable
+data class DetailsError(val message: String) : DetailsError()
+```
+
+### UI key decisions
+- `LaunchedEffect(movieId)` triggers `viewModel.getDetails(movieId)` once on entry
+- Layout: top `Row` with poster image (150dp wide, 220dp tall, rounded corners) + basic info column; remaining fields in full-width rows below
+- `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
+- `verticalScroll` on root `Column` for long content
+- `runtime` and `homepage` are nullable — only rendered if present
+- `BASE_IMAGE_URL_ORIGINAL` defined as private constant in `DetailsScreen.kt`
+- Formatting helpers (`formatLanguages`, `formatGenres`, etc.) are private functions using `joinToString(", ")`
 
 ---
 
@@ -402,6 +443,7 @@ Install: `./gradlew installGitHooks`
 ```
 Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
 API Key:   BuildConfig.SERVER_API_KEY
+Image URL: https://image.tmdb.org/t/p/original (defined as BASE_IMAGE_URL_ORIGINAL in screen files)
 ```
 
 ---
@@ -469,18 +511,17 @@ API Key:   BuildConfig.SERVER_API_KEY
 ## Pending Migrations
 
 - [x] Migrate Home screen to Jetpack Compose
-- [ ] Migrate Details screen to Jetpack Compose
-- [ ] Migrate Navigation to Navigation Compose (partially done — Compose flow uses Navigation Compose, XML flow still uses Safe Args pending Details migration)
+- [x] Migrate Details screen to Jetpack Compose
+- [x] Migrate Navigation to Navigation Compose
+- [x] Remove XML layouts, Fragments, Safe Args and related dependencies
+- [x] Restructure project defining Koin modules on its module instead of app
+- [x] Add Compose + Navigation Compose setup
+- [x] Add detekt-rules-compose with Compose rules in detekt.yml
+- [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
 - [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
 - [ ] Remove Robolectric dependency
 - [ ] Add Detekt JUnit 5 rules plugin
 - [ ] Set up GitHub Actions CI/CD pipelines (PR validation + deploy)
-- [x] Restructure project defining Koin modules on its module instead of app
-- [x] Add Compose + Navigation Compose setup
-- [x] Add detekt-rules-compose with Compose rules in detekt.yml
-- [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)
-- [ ] Remove Glide dependency once all screens are migrated to Compose (replaced by Coil)
-- [ ] Remove XML navigation, fragments and related dependencies once Details screen is migrated
