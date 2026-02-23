@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "627824630621",
+    "project_id": "movies-2d5f3",
+    "storage_bucket": "movies-2d5f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:627824630621:android:648637967a4849b78a66b4",
+        "android_client_info": {
+          "package_name": "jsanzo.movies"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkjqP9Z50sN-sD067EdG-BQdqMdAR7cVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:627824630621:android:c0bf9a0416b11f9b8a66b4",
+        "android_client_info": {
+          "package_name": "jsanzo.movies.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkjqP9Z50sN-sD067EdG-BQdqMdAR7cVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

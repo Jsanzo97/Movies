@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import jsanzo.movies.domain.utils.onError
 import jsanzo.movies.domain.utils.onSuccess
+import jsanzo.movies.tracking.MovieTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class DetailsViewModel(
     private val getMovieDetailsUseCase: GetMovieDetailsUseCase,
+    private val firebaseTracker: MovieTracker,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<DetailsViewState>(Loading)
@@ -20,15 +22,19 @@ class DetailsViewModel(
 
     fun getDetails(movieId: Int) {
         _state.value = Loading
-
         viewModelScope.launch {
             getMovieDetailsUseCase(movieId)
                 .onSuccess { movieDetails ->
                     _state.value = DetailsSuccess(movieDetails)
                 }
                 .onError { error ->
+                    firebaseTracker.trackErrorShown("details", error.toString())
                     _state.value = DetailsError(error.toString())
                 }
         }
+    }
+
+    fun trackScreenView(movieId: Int) {
+        firebaseTracker.trackDetailsShown(movieId)
     }
 }

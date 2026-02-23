@@ -10,6 +10,7 @@ import io.mockk.mockk
 import jsanzo.movies.domain.error.NotFoundError
 import jsanzo.movies.domain.model.DomainMovieDetails
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
+import jsanzo.movies.tracking.MovieTracker
 import jsanzo.movies.ui.screens.details.DetailsError
 import jsanzo.movies.ui.screens.details.DetailsSuccess
 import jsanzo.movies.ui.screens.details.DetailsViewModel
@@ -68,13 +69,15 @@ class DetailsViewModelTest {
     private val validMovieId = 0
     private val invalidMovieId = -1
 
+    private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
+
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
         coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns domainMovieDetails.right()
 
-        detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase)
+        detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase, mockedMovieTracker)
         detailsViewModelStateFlow = detailsViewModel.state
     }
 

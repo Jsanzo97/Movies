@@ -1,11 +1,11 @@
 @file:Suppress("UnstableApiUsage")
 import com.android.build.api.dsl.ApplicationExtension
+import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import java.io.File
-import com.google.devtools.ksp.gradle.KspExtension
 
 class SetupAndroidApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -16,6 +16,8 @@ class SetupAndroidApplicationPlugin : Plugin<Project> {
 private fun Project.apply() {
     pluginManager.apply("com.android.application")
     pluginManager.apply("common-setup")
+    pluginManager.apply("com.google.firebase.crashlytics")
+    pluginManager.apply("com.google.gms.google-services")
 
     extensions.configure<ApplicationExtension>("android") {
         namespace = calculateNamespace()
@@ -100,6 +102,9 @@ private fun Project.apply() {
         "implementation"(libs().getLibrary("coil-compose"))
         "implementation"(libs().getLibrary("material-icons-core"))
         "implementation"(libs().getLibrary("accompanist-permissions"))
+        "implementation"(platform(libs().getLibrary("firebase-bom")))
+        "implementation"(libs().getLibrary("firebase-analytics"))
+        "implementation"(libs().getLibrary("firebase-crashlytics"))
 
         "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
     }

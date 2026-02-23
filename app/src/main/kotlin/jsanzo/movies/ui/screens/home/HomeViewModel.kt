@@ -7,6 +7,7 @@ import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import jsanzo.movies.domain.utils.onError
 import jsanzo.movies.domain.utils.onSuccess
+import jsanzo.movies.tracking.MovieTracker
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import org.koin.android.annotation.KoinViewModel
 class HomeViewModel(
     private val getMoviesUseCase: GetMoviesUseCase,
     private val saveMovieUseCase: SaveMovieUseCase,
+    private val firebaseTracker: MovieTracker,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeViewState>(Loading)
@@ -41,9 +43,11 @@ class HomeViewModel(
                     val newMovies = movies.results.filter { it.id !in existingIds }
                     moviesRetrieved.addAll(newMovies)
                     nextPageToRetrieve++
+                    firebaseTracker.trackPageLoaded(page)
                     _state.value = MoviesSuccess(moviesRetrieved.toList())
                 }
                 .onError { error ->
+                    firebaseTracker.trackErrorShown("home", error.toString())
                     _state.value = MoviesError(error.toString())
                 }
         }
@@ -51,11 +55,13 @@ class HomeViewModel(
 
     fun saveMovie(movie: DomainMovieResult) {
         viewModelScope.launch {
-            val previousState = _state.value
-            _state.value = Loading
+            firebaseTracker.trackMovieClicked(movie.id, movie.title)
             saveMovieUseCase(movie)
-                .onError { _state.value = previousState }
         }
+    }
+
+    fun trackScreenView() {
+        firebaseTracker.trackHomeShown()
     }
 
     fun notifyLastElementVisible(lastElement: Int) {
