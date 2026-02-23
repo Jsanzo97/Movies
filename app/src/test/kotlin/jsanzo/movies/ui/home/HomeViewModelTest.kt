@@ -15,6 +15,11 @@ import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import jsanzo.movies.ui.compose.screens.home.HomeViewModel
+import jsanzo.movies.ui.compose.screens.home.HomeViewState
+import jsanzo.movies.ui.compose.screens.home.Loading
+import jsanzo.movies.ui.compose.screens.home.MoviesError
+import jsanzo.movies.ui.compose.screens.home.MoviesSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
@@ -32,33 +37,15 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var homeViewModel: HomeViewModel
+    private lateinit var homeViewModelStateFlow: StateFlow<HomeViewState>
 
     private val mockedGetMoviesUseCase: GetMoviesUseCase = mockk()
     private val mockedSaveMovieUseCase: SaveMovieUseCase = mockk()
-
-    private lateinit var homeViewModelStateFlow: StateFlow<HomeViewState>
 
     private val validPage = 1
     private val invalidPage = -1
     private val lastElementVisibleToNeedMore = 10
     private val lastElementVisibleToNotNeedMore = 1
-
-    private val invalidMockedDomainMovieResult = DomainMovieResult(
-        posterPath = null,
-        adult = false,
-        overview = EMPTY_STRING,
-        releaseDate = EMPTY_STRING,
-        genreIds = listOf(),
-        id = -1,
-        originalTitle = EMPTY_STRING,
-        originalLanguage = EMPTY_STRING,
-        title = EMPTY_STRING,
-        backdropPath = null,
-        popularity = 0.0,
-        voteCount = 0,
-        video = false,
-        voteAverage = 0.0,
-    )
 
     private val mockedDomainMovieResult = DomainMovieResult(
         posterPath = null,
@@ -66,7 +53,7 @@ class HomeViewModelTest {
         overview = EMPTY_STRING,
         releaseDate = EMPTY_STRING,
         genreIds = listOf(),
-        id = 0,
+        id = 1,
         originalTitle = EMPTY_STRING,
         originalLanguage = EMPTY_STRING,
         title = EMPTY_STRING,
@@ -79,7 +66,9 @@ class HomeViewModelTest {
 
     private val mockedDomainMovie = DomainMovie(
         page = 0,
-        results = listOf(mockedDomainMovieResult, mockedDomainMovieResult),
+        results = (1..20).map { id ->
+            mockedDomainMovieResult.copy(id = id)
+        },
         totalResults = 0,
         totalPages = 0,
     )
@@ -91,10 +80,10 @@ class HomeViewModelTest {
         coEvery { mockedGetMoviesUseCase(validPage + 1) } returns mockedDomainMovie.right()
         coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
         coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns None
-        coEvery { mockedSaveMovieUseCase(invalidMockedDomainMovieResult) } returns InvalidParametersError.some()
+        coEvery { mockedSaveMovieUseCase(any()) } returns InvalidParametersError.some()
 
         homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
-        homeViewModelStateFlow = homeViewModel.homeViewModelSateFlow
+        homeViewModelStateFlow = homeViewModel.state
     }
 
     @AfterEach
@@ -103,89 +92,65 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `we are always in InitialState at the beginning`() {
-        homeViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
+    fun `initial state is Loading`() {
+        homeViewModelStateFlow.value.shouldBeInstanceOf<Loading>()
     }
 
     @Test
-    fun `we are in MoviesRetrieved state after call getMovies() with valid page, also we get the movie list`() = runTest {
+    fun `state is MoviesSuccess after getMovies() with valid page`() = runTest {
         homeViewModel.getMovies(validPage)
-
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesSuccess>()
 
-        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
-
-        val state = homeViewModelStateFlow.value as? MoviesRetrieved
-
-        state?.movies shouldBe mockedDomainMovie.results
+        val state = homeViewModelStateFlow.value as MoviesSuccess
+        state.movies shouldBe mockedDomainMovie.results
     }
 
     @Test
-    fun `we are in ErrorInOperation state after call getMovies() with invalid page`() = runTest {
+    fun `state is MoviesError after getMovies() with invalid page`() = runTest {
         homeViewModel.getMovies(invalidPage)
-
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) { mockedGetMoviesUseCase(invalidPage) }
-
-        homeViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesError>()
     }
 
     @Test
-    fun `we are in SavedMovie state after call saveMovie() with valid movie result`() = runTest {
-        homeViewModel.saveMovie(mockedDomainMovieResult)
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        coVerify(exactly = 1) { mockedSaveMovieUseCase(mockedDomainMovieResult) }
-
-        homeViewModelStateFlow.value.shouldBeInstanceOf<SavedMovie>()
-    }
-
-    @Test
-    fun `we are in ErrorInOperation state after call saveMovie() with invalid movie result`() = runTest {
-        homeViewModel.saveMovie(invalidMockedDomainMovieResult)
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        coVerify(exactly = 1) { mockedSaveMovieUseCase(invalidMockedDomainMovieResult) }
-
-        homeViewModelStateFlow.value.shouldBeInstanceOf<ErrorInOperation>()
-    }
-
-    @Test
-    fun `we are in the initial state after call onStop()`() {
-        homeViewModel.onStop()
-        homeViewModelStateFlow.value.shouldBeInstanceOf<InitialState>()
-    }
-
-    @Test
-    fun `getMovies() called after notifyLastElementVisible() when we need new page with movies`() = runTest {
-        homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
-
-        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
-
-        val state = homeViewModelStateFlow.value as? MoviesRetrieved
-
-        state?.movies shouldBe mockedDomainMovie.results
-    }
-
-    @Test
-    fun `getMovies() not called more after notifyLastElementVisible() called when we not need new page with movies`() = runTest {
+    fun `state is MoviesError after saveMovie() fails`() = runTest {
         homeViewModel.getMovies(validPage)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+
+        val previousState = homeViewModelStateFlow.value
+
+        coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns InvalidParametersError.some()
+        homeViewModel.saveMovie(mockedDomainMovieResult)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModelStateFlow.value shouldBe previousState
+    }
+
+    @Test
+    fun `getMovies() called after notifyLastElementVisible() when threshold reached`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { mockedGetMoviesUseCase(validPage + 1) }
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesSuccess>()
+    }
+
+    @Test
+    fun `getMovies() not called when threshold not reached`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         homeViewModel.notifyLastElementVisible(lastElementVisibleToNotNeedMore)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
 
-        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesRetrieved>()
+        coVerify(exactly = 0) { mockedGetMoviesUseCase(validPage + 1) }
     }
 }

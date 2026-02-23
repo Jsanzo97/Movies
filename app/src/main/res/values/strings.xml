@@ -7,4 +7,9 @@
     <string name="custom_dialog_fragment_cancel">Cancel</string>
 
     <string name="media_image_content_description">Image of the movie title</string>
+
+    <string name="movie_title">Title:</string>
+    <string name="movie_score">Score:</string>
+    <string name="movie_language">Language:</string>
+    <string name="movie_date">Date:</string>
 </resources>

@@ -10,6 +10,11 @@ class CommonSetupPlugin : Plugin<Project> {
             setupCheck()
             setupKoin()
             setupArrow()
+            setupSerialization()
         }
+    }
+
+    private fun Project.setupSerialization() {
+        pluginManager.apply("org.jetbrains.kotlin.plugin.serialization")
     }
 }

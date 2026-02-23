@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.setup.android.library)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 dependencies {

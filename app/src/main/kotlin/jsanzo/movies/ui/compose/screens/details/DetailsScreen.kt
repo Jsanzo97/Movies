@@ -10,18 +10,19 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun DetailsScreen(
+    movieId: Int,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = "Details Screen")
+        Text(text = "Details Screen — movieId: $movieId")
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun DetailsScreenPreview() {
-    DetailsScreen()
+    DetailsScreen(movieId = 0)
 }

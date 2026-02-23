@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="movie_title">Title:</string>
-    <string name="movie_score">Score:</string>
-    <string name="movie_language">Language:</string>
-    <string name="movie_date">Date:</string>
-
-</resources>
