@@ -63,6 +63,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
+chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilVersion" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
