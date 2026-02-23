@@ -37,8 +37,8 @@ if echo "$COMMIT_MSG" | grep -qE "$TASK_PATTERN"; then
     exit 0
 fi
 
-# Find last task number in commit history and increment
-LAST_TASK=$(git log --format="%B" | grep -oE "\[Task - [0-9]+\]" | grep -oE "[0-9]+" | sort -n | tail -1)
+# Find last task number across all branches and increment
+LAST_TASK=$(git log --all --format="%B" | grep -oE "\[Task - [0-9]+\]" | grep -oE "[0-9]+" | sort -n | tail -1)
 
 if [ -z "$LAST_TASK" ]; then
     NEXT_TASK=1
