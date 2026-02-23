@@ -68,6 +68,8 @@ jobs:
         run: ./gradlew assembleDebug testAll
         env:
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+          SERVER_ENDPOINT: ${{ secrets.SERVER_ENDPOINT }}
+          SERVER_API_KEY: ${{ secrets.SERVER_API_KEY }}
 
       - name: Upload test reports
         if: always()

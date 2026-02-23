@@ -181,8 +181,8 @@ app/src/main/kotlin/jsanzo/movies/
 Type-safe Navigation Compose using `@Serializable` data objects/classes:
 ```kotlin
 sealed interface AppDestinations {
-  @Serializable data object Home : AppDestinations
-  @Serializable data class Details(val movieId: Int) : AppDestinations
+    @Serializable data object Home : AppDestinations
+    @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
 
@@ -254,16 +254,16 @@ Notification permission is requested only on debug builds and only on Android 13
 ```kotlin
 @Composable
 fun RequestNotificationPermission() {
-  if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-    val permissionState = rememberPermissionState(
-      permission = Manifest.permission.POST_NOTIFICATIONS,
-    )
-    LaunchedEffect(Unit) {
-      if (!permissionState.status.isGranted) {
-        permissionState.launchPermissionRequest()
-      }
+    if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionState = rememberPermissionState(
+            permission = Manifest.permission.POST_NOTIFICATIONS,
+        )
+        LaunchedEffect(Unit) {
+            if (!permissionState.status.isGranted) {
+                permissionState.launchPermissionRequest()
+            }
+        }
     }
-  }
 }
 ```
 
@@ -292,8 +292,8 @@ Navigation to details is handled as a side effect via `SharedFlow<Int>` instead 
 private var loadingJob: Job? = null
 
 fun getMovies(page: Int = nextPageToRetrieve) {
-  if (loadingJob?.isActive == true) return
-  loadingJob = viewModelScope.launch { ... }
+    if (loadingJob?.isActive == true) return
+    loadingJob = viewModelScope.launch { ... }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -304,10 +304,10 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ### Pagination logic
 ```kotlin
 private fun checkNeedNewPage() {
-  val totalLoaded = moviesRetrieved.size
-  if (lastVisible + threshold >= totalLoaded) {
-    getMovies()
-  }
+    val totalLoaded = moviesRetrieved.size
+    if (lastVisible + threshold >= totalLoaded) {
+        getMovies()
+    }
 }
 ```
 
@@ -464,6 +464,7 @@ File: `.github/workflows/pr-validation.yml`
 - Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
 - `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` set on all Gradle steps to suppress KSP NullPointerException in headless CI environments
 - Gradle cache managed automatically by `gradle/actions/setup-gradle@v4` (no `cache-read-only` restriction)
+- `cache: 'gradle'` added to `actions/setup-java@v4` to cache the Gradle wrapper and avoid downloading it on every run
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
   2. `build-and-test` — `assembleDebug` + `testAll` in a single job (runs after check)
@@ -516,6 +517,39 @@ Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
 API Key:   BuildConfig.SERVER_API_KEY
 Image URL: https://image.tmdb.org/t/p/original (defined as BASE_IMAGE_URL_ORIGINAL in screen files)
 ```
+
+### Secrets management
+
+API keys and URLs are never hardcoded in source code. They are read from `local.properties` locally and from GitHub Actions Secrets in CI.
+
+**`local.properties`** (gitignored, local only):
+```properties
+SERVER_ENDPOINT=https://api.themoviedb.org/3/movie/
+SERVER_API_KEY=your_api_key_here
+```
+
+**`:remote/build.gradle.kts`** reads from `local.properties` with fallback to environment variables for CI:
+```kotlin
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
+buildConfigField(
+    "String", "SERVER_ENDPOINT",
+    "\"${localProperties["SERVER_ENDPOINT"] ?: System.getenv("SERVER_ENDPOINT")}\"",
+)
+buildConfigField(
+    "String", "SERVER_API_KEY",
+    "\"${localProperties["SERVER_API_KEY"] ?: System.getenv("SERVER_API_KEY")}\"",
+)
+```
+
+**GitHub Actions Secrets** required (Settings → Secrets and variables → Actions):
+- `SERVER_ENDPOINT`
+- `SERVER_API_KEY`
+
+Secrets are injected as environment variables in the `build-and-test` job only (the `check` job does not compile code so does not need them).
 
 ---
 
