@@ -25,6 +25,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Async | Coroutines 1.10.2 + Flow + StateFlow | |
 | Image loading | Coil 2.7.0 | Replaced Glide |
 | Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
+| HTTP inspector | Chucker | debugImplementation only, no-op in release |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
 | Min SDK | 24 | |
@@ -82,7 +83,7 @@ Each module appends its name automatically via `calculateNamespace()` in build-l
 #### UseCase pattern
 ```kotlin
 class UseCase(private val repository: Repository) {
-    suspend operator fun invoke() = repository.function()
+  suspend operator fun invoke() = repository.function()
 }
 ```
 
@@ -120,7 +121,7 @@ fun MovieResult.toDataMovieResult() = DataMovieResult()
 ### Presentation Layer (`:app`)
 - ViewModels expose `StateFlow<ViewState>`.
 - Sealed classes for ViewState per screen.
-- Compose screens in `ui/compose/`.
+- Compose screens in `ui/screens/`.
 
 ---
 
@@ -180,8 +181,8 @@ app/src/main/kotlin/jsanzo/movies/
 Type-safe Navigation Compose using `@Serializable` data objects/classes:
 ```kotlin
 sealed interface AppDestinations {
-    @Serializable data object Home : AppDestinations
-    @Serializable data class Details(val movieId: Int) : AppDestinations
+  @Serializable data object Home : AppDestinations
+  @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
 
@@ -214,6 +215,12 @@ Navigation side effects (e.g. navigate to details) are handled via `SharedFlow<T
 
 ---
 
+## Window Insets
+
+All screens use `Modifier.windowInsetsPadding(WindowInsets.safeDrawing)` on the root composable to handle both status bar and navigation bar (buttons or gestures) correctly.
+
+---
+
 ## Dependency Injection — Koin Annotations
 
 The project uses Koin Annotations for dependency injection. Each Gradle module is responsible for its own dependency providers. `@KoinViewModel` is used for ViewModels, with `@ComponentScan` for automatic scanning.
@@ -231,6 +238,34 @@ Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggre
 | `NetworkModule`| `:remote/di` | Provides Retrofit and OkHttp dependencies. |
 | `AppRemoteModule`| `:remote/di/`| Provides build-variant specific network config (e.g., Chucker). |
 | `DomainModule` | `:domain/di` | Provides UseCases. |
+
+---
+
+## Chucker
+
+HTTP inspector for debug builds only.
+
+```kotlin
+debugImplementation(chucker)
+releaseImplementation(chucker-no-op)
+```
+
+Notification permission is requested only on debug builds and only on Android 13+:
+```kotlin
+@Composable
+fun RequestNotificationPermission() {
+  if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val permissionState = rememberPermissionState(
+      permission = Manifest.permission.POST_NOTIFICATIONS,
+    )
+    LaunchedEffect(Unit) {
+      if (!permissionState.status.isGranted) {
+        permissionState.launchPermissionRequest()
+      }
+    }
+  }
+}
+```
 
 ---
 
@@ -257,8 +292,8 @@ Navigation to details is handled as a side effect via `SharedFlow<Int>` instead 
 private var loadingJob: Job? = null
 
 fun getMovies(page: Int = nextPageToRetrieve) {
-    if (loadingJob?.isActive == true) return
-    loadingJob = viewModelScope.launch {  }
+  if (loadingJob?.isActive == true) return
+  loadingJob = viewModelScope.launch { ... }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -269,22 +304,23 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ### Pagination logic
 ```kotlin
 private fun checkNeedNewPage() {
-    val totalLoaded = moviesRetrieved.size
-    if (lastVisible + threshold >= totalLoaded) {
-        getMovies()
-    }
+  val totalLoaded = moviesRetrieved.size
+  if (lastVisible + threshold >= totalLoaded) {
+    getMovies()
+  }
 }
 ```
 
 ### UI key decisions
 - `SearchBar` with `RectangleShape` and `expanded = false` (never expands, no suggestions)
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
-- `LinearProgressIndicator` at top of screen for page loading
 - `@Stable` / `@Immutable` annotations on ViewState for Compose stability
 - `key = { _, movie -> movie.id }` in `itemsIndexed` to prevent duplicate key crashes
 - `remember(state, searchQuery)` for filtered movie list to avoid recalculation on every recomposition
-- `windowInsetsPadding(WindowInsets.statusBars)` to avoid content going under status bar
+- `windowInsetsPadding(WindowInsets.safeDrawing)` on root Column
 - `Column` as root container with `SearchBar` fixed at top and `LazyColumn` below
+- Movie cards: `RoundedCornerShape(12.dp)` on images, `titleSmall` bold for title, `bodySmall` + `onSurfaceVariant` for labels
+- Error state uses `colorScheme.error`
 
 ---
 
@@ -297,20 +333,28 @@ sealed class DetailsViewState
 data object Loading : DetailsViewState()
 
 @Immutable
-data class DetailsSuccess(val movieDetails: DomainMovieDetails) : DetailsSuccess()
+data class DetailsSuccess(val movieDetails: DomainMovieDetails) : DetailsViewState()
 
 @Immutable
-data class DetailsError(val message: String) : DetailsError()
+data class DetailsError(val message: String) : DetailsViewState()
 ```
 
 ### UI key decisions
 - `LaunchedEffect(movieId)` triggers `viewModel.getDetails(movieId)` once on entry
-- Layout: top `Row` with poster image (150dp wide, 220dp tall, rounded corners) + basic info column; remaining fields in full-width rows below
+- Layout: top `Row` with poster image (130dp wide, 195dp tall, `RoundedCornerShape(12.dp)`) + basic info column; remaining fields in full-width sections below
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
 - `verticalScroll` on root `Column` for long content
+- `windowInsetsPadding(WindowInsets.safeDrawing)` on root Column
 - `runtime` and `homepage` are nullable — only rendered if present
+- `homepage` is clickable via `LocalUriHandler` — opens system browser, styled with `colorScheme.primary` and `TextDecoration.Underline`
+- `tagline` shown below title in `onSurfaceVariant` if present
+- `HorizontalDivider` separates header from body sections
+- `DetailSection` composable for body fields: `labelSmall` bold in `onSurfaceVariant` + `bodyMedium` value
+- `InfoChip` composable for header fields: `bodySmall` bold in `onSurfaceVariant` + `bodySmall` value
+- Status and Revenue displayed side by side as two columns
 - `BASE_IMAGE_URL_ORIGINAL` defined as private constant in `DetailsScreen.kt`
 - Formatting helpers (`formatLanguages`, `formatGenres`, etc.) are private functions using `joinToString(", ")`
+- Error state uses `colorScheme.error`
 
 ---
 
@@ -418,10 +462,30 @@ File: `.github/workflows/pr-validation.yml`
 
 - Triggers on every PR regardless of branches
 - Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
+- `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` set on all Gradle steps to suppress KSP NullPointerException in headless CI environments
+- Gradle cache managed automatically by `gradle/actions/setup-gradle@v4` (no `cache-read-only` restriction)
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
-  2. `build` — `assembleDebug` (runs after check)
-  3. `tests` — `testAll` (runs after check, parallel to build)
+  2. `build-and-test` — `assembleDebug` + `testAll` in a single job (runs after check)
+
+> **Why merge build and test into one job?** Separate jobs each spin up a fresh runner and restore the Gradle cache independently, duplicating work. A single `build-and-test` job halves the runner usage and cache restoration overhead.
+
+> **Branch protection rules**: if status checks are required on `develop`/`main`, the required check name is `Build & Tests` (not the old `Build` and `Tests` separately).
+
+### Gradle performance settings (`gradle.properties`)
+
+```properties
+org.gradle.jvmargs=-Xmx6144m -Dfile.encoding=UTF-8
+org.gradle.parallel=true
+org.gradle.configuration-cache=true
+org.gradle.caching=true
+org.gradle.daemon=false
+```
+
+- `-Xmx6144m` — capped at 6GB to stay within GitHub runner memory limits (7GB available)
+- `org.gradle.daemon=false` — daemon brings no benefit on ephemeral CI runners
+- `org.gradle.configuration-cache=true` — enabled globally, applies to both local and CI
+- `org.gradle.caching=true` — build cache enabled globally
 
 ---
 
@@ -435,6 +499,13 @@ Install: `./gradlew installGitHooks`
 ```
 [Task - 123] your commit message here
 ```
+
+### Hook behaviour
+- If the commit message already contains `[Task - N]` it validates and exits
+- If not, it finds the highest task number across **all branches** (`git log --all`) and auto-prepends `[Task - N+1]`
+- Skips automatic git commits (merge, rebase, fixup, squash)
+- Rejects commits on branches that don't match `feature/`, `refactor/`, `bugfix/`, `hotfix/`
+- Rejects commit messages shorter than 10 characters
 
 ---
 
@@ -505,6 +576,7 @@ Image URL: https://image.tmdb.org/t/p/original (defined as BASE_IMAGE_URL_ORIGIN
 - **Namespace special case**: The `:app` module has a hardcoded `if` in `calculateNamespace()` because its namespace is `jsanzo.movies`, not `jsanzo.movies.app`.
 - **Compose compiler plugin classpath conflict**: With AGP 9.0.1 + Kotlin 2.x, applying `org.jetbrains.kotlin.plugin.compose` via `pluginManager.apply()` from a convention plugin in an included build causes `org.jetbrains:annotations` version conflicts. Workaround: declare it with `apply false` in the root `build.gradle.kts` and apply it explicitly in `app/build.gradle.kts`.
 - **detekt-rules-compose version cap**: Versions `0.5.x+` depend on `dev.detekt 2.0.0-alpha.2` which is not yet published in public repos. Max compatible version with Detekt 1.23.8 is `0.4.27`.
+- **KSP NullPointerException in CI**: KSP throws a harmless `NullPointerException` in `AWT-EventQueue-0` on headless environments. Does not fail the build. Suppressed via `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` in CI.
 
 ---
 
@@ -518,10 +590,11 @@ Image URL: https://image.tmdb.org/t/p/original (defined as BASE_IMAGE_URL_ORIGIN
 - [x] Add Compose + Navigation Compose setup
 - [x] Add detekt-rules-compose with Compose rules in detekt.yml
 - [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
+- [x] Set up GitHub Actions CI/CD pipelines (PR validation)
 - [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
 - [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
 - [ ] Remove Robolectric dependency
 - [ ] Add Detekt JUnit 5 rules plugin
-- [ ] Set up GitHub Actions CI/CD pipelines (PR validation + deploy)
+- [ ] Set up deploy pipeline
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)
