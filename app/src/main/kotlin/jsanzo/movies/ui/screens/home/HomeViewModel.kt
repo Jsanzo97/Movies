@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.compose.screens.home
+package jsanzo.movies.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

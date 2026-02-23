@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.compose
+package jsanzo.movies.ui
 
 import android.Manifest
 import android.os.Build
@@ -11,8 +11,8 @@ import androidx.compose.runtime.LaunchedEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import jsanzo.movies.ui.compose.navigation.AppNavigation
-import jsanzo.movies.ui.compose.theme.MoviesTheme
+import jsanzo.movies.ui.navigation.AppNavigation
+import jsanzo.movies.ui.theme.MoviesTheme
 
 class ComposeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
