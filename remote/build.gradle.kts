@@ -1,8 +1,10 @@
 import com.android.build.api.dsl.LibraryExtension
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.setup.android.library)
 }
+
 
 extensions.configure<LibraryExtension>("android") {
 
@@ -10,9 +12,22 @@ extensions.configure<LibraryExtension>("android") {
         buildConfig = true
     }
 
+    val localProperties = Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) load(file.inputStream())
+    }
+
     defaultConfig {
-        buildConfigField("String", "SERVER_ENDPOINT", "\"https://api.themoviedb.org/3/movie/\"")
-        buildConfigField("String", "SERVER_API_KEY", "\"3ce5fa18330f82a0e8c84eea49508b46\"")
+        buildConfigField(
+            "String",
+            "SERVER_ENDPOINT",
+            "\"${localProperties["SERVER_ENDPOINT"] ?: System.getenv("SERVER_ENDPOINT")}\"",
+        )
+        buildConfigField(
+            "String",
+            "SERVER_API_KEY",
+            "\"${localProperties["SERVER_API_KEY"] ?: System.getenv("SERVER_API_KEY")}\"",
+        )
     }
 }
 
