@@ -1,5 +1,7 @@
 package jsanzo.movies.remote.di
 
+import android.content.Context
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import jsanzo.movies.remote.BuildConfig
 import kotlinx.serialization.json.Json
@@ -37,4 +39,19 @@ class NetworkModule {
             .addConverterFactory(Json.asConverterFactory(contentType))
             .build()
     }
+
+    @Single
+    fun chuckerInterceptor(context: Context): ChuckerInterceptor = ChuckerInterceptor(context)
+
+    @Single
+    @Named(APP_OK_HTTP_CLIENT)
+    fun appOkHttpClient(
+        chuckerInterceptor: ChuckerInterceptor,
+        @Named(BASIC_OK_HTTP_CLIENT) basicOkHttpClient: OkHttpClient,
+    ): OkHttpClient = basicOkHttpClient.newBuilder()
+        .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .addInterceptor(chuckerInterceptor)
+        .build()
 }

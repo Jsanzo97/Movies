@@ -24,4 +24,5 @@ dependencies {
     implementation(libs.okhttp.core)
 
     debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.no.op)
 }
