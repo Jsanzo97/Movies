@@ -1,4 +1,4 @@
-package jsanzo.movies.ui.home
+package jsanzo.movies.ui.compose.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +7,7 @@ import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import jsanzo.movies.domain.utils.onError
 import jsanzo.movies.domain.utils.onSuccess
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,54 +19,42 @@ class HomeViewModel(
     private val saveMovieUseCase: SaveMovieUseCase,
 ) : ViewModel() {
 
-    private val _homeViewModelStateFlow = MutableStateFlow<HomeViewState>(InitialState)
-    val homeViewModelSateFlow: StateFlow<HomeViewState> get() = _homeViewModelStateFlow
+    private val _state = MutableStateFlow<HomeViewState>(Loading)
+    val state: StateFlow<HomeViewState> get() = _state
 
     private val threshold = 10
-    private val pageSize = 20
     private var nextPageToRetrieve = 1
-    private var lastElementRetrieved = 0
     private var lastVisible = 0
     private val moviesRetrieved = mutableListOf<DomainMovieResult>()
+    private var loadingJob: Job? = null
 
     fun getMovies(page: Int = nextPageToRetrieve) {
-        viewModelScope.launch {
+        if (loadingJob?.isActive == true) return
+        loadingJob = viewModelScope.launch {
             if (page == 1) {
-                _homeViewModelStateFlow.value = RetrievingMovies
+                _state.value = Loading
             }
 
             getMoviesUseCase(page)
                 .onSuccess { movies ->
-                    movies.results.forEach { movieResult ->
-                        if (!moviesRetrieved.contains(movieResult)) {
-                            moviesRetrieved.addAll(movies.results)
-                        }
-                    }
-                    _homeViewModelStateFlow.value = MoviesRetrieved(moviesRetrieved)
+                    val existingIds = moviesRetrieved.map { it.id }.toSet()
+                    val newMovies = movies.results.filter { it.id !in existingIds }
+                    moviesRetrieved.addAll(newMovies)
+                    nextPageToRetrieve++
+                    _state.value = MoviesSuccess(moviesRetrieved.toList())
                 }
                 .onError { error ->
-                    _homeViewModelStateFlow.value = ErrorInOperation(error.toString())
+                    _state.value = MoviesError(error.toString())
                 }
         }
     }
 
     fun saveMovie(movie: DomainMovieResult) {
         viewModelScope.launch {
+            val previousState = _state.value
+            _state.value = Loading
             saveMovieUseCase(movie)
-                .onSuccess { _homeViewModelStateFlow.value = SavedMovie(movie.id) }
-                .onError { _homeViewModelStateFlow.value = ErrorInOperation(it.toString()) }
-        }
-    }
-
-    fun onStop() {
-        _homeViewModelStateFlow.value = InitialState
-    }
-
-    private fun checkNeedNewPage() {
-        if (lastVisible + threshold >= lastElementRetrieved) {
-            lastElementRetrieved += pageSize
-            nextPageToRetrieve++
-            getMovies()
+                .onError { _state.value = previousState }
         }
     }
 
@@ -73,6 +62,13 @@ class HomeViewModel(
         if (lastVisible != lastElement) {
             lastVisible = lastElement
             checkNeedNewPage()
+        }
+    }
+
+    private fun checkNeedNewPage() {
+        val totalLoaded = moviesRetrieved.size
+        if (lastVisible + threshold >= totalLoaded) {
+            getMovies()
         }
     }
 }

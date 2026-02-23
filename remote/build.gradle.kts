@@ -2,7 +2,6 @@ import com.android.build.api.dsl.LibraryExtension
 
 plugins {
     alias(libs.plugins.setup.android.library)
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 extensions.configure<LibraryExtension>("android") {
