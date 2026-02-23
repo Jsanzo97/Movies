@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlinx.serialization) apply false
     alias(libs.plugins.detekt.gradle.plugin) apply false
     alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.firebase.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 tasks.register("detektAll") {

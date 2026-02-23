@@ -60,6 +60,7 @@ fun DetailsScreen(
 
     LaunchedEffect(movieId) {
         viewModel.getDetails(movieId)
+        viewModel.trackScreenView(movieId)
     }
 
     when (val currentState = state) {
