@@ -1,47 +1,44 @@
 package jsanzo.movies.ui.tracker
 
+import com.google.firebase.analytics.FirebaseAnalytics
 import io.mockk.mockk
 import io.mockk.verify
+import jsanzo.movies.tracking.FirebaseTracker
 import jsanzo.movies.tracking.MovieTracker
 import org.junit.jupiter.api.Test
 
 class MovieTrackerTest {
 
-    private val tracker: MovieTracker = mockk(relaxed = true)
+    private val mockedAnalytics: FirebaseAnalytics = mockk(relaxed = true)
+    private val tracker: MovieTracker = FirebaseTracker(mockedAnalytics)
 
     @Test
-    fun `trackHomeShown is called`() {
+    fun `trackHomeShown logs screen_view event with home screen name`() {
         tracker.trackHomeShown()
-        verify(exactly = 1) { tracker.trackHomeShown() }
+        verify { mockedAnalytics.logEvent("screen_view", any()) }
     }
 
     @Test
-    fun `trackDetailsShown is called with correct movieId`() {
-        val movieId = 123
-        tracker.trackDetailsShown(movieId)
-        verify(exactly = 1) { tracker.trackDetailsShown(movieId) }
+    fun `trackDetailsShown logs screen_view with details and movieId`() {
+        tracker.trackDetailsShown(123)
+        verify { mockedAnalytics.logEvent("screen_view", any()) }
     }
 
     @Test
-    fun `trackMovieClicked is called with correct parameters`() {
-        val movieId = 123
-        val movieTitle = "Harry Potter"
-        tracker.trackMovieClicked(movieId, movieTitle)
-        verify(exactly = 1) { tracker.trackMovieClicked(movieId, movieTitle) }
+    fun `trackMovieClicked logs movie_clicked event`() {
+        tracker.trackMovieClicked(123, "Harry Potter")
+        verify { mockedAnalytics.logEvent("movie_clicked", any()) }
     }
 
     @Test
-    fun `trackErrorShown is called with correct parameters`() {
-        val screen = "home"
-        val error = "error message"
-        tracker.trackErrorShown(screen, error)
-        verify(exactly = 1) { tracker.trackErrorShown(screen, error) }
+    fun `trackErrorShown logs error_shown event`() {
+        tracker.trackErrorShown("home", "error message")
+        verify { mockedAnalytics.logEvent("error_shown", any()) }
     }
 
     @Test
-    fun `trackPageLoaded is called with correct page`() {
-        val page = 1
-        tracker.trackPageLoaded(page)
-        verify(exactly = 1) { tracker.trackPageLoaded(page) }
+    fun `trackPageLoaded logs page_loaded event`() {
+        tracker.trackPageLoaded(1)
+        verify { mockedAnalytics.logEvent("page_loaded", any()) }
     }
 }

@@ -1,12 +1,15 @@
 # 🎬 Movies
 
-![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-7F52FF?style=flat&logo=kotlin&logoColor=white)
-![Android](https://img.shields.io/badge/Android-SDK%2036-3DDC84?style=flat&logo=android&logoColor=white)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2025.06.00-4285F4?style=flat&logo=jetpackcompose&logoColor=white)
-![Min SDK](https://img.shields.io/badge/Min%20SDK-24-orange?style=flat)
-![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat&logo=githubactions&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics-FFCA28?style=flat&logo=firebase&logoColor=black)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-grey?style=flat&logo=kotlin&logoColor=white&labelColor=7F52FF)
+![Android](https://img.shields.io/badge/Android-SDK%2036-grey?style=flat&logo=android&logoColor=white&labelColor=green)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.02.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
+![Min SDK](https://img.shields.io/badge/Min%20SDK-26-grey?style=flat&labelColor=green)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-grey?style=flat&logo=githubactions&logoColor=white&labelColor=yellow)
+![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics-grey?style=flat&logo=firebase&logoColor=black&labelColor=orange)
+![JUnit5](https://img.shields.io/badge/JUnit5-5.11.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
+![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
+[![Coverage](https://codecov.io/gh/Jsanzo97/Movies/branch/develop/graph/badge.svg)](https://codecov.io/gh/Jsanzo97/Movies)
+![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=deeppink)
 
 Android application that lists and displays movie details using [The Movie Database (TMDB) API](https://www.themoviedb.org/). Built as a reference project to showcase modern Android architecture and engineering practices.
 
@@ -76,7 +79,7 @@ The project uses a **custom Gradle plugin system** via an included `build-logic`
 |---|---|
 | `setup-android-application` | Base `:app` config — Compose, BuildConfig, build types, desugaring, Firebase dependencies |
 | `setup-android-library` | Base Android library config for all other modules |
-| `common-setup` | Detekt, Spotless/KtLint, JUnit 5, Koin Annotations, Kotlinx Serialization |
+| `common-setup` | Detekt, Spotless/KtLint, JUnit 5, Koin Annotations, Kotlinx Serialization, JaCoCo |
 
 This avoids duplicating Gradle configuration across modules. Adding a new module requires only applying the relevant convention plugin.
 
@@ -92,7 +95,7 @@ This avoids duplicating Gradle configuration across modules. Adding a new module
 GitHub Actions pipeline with two jobs:
 
 ```
-check (Detekt + Spotless) → build-and-test (assembleDebug + testAll)
+check (Detekt + Spotless) → build-and-test (assembleDebug + testAll + jacocoAll + Codecov)
 ```
 
 | Optimization | Detail |
@@ -112,6 +115,7 @@ All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
 | `SERVER_API_KEY` | TMDB API key, injected via `BuildConfig` |
 | `SERVER_ENDPOINT` | TMDB base URL, injected via `BuildConfig` |
 | `GOOGLE_SERVICES_JSON` | Base64-encoded `google-services.json`, decoded before build |
+| `CODECOV_TOKEN` | Codecov upload token for coverage reporting |
 
 ---
 
@@ -140,6 +144,13 @@ Debug Analytics events can be monitored in Firebase DebugView using Gradle tasks
 | Coroutines Test | `runTest` + `StandardTestDispatcher` for deterministic coroutine execution |
 
 ViewModel tests use `Dispatchers.setMain(testDispatcher)` + `advanceUntilIdle()` to control coroutine execution deterministically.
+
+Coverage is measured with **JaCoCo 0.8.12** and reported to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR.
+
+```bash
+./gradlew jacocoAll                     # generate coverage reports for all modules
+./gradlew :app:jacocoDebugTestReport    # specific module
+```
 
 ---
 

@@ -29,6 +29,16 @@ tasks.register("testAll") {
     })
 }
 
+tasks.register("jacocoAll") {
+    group = "verification"
+    description = "Run JaCoCo coverage report for all modules"
+    dependsOn(
+        subprojects.mapNotNull { subproject ->
+            subproject.tasks.findByName("jacocoDebugTestReport")
+        }
+    )
+}
+
 tasks.register("installGitHooks", Copy::class) {
     group = "setup"
     description = "Installs git hooks for the project"
