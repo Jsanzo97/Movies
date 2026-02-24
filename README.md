@@ -5,10 +5,10 @@
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.02.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26-grey?style=flat&labelColor=green)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-grey?style=flat&logo=githubactions&logoColor=white&labelColor=yellow)
-![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics-grey?style=flat&logo=firebase&logoColor=black&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
 ![JUnit5](https://img.shields.io/badge/JUnit5-5.11.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
-[![Coverage](https://codecov.io/gh/Jsanzo97/Movies/branch/develop/graph/badge.svg)](https://codecov.io/gh/Jsanzo97/Movies)
+[![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
 ![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=deeppink)
 
 Android application that lists and displays movie details using [The Movie Database (TMDB) API](https://www.themoviedb.org/). Built as a reference project to showcase modern Android architecture and engineering practices.
