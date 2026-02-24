@@ -70,6 +70,7 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         viewModel.getMovies()
+        viewModel.trackScreenView()
     }
 
     HomeContent(

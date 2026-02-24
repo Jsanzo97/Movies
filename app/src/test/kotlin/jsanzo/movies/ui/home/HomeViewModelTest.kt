@@ -14,6 +14,7 @@ import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import jsanzo.movies.tracking.MovieTracker
 import jsanzo.movies.ui.screens.home.HomeViewModel
 import jsanzo.movies.ui.screens.home.HomeViewState
 import jsanzo.movies.ui.screens.home.Loading
@@ -72,6 +73,8 @@ class HomeViewModelTest {
         totalPages = 0,
     )
 
+    private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
+
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -81,7 +84,7 @@ class HomeViewModelTest {
         coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns None
         coEvery { mockedSaveMovieUseCase(any()) } returns InvalidParametersError.some()
 
-        homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
+        homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase, mockedMovieTracker)
         homeViewModelStateFlow = homeViewModel.state
     }
 
