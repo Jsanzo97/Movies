@@ -51,6 +51,10 @@ jobs:
     name: Build & Tests
     needs: check
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -81,10 +85,25 @@ jobs:
           SERVER_ENDPOINT: ${{ secrets.SERVER_ENDPOINT }}
           SERVER_API_KEY: ${{ secrets.SERVER_API_KEY }}
 
-      - name: Upload test reports
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: test-reports
-          path: '**/build/reports/tests/'
-          retention-days: 7
+          name: Test Results
+          path: '**/build/test-results/**/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Run JaCoCo
+        run: ./gradlew jacocoAll
+        if: always()
+        env:
+          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: '**/build/reports/jacoco/**/jacocoDebugTestReport.xml'
+          fail_ci_if_error: false
+          verbose: true

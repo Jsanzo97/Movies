@@ -7,6 +7,7 @@ class CommonSetupPlugin : Plugin<Project> {
             setupDetekt()
             setupSpotless()
             setupJunitTests()
+            setupJacocoReport()
             setupCheck()
             setupKoin()
             setupArrow()

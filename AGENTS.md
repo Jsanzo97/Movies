@@ -523,6 +523,33 @@ testDispatcher.scheduler.advanceUntilIdle()
 ./gradlew :app:testDebugUnitTest           # Specific module
 ```
 
+### Code Coverage — JaCoCo
+
+JaCoCo 0.8.12 is configured via `setupJacocoReport()` in `CommonSetupPlugin`. Each module gets a `jacocoDebugTestReport` task that generates both HTML and XML reports.
+
+```bash
+./gradlew jacocoAll                        # Run JaCoCo on all modules
+./gradlew :app:jacocoDebugTestReport       # Specific module
+```
+
+Reports are generated at `<module>/build/reports/jacoco/jacocoDebugTestReport/`.
+
+**Excluded from coverage:**
+- Generated code (`**/generated/**`, `**/ksp/**`)
+- DI modules (`**/di/**`, `**/*Module*.*`, `**/*Component*.*`)
+- Android boilerplate (`**/R.class`, `**/BuildConfig.*`, `**/Manifest*.*`)
+- Koin/Dagger generated classes (`**/*_Factory*.*`, `**/*_MembersInjector*.*`)
+
+**Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `FirebaseTrackerTest`.
+
+### Codecov
+
+Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR via `codecov/codecov-action@v4`.
+
+- Coverage badge is dynamic and updates automatically with each PR
+- Currently only `:app` module XML is being picked up — remaining modules to be fixed when more tests are added
+- `CODECOV_TOKEN` stored as GitHub Actions Secret
+
 ---
 
 ## CI/CD & Branching
@@ -550,7 +577,7 @@ File: `.github/workflows/pr-validation.yml`
 - `google-services.json` decoded from secret before every Gradle task that needs it
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
-  2. `build-and-test` — `assembleDebug` + `testAll` in a single job (runs after check)
+  2. `build-and-test` — `assembleDebug` + `testAll` + `jacocoAll` + Codecov upload in a single job (runs after check)
 
 **Approximate CI times after cache optimization:**
 - `check`: ~1 min
@@ -560,6 +587,7 @@ File: `.github/workflows/pr-validation.yml`
 - `SERVER_ENDPOINT`
 - `SERVER_API_KEY`
 - `GOOGLE_SERVICES_JSON` (base64 encoded `google-services.json`, generated with PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("D:\path\to\app\google-services.json")) | clip`)
+- `CODECOV_TOKEN` (from codecov.io dashboard)
 
 > **Branch protection rules**: if status checks are required on `develop`/`main`, the required check names are `Check (Detekt + Spotless)` and `Build & Tests`.
 
@@ -681,6 +709,10 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 # Tests
 ./gradlew testAll
 ./gradlew :app:testDebugUnitTest
+
+# Coverage
+./gradlew jacocoAll
+./gradlew :app:jacocoDebugTestReport
 
 # Static analysis
 ./gradlew detektAll

@@ -36,6 +36,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
@@ -45,10 +47,9 @@ import jsanzo.movies.domain.model.DomainMovieGenre
 import jsanzo.movies.domain.model.DomainMovieProductionCompany
 import jsanzo.movies.domain.model.DomainMovieProductionCountry
 import jsanzo.movies.domain.model.DomainMovieSpokenLanguage
+import jsanzo.movies.ui.BASE_IMAGE_URL_ORIGINAL
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
-
-private const val BASE_IMAGE_URL_ORIGINAL = "https://image.tmdb.org/t/p/original"
 
 @Composable
 fun DetailsScreen(
@@ -63,7 +64,18 @@ fun DetailsScreen(
         viewModel.trackScreenView(movieId)
     }
 
-    when (val currentState = state) {
+    DetailsScreenContent(
+        state = state,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun DetailsScreenContent(
+    state: DetailsViewState,
+    modifier: Modifier = Modifier,
+) {
+    when (state) {
         is Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -74,7 +86,7 @@ fun DetailsScreen(
         }
 
         is DetailsSuccess -> DetailsContent(
-            movieDetails = currentState.movieDetails,
+            movieDetails = state.movieDetails,
             modifier = modifier,
         )
 
@@ -84,7 +96,7 @@ fun DetailsScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = currentState.message,
+                    text = state.message,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -283,52 +295,62 @@ private fun formatCountries(countries: List<DomainMovieProductionCountry>) = cou
 
 @Preview(showBackground = true)
 @Composable
-private fun DetailsContentPreview() {
+private fun DetailsScreenPreview(
+    @PreviewParameter(DetailsViewStateProvider::class) state: DetailsViewState,
+) {
     MoviesTheme {
         Surface {
-            DetailsContent(
-                movieDetails = DomainMovieDetails(
-                    adult = false,
-                    backdropPath = null,
-                    belongsToCollection = null,
-                    budget = 200_000_000,
-                    genres = listOf(
-                        DomainMovieGenre(1, "Fantasy"),
-                        DomainMovieGenre(2, "Adventure"),
-                    ),
-                    homepage = "https://www.harrypotter.com",
-                    id = 1,
-                    imdbId = "tt1201607",
-                    originalLanguage = "en",
-                    originalTitle = "Harry Potter and the Deathly Hallows",
-                    overview = "Harry, Ron and Hermione search for Voldemort's remaining Horcruxes in their effort to destroy the Dark Lord.",
-                    popularity = 8.5,
-                    posterPath = null,
-                    productionCompanies = listOf(
-                        DomainMovieProductionCompany(
-                            name = "Warner Bros.",
-                            id = 1,
-                            logoPath = null,
-                            originCountry = "US",
-                        ),
-                    ),
-                    productionCountries = listOf(
-                        DomainMovieProductionCountry("GB", "United Kingdom"),
-                    ),
-                    releaseDate = "2011-07-15",
-                    revenue = 1_341_693_157,
-                    runtime = 130,
-                    spokenLanguages = listOf(
-                        DomainMovieSpokenLanguage("en", "English"),
-                    ),
-                    status = "Released",
-                    tagline = "It all ends.",
-                    title = "Harry Potter and the Deathly Hallows – Part 2",
-                    video = false,
-                    voteAverage = 8.1,
-                    voteCount = 19_823,
-                ),
-            )
+            DetailsScreenContent(state = state)
         }
     }
+}
+
+private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewState> {
+    override val values: Sequence<DetailsViewState> = sequenceOf(
+        Loading,
+        DetailsSuccess(
+            movieDetails = DomainMovieDetails(
+                adult = false,
+                backdropPath = null,
+                belongsToCollection = null,
+                budget = 200_000_000,
+                genres = listOf(
+                    DomainMovieGenre(1, "Fantasy"),
+                    DomainMovieGenre(2, "Adventure"),
+                ),
+                homepage = "https://www.harrypotter.com",
+                id = 1,
+                imdbId = "tt1201607",
+                originalLanguage = "en",
+                originalTitle = "Harry Potter and the Deathly Hallows",
+                overview = "Harry, Ron and Hermione search for Voldemort's remaining horcruxes in their effort to destroy the Dark Lord.",
+                popularity = 150.0,
+                posterPath = null,
+                productionCompanies = listOf(
+                    DomainMovieProductionCompany(
+                        name = "Warner Bros.",
+                        id = 1,
+                        logoPath = null,
+                        originCountry = "US",
+                    ),
+                ),
+                productionCountries = listOf(
+                    DomainMovieProductionCountry("US", "United States of America"),
+                ),
+                releaseDate = "2011-07-15",
+                revenue = 1_341_511_219,
+                runtime = 130,
+                spokenLanguages = listOf(
+                    DomainMovieSpokenLanguage("en", "English"),
+                ),
+                status = "Released",
+                tagline = "It all ends here.",
+                title = "Harry Potter and the Deathly Hallows: Part 2",
+                video = false,
+                voteAverage = 8.3,
+                voteCount = 18_000,
+            ),
+        ),
+        DetailsError("An unexpected error occurred"),
+    )
 }

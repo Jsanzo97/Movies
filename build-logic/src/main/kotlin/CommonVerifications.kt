@@ -9,6 +9,8 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
+import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 internal fun Project.setupDetekt() {
     pluginManager.apply("io.gitlab.arturbosch.detekt")
@@ -24,9 +26,9 @@ internal fun Project.setupDetekt() {
         })
     }
 
-    tasks.withType<Detekt>().configureEach {
+    tasks.withType<Detekt>().configureEach {        
         jvmTarget = "17"
-        exclude { it.file.absolutePath.contains("/build/generated") }
+        exclude { it.file.absolutePath.contains("/build/generated") }        
     }
 }
 
@@ -79,10 +81,20 @@ internal fun Project.setupJunitTests() {
         extensions.findByName("android")?.let { ext ->
             when (ext) {
                 is com.android.build.api.dsl.ApplicationExtension -> {
-                    ext.testOptions.unitTests.all { it.useJUnitPlatform() }
+                    ext.testOptions.unitTests {
+                        isReturnDefaultValues = true
+                        all { test ->
+                            test.useJUnitPlatform()
+                        }
+                    }
                 }
                 is com.android.build.api.dsl.LibraryExtension -> {
-                    ext.testOptions.unitTests.all { it.useJUnitPlatform() }
+                    ext.testOptions.unitTests {
+                        isReturnDefaultValues = true
+                        all {
+                            it.useJUnitPlatform()
+                        }
+                    }
                 }
             }
         }
@@ -101,5 +113,100 @@ internal fun Project.setupJunitTests() {
 
         "testRuntimeOnly"(libs().getLibrary("junit-vintage-engine"))
         "testRuntimeOnly"(libs().getLibrary("junit-platform-launcher"))
+    }
+}
+
+internal fun Project.setupJacocoReport() {
+    pluginManager.apply("jacoco")
+
+    extensions.configure<JacocoPluginExtension> {
+        toolVersion = "0.8.12"
+    }
+
+    afterEvaluate {        
+        extensions.findByName("android")?.let { ext ->
+            val variants = when (ext) {
+                is com.android.build.api.dsl.ApplicationExtension -> listOf("debug")
+                is com.android.build.api.dsl.LibraryExtension -> listOf("debug")
+                else -> emptyList()
+            }
+
+            variants.forEach { variant ->
+                val variantName = variant.replaceFirstChar { it.uppercase() }
+
+                tasks.register("jacoco${variantName}TestReport", JacocoReport::class.java) {
+                    dependsOn("test${variantName}UnitTest")
+                    group = "verification"
+                    description = "Generate JaCoCo coverage report for $variant variant"
+
+                    reports {
+                        xml.required.set(true)
+                        html.required.set(true)
+                    }
+
+                    val excludes = listOf(
+                        "**/R.class",
+                        "**/R$*.class",
+                        "**/BuildConfig.*",
+                        "**/Manifest*.*",
+                        "**/*Test*.*",
+                        "android/**/*.*",
+                        "**/di/**",
+                        "**/*_Factory*.*",
+                        "**/*_MembersInjector*.*",
+                        "**/*Module*.*",
+                        "**/*Component*.*",
+                        "**/generated/**",
+                        "**/ksp/**",
+                        $$"**/*$lambda$*",
+                        $$"**/*$inlined$*",
+                        $$"**/*$default$*",
+                        $$"**/*$sam$*",
+                        "**/*$*Function*",
+                        $$"**/*$1*",
+                        $$"**/*$2*",
+                        $$"**/*$3*",
+                        $$"**/*$4*",
+                        $$"**/*$5*",
+                        $$"**/*$6*",
+                        $$"**/*$7*",
+                        $$"**/*$8*",
+                        $$"**/*$9*",
+                        "**/*ComposableSingletons*",
+                        "**/ComposableSingletons${'$'}*",
+                        "**/*WhenMappings*",
+                        "**/*DefaultImpls*",
+                        "**/*_Generated*",
+                        "**/ui/theme/**",
+                        "**/ui/navigation/**",
+                        "**/ui/navigation/**",
+                        "**/ui/screens/**/*Screen*",
+                        "**/ui/screens/**/*ViewStateProvider*",
+                        "**/ui/ComposeActivity*",
+                        "**/MoviesApplication*",
+                    )
+
+                    val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/$variant/classes") {
+                        exclude(excludes)
+                    }
+
+                    val kotlinClasses = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/$variant") {
+                        exclude(excludes)
+                    }
+
+                    val kotlincClasses = fileTree("${layout.buildDirectory.get()}/intermediates/built_in_kotlinc/$variant/compile${variantName}Kotlin/classes") {
+                        exclude(excludes)
+                    }
+
+                    classDirectories.setFrom(files(javaClasses, kotlinClasses, kotlincClasses))
+                    sourceDirectories.setFrom(files("src/main/kotlin", "src/main/java"))
+                    executionData.setFrom(
+                        fileTree(layout.buildDirectory.get()) {
+                            include("**/*.exec", "**/*.ec")
+                        }
+                    )
+                }
+            }
+        }
     }
 }
