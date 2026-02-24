@@ -84,7 +84,7 @@ Each module appends its name automatically via `calculateNamespace()` in build-l
 #### UseCase pattern
 ```kotlin
 class UseCase(private val repository: Repository) {
-    suspend operator fun invoke() = repository.function()
+  suspend operator fun invoke() = repository.function()
 }
 ```
 
@@ -245,8 +245,14 @@ Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggre
 ## Firebase
 
 ### Setup
-- `google-services.json` in `:app`
+- `google-services.json` is gitignored — never committed to the repo
 - Two apps registered in Firebase Console: `jsanzo.movies` (release) and `jsanzo.movies.debug` (debug)
+- `google-services.json` is passed to CI via GitHub Secret `GOOGLE_SERVICES_JSON` (base64 encoded) and decoded before the build:
+```yaml
+- name: Decode google-services.json
+  run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+```
+- To encode locally for the secret: `certutil -encode app\google-services.json google-services-b64.txt` (Windows)
 - Plugins applied in `app/build.gradle.kts` (not in convention plugin to avoid classpath conflicts):
 ```kotlin
 alias(libs.plugins.google.services)
@@ -258,6 +264,21 @@ alias(libs.plugins.firebase.crashlytics)
 "implementation"(libs().getLibrary("firebase-analytics"))
 "implementation"(libs().getLibrary("firebase-crashlytics"))
 ```
+
+### Tracker interface
+`Tracker` is an interface defined in `:app/tracking/Tracker.kt`. `FirebaseTracker` implements it. ViewModels depend on `Tracker` not `FirebaseTracker`, making them testable without Firebase:
+
+```kotlin
+interface Tracker {
+    fun trackHomeShown()
+    fun trackDetailsShown(movieId: Int)
+    fun trackMovieClicked(movieId: Int, movieTitle: String)
+    fun trackErrorShown(screen: String, error: String)
+    fun trackPageLoaded(page: Int)
+}
+```
+
+In tests, `Tracker` is mocked with `mockk(relaxed = true)` so all tracking calls are ignored automatically.
 
 ### FirebaseTracker
 Located in `:app/tracking/FirebaseTracker.kt`. Single source of truth for all analytics events. Provided via `AppModule`:
@@ -524,15 +545,23 @@ File: `.github/workflows/pr-validation.yml`
 - Triggers on every PR regardless of branches
 - Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
 - `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` set on all Gradle steps to suppress KSP NullPointerException in headless CI environments
-- Gradle cache managed automatically by `gradle/actions/setup-gradle@v4` (no `cache-read-only` restriction)
-- `cache: 'gradle'` added to `actions/setup-java@v4` to cache the Gradle wrapper and avoid downloading it on every run
+- Gradle cache managed by `gradle/actions/setup-gradle@v4` with `cache-read-only: false` to allow cache writes on every run
+- `cache: 'gradle'` on `actions/setup-java@v4` restores Gradle User Home before `setup-gradle` runs
+- `google-services.json` decoded from secret before every Gradle task that needs it
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
   2. `build-and-test` — `assembleDebug` + `testAll` in a single job (runs after check)
 
-> **Why merge build and test into one job?** Separate jobs each spin up a fresh runner and restore the Gradle cache independently, duplicating work. A single `build-and-test` job halves the runner usage and cache restoration overhead.
+**Approximate CI times after cache optimization:**
+- `check`: ~1 min
+- `build-and-test`: ~2 min
 
-> **Branch protection rules**: if status checks are required on `develop`/`main`, the required check name is `Build & Tests` (not the old `Build` and `Tests` separately).
+**GitHub Actions Secrets required:**
+- `SERVER_ENDPOINT`
+- `SERVER_API_KEY`
+- `GOOGLE_SERVICES_JSON` (base64 encoded `google-services.json`, generated with PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("D:\path\to\app\google-services.json")) | clip`)
+
+> **Branch protection rules**: if status checks are required on `develop`/`main`, the required check names are `Check (Detekt + Spotless)` and `Build & Tests`.
 
 ### Gradle performance settings (`gradle.properties`)
 
@@ -586,4 +615,114 @@ API keys and URLs are never hardcoded in source code. They are read from `local.
 **`local.properties`** (gitignored, local only):
 ```properties
 SERVER_ENDPOINT=https://api.themoviedb.org/3/movie/
-SERVER_API_KEY=your_a
+SERVER_API_KEY=your_api_key_here
+```
+
+**`:remote/build.gradle.kts`** reads from `local.properties` with fallback to environment variables for CI:
+```kotlin
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
+buildConfigField(
+    "String", "SERVER_ENDPOINT",
+    "\"${localProperties["SERVER_ENDPOINT"] ?: System.getenv("SERVER_ENDPOINT")}\"",
+)
+buildConfigField(
+    "String", "SERVER_API_KEY",
+    "\"${localProperties["SERVER_API_KEY"] ?: System.getenv("SERVER_API_KEY")}\"",
+)
+```
+
+**GitHub Actions Secrets** required (Settings → Secrets and variables → Actions):
+- `SERVER_ENDPOINT`
+- `SERVER_API_KEY`
+- `GOOGLE_SERVICES_JSON` (base64 encoded `google-services.json`)
+
+Secrets are injected as environment variables in the `build-and-test` job only (the `check` job does not compile code so does not need them).
+
+---
+
+## Version Catalog
+
+| Library | Version |
+|---|---|
+| Android Gradle Plugin | 9.0.1 |
+| Kotlin | 2.3.10 |
+| Coroutines | 1.10.2 |
+| Koin | 4.1.1 |
+| Koin Annotations | 2.3.1 |
+| Retrofit | 3.0.0 |
+| OkHttp | 5.3.2 |
+| Room | 2.8.4 |
+| Navigation Compose | 2.9.0 |
+| Compose BOM | 2025.06.00 |
+| Coil | 2.7.0 |
+| Accompanist | 0.36.0 |
+| Arrow | 2.2.1.1 |
+| Detekt | 1.23.8 |
+| detekt-rules-compose | 0.4.27 |
+| Firebase BOM | 33.7.0 |
+| Google Services plugin | 4.4.2 |
+| Firebase Crashlytics plugin | 3.0.3 |
+| Lifecycle | 2.10.0 |
+| KSP | 2.3.5 |
+
+---
+
+## Common Commands
+
+```bash
+# Build
+./gradlew assembleDebug
+./gradlew assembleRelease
+
+# Tests
+./gradlew testAll
+./gradlew :app:testDebugUnitTest
+
+# Static analysis
+./gradlew detektAll
+./gradlew :app:detekt
+
+# All checks
+./gradlew check
+
+# Stop Gradle daemon (Windows file lock workaround)
+./gradlew --stop
+
+# Install git hooks
+./gradlew installGitHooks
+```
+
+---
+
+## Known Issues & Notes
+
+- **Windows file locking**: The Gradle daemon may lock `.jar` files. Run `./gradlew --stop` if the build fails with file access errors.
+- **Namespace special case**: The `:app` module has a hardcoded `if` in `calculateNamespace()` because its namespace is `jsanzo.movies`, not `jsanzo.movies.app`.
+- **Compose compiler plugin classpath conflict**: With AGP 9.0.1 + Kotlin 2.x, applying `org.jetbrains.kotlin.plugin.compose` via `pluginManager.apply()` from a convention plugin in an included build causes `org.jetbrains:annotations` version conflicts. Workaround: declare it with `apply false` in the root `build.gradle.kts` and apply it explicitly in `app/build.gradle.kts`.
+- **detekt-rules-compose version cap**: Versions `0.5.x+` depend on `dev.detekt 2.0.0-alpha.2` which is not yet published in public repos. Max compatible version with Detekt 1.23.8 is `0.4.27`.
+- **KSP NullPointerException in CI**: KSP throws a harmless `NullPointerException` in `AWT-EventQueue-0` on headless environments. Does not fail the build. Suppressed via `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` in CI.
+
+---
+
+## Pending Migrations
+
+- [x] Migrate Home screen to Jetpack Compose
+- [x] Migrate Details screen to Jetpack Compose
+- [x] Migrate Navigation to Navigation Compose
+- [x] Remove XML layouts, Fragments, Safe Args and related dependencies
+- [x] Restructure project defining Koin modules on its module instead of app
+- [x] Add Compose + Navigation Compose setup
+- [x] Add detekt-rules-compose with Compose rules in detekt.yml
+- [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
+- [x] Set up GitHub Actions CI/CD pipelines (PR validation)
+- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
+- [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
+- [ ] Remove Robolectric dependency
+- [ ] Add Detekt JUnit 5 rules plugin
+- [ ] Set up deploy pipeline
+- [ ] Evaluate Arrow dependency (keep or remove)
+- [ ] Introduce dedicated mapper classes (currently using extension functions)

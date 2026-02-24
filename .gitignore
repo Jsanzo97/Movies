@@ -14,3 +14,4 @@ local.properties
 secret/
 keystore.jks
 *.jks
+app/google-services.json
