@@ -92,10 +92,11 @@ This avoids duplicating Gradle configuration across modules. Adding a new module
 
 ## 🚀 CI/CD
 
-GitHub Actions pipeline with two jobs:
+Two GitHub Actions workflows:
 
 ```
-check (Detekt + Spotless) → build-and-test (assembleDebug + testAll + jacocoAll + Codecov)
+PR:      check (Detekt + Spotless) → build-and-test (assembleDebug + testAll + jacocoAll + Codecov)
+develop: coverage (jacocoAll + Codecov)
 ```
 
 | Optimization | Detail |
@@ -104,8 +105,9 @@ check (Detekt + Spotless) → build-and-test (assembleDebug + testAll + jacocoAl
 | Headless JVM | `JAVA_TOOL_OPTIONS: -Djava.awt.headless=true` suppresses KSP AWT errors |
 | Configuration cache | Enabled globally, persisted between runs |
 | Single build+test job | Avoids spinning up two runners for tasks that share the same cache |
+| Separate coverage workflow | Avoids re-running full pipeline on develop after merge |
 
-**Approximate times:** `check` ~1 min · `build-and-test` ~2 min
+**Approximate times:** `check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min after cache has been written
 
 ### Secrets
 All sensitive values are stored as GitHub Actions Secrets — never hardcoded:

@@ -2,9 +2,6 @@ name: PR Validation
 
 on:
   pull_request:
-  push:
-    branches:
-      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
