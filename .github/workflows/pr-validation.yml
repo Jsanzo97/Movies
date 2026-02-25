@@ -2,6 +2,9 @@ name: PR Validation
 
 on:
   pull_request:
+  push:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -104,6 +107,7 @@ jobs:
         uses: codecov/codecov-action@v4
         if: always()
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: '**/build/reports/jacoco/**/jacocoDebugTestReport.xml'
           fail_ci_if_error: false
           verbose: true

@@ -9,7 +9,7 @@
 ![JUnit5](https://img.shields.io/badge/JUnit5-5.11.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
 [![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
-![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=deeppink)
+![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=yellow)
 
 Android application that lists and displays movie details using [The Movie Database (TMDB) API](https://www.themoviedb.org/). Built as a reference project to showcase modern Android architecture and engineering practices.
 
