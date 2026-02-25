@@ -569,7 +569,7 @@ Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo9
 
 File: `.github/workflows/pr-validation.yml`
 
-- Triggers on every PR regardless of branches
+- Triggers on every PR (`on: pull_request`)
 - Cancels in-progress runs when new commit is pushed (`cancel-in-progress: true`)
 - `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` set on all Gradle steps to suppress KSP NullPointerException in headless CI environments
 - Gradle cache managed by `gradle/actions/setup-gradle@v4` with `cache-read-only: false` to allow cache writes on every run
@@ -577,11 +577,22 @@ File: `.github/workflows/pr-validation.yml`
 - `google-services.json` decoded from secret before every Gradle task that needs it
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
-  2. `build-and-test` — `assembleDebug` + `testAll` + `jacocoAll` + Codecov upload in a single job (runs after check)
+  2. `build-and-test` — `assembleDebug` + `testAll` + `jacocoAll` + Codecov upload (runs after check)
 
 **Approximate CI times after cache optimization:**
 - `check`: ~1 min
 - `build-and-test`: ~2 min
+
+### GitHub Actions — Coverage
+
+File: `.github/workflows/coverage.yml`
+
+- Triggers on push to `develop` only (`on: push: branches: [develop]`)
+- Runs after a PR is merged — avoids re-running the full validation pipeline on develop
+- Single job: `jacocoAll` + Codecov upload
+- Much faster than full PR validation since build and tests already passed in the PR
+
+> **Why a separate workflow?** PRs already run the full pipeline. Running it again on develop after merge is redundant. The coverage workflow only does what's needed to update Codecov and the badge.
 
 **GitHub Actions Secrets required:**
 - `SERVER_ENDPOINT`
@@ -649,17 +660,17 @@ SERVER_API_KEY=your_api_key_here
 **`:remote/build.gradle.kts`** reads from `local.properties` with fallback to environment variables for CI:
 ```kotlin
 val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) load(file.inputStream())
+  val file = rootProject.file("local.properties")
+  if (file.exists()) load(file.inputStream())
 }
 
 buildConfigField(
-    "String", "SERVER_ENDPOINT",
-    "\"${localProperties["SERVER_ENDPOINT"] ?: System.getenv("SERVER_ENDPOINT")}\"",
+  "String", "SERVER_ENDPOINT",
+  "\"${localProperties["SERVER_ENDPOINT"] ?: System.getenv("SERVER_ENDPOINT")}\"",
 )
 buildConfigField(
-    "String", "SERVER_API_KEY",
-    "\"${localProperties["SERVER_API_KEY"] ?: System.getenv("SERVER_API_KEY")}\"",
+  "String", "SERVER_API_KEY",
+  "\"${localProperties["SERVER_API_KEY"] ?: System.getenv("SERVER_API_KEY")}\"",
 )
 ```
 
@@ -752,8 +763,8 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [x] Set up GitHub Actions CI/CD pipelines (PR validation)
 - [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
-- [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
-- [ ] Remove Robolectric dependency
+- [x] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
+- [x] Remove Robolectric dependency
 - [ ] Add Detekt JUnit 5 rules plugin
 - [ ] Set up deploy pipeline
 - [ ] Evaluate Arrow dependency (keep or remove)
