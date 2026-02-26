@@ -33,16 +33,16 @@ jobs:
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
 
       - name: Run JaCoCo
-        run: ./gradlew jacocoAll
+        run: ./gradlew jacocoMergedReport
+        if: always()
         env:
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
-          SERVER_ENDPOINT: ${{ secrets.SERVER_ENDPOINT }}
-          SERVER_API_KEY: ${{ secrets.SERVER_API_KEY }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: '**/build/reports/jacoco/**/jacocoDebugTestReport.xml'
+          files: 'build/reports/jacoco/jacocoMergedReport/jacocoMergedReport.xml'
           fail_ci_if_error: false
           verbose: true

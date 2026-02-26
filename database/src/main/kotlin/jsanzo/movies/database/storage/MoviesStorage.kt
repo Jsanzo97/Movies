@@ -58,7 +58,7 @@ class MoviesStorage(
             moviesDao.saveMovieDetails(dataMovieDetails.toMovieDetailsEntity())
             None
         } catch (_: Exception) {
-            ReadingError.some()
+            WritingError.some()
         }
     }
 }

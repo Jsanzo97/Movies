@@ -1,0 +1,59 @@
+package jsanzo.movies.domain.model
+
+internal val domainMovieDetails = DomainMovieDetails(
+    adult = false,
+    backdropPath = null,
+    belongsToCollection = DomainMovieCollection(
+        id = 1,
+        name = "Collection",
+        posterPath = "",
+        backdropPath = "",
+    ),
+    budget = 0,
+    genres = listOf(DomainMovieGenre(id = 1, name = "Action")),
+    homepage = null,
+    id = 1,
+    imdbId = null,
+    originCountry = listOf(""),
+    originalLanguage = "",
+    originalTitle = "",
+    overview = null,
+    popularity = 0.0,
+    posterPath = null,
+    productionCompanies = listOf(DomainMovieProductionCompany(name = "Warner", id = 1, logoPath = null, originCountry = "US")),
+    productionCountries = listOf(DomainMovieProductionCountry(iso = "US", name = "United States")),
+    releaseDate = "",
+    revenue = 0,
+    runtime = null,
+    spokenLanguages = listOf(DomainMovieSpokenLanguage(englishName = "name", iso = "en", name = "English")),
+    status = "",
+    tagline = null,
+    title = "",
+    video = false,
+    voteAverage = 0.0,
+    voteCount = 0,
+)
+
+internal val domainMovieResult = DomainMovieResult(
+    posterPath = null,
+    adult = false,
+    overview = "",
+    releaseDate = "",
+    genreIds = listOf(1, 2),
+    id = 1,
+    originalTitle = "Original Title",
+    originalLanguage = "en",
+    title = "Title",
+    backdropPath = null,
+    popularity = 8.5,
+    voteCount = 100,
+    video = false,
+    voteAverage = 7.5,
+)
+
+internal val domainMovie = DomainMovie(
+    page = 1,
+    results = listOf(domainMovieResult),
+    totalResults = 1,
+    totalPages = 1,
+)

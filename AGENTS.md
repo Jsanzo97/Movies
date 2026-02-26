@@ -182,8 +182,8 @@ app/src/main/kotlin/jsanzo/movies/
 Type-safe Navigation Compose using `@Serializable` data objects/classes:
 ```kotlin
 sealed interface AppDestinations {
-    @Serializable data object Home : AppDestinations
-    @Serializable data class Details(val movieId: Int) : AppDestinations
+  @Serializable data object Home : AppDestinations
+  @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
 
@@ -270,11 +270,11 @@ alias(libs.plugins.firebase.crashlytics)
 
 ```kotlin
 interface Tracker {
-    fun trackHomeShown()
-    fun trackDetailsShown(movieId: Int)
-    fun trackMovieClicked(movieId: Int, movieTitle: String)
-    fun trackErrorShown(screen: String, error: String)
-    fun trackPageLoaded(page: Int)
+  fun trackHomeShown()
+  fun trackDetailsShown(movieId: Int)
+  fun trackMovieClicked(movieId: Int, movieTitle: String)
+  fun trackErrorShown(screen: String, error: String)
+  fun trackPageLoaded(page: Int)
 }
 ```
 
@@ -286,10 +286,10 @@ Located in `:app/tracking/FirebaseTracker.kt`. Single source of truth for all an
 ```kotlin
 @Single
 fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
-    FirebaseTracker(
-        analytics = FirebaseAnalytics.getInstance(androidContext),
-        crashlytics = FirebaseCrashlytics.getInstance(),
-    )
+  FirebaseTracker(
+    analytics = FirebaseAnalytics.getInstance(androidContext),
+    crashlytics = FirebaseCrashlytics.getInstance(),
+  )
 ```
 
 ### Tracked events
@@ -336,16 +336,16 @@ Notification permission is requested only on debug builds and only on Android 13
 ```kotlin
 @Composable
 fun RequestNotificationPermission() {
-    if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val permissionState = rememberPermissionState(
-            permission = Manifest.permission.POST_NOTIFICATIONS,
-        )
-        LaunchedEffect(Unit) {
-            if (!permissionState.status.isGranted) {
-                permissionState.launchPermissionRequest()
-            }
-        }
+  if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val permissionState = rememberPermissionState(
+      permission = Manifest.permission.POST_NOTIFICATIONS,
+    )
+    LaunchedEffect(Unit) {
+      if (!permissionState.status.isGranted) {
+        permissionState.launchPermissionRequest()
+      }
     }
+  }
 }
 ```
 
@@ -374,8 +374,8 @@ Navigation to details is handled as a side effect via `SharedFlow<Int>` instead 
 private var loadingJob: Job? = null
 
 fun getMovies(page: Int = nextPageToRetrieve) {
-    if (loadingJob?.isActive == true) return
-    loadingJob = viewModelScope.launch { ... }
+  if (loadingJob?.isActive == true) return
+  loadingJob = viewModelScope.launch { ... }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -386,10 +386,10 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ### Pagination logic
 ```kotlin
 private fun checkNeedNewPage() {
-    val totalLoaded = moviesRetrieved.size
-    if (lastVisible + threshold >= totalLoaded) {
-        getMovies()
-    }
+  val totalLoaded = moviesRetrieved.size
+  if (lastVisible + threshold >= totalLoaded) {
+    getMovies()
+  }
 }
 ```
 
@@ -458,6 +458,7 @@ Convention plugins are defined in `build-logic/src/main/kotlin/`.
 - `setupJunitTests()` — configures JUnit 5
 - `setupSerialization()` — applies `org.jetbrains.kotlin.plugin.serialization` to all modules
 - `setupKoin()` — configures Koin
+- `setupJacocoReport()` — configures JaCoCo 0.8.12, registers `jacocoDebugTestReport` task per module, exposes excludes list via `project.extra["jacocoExcludes"]`
 
 ---
 
@@ -525,30 +526,41 @@ testDispatcher.scheduler.advanceUntilIdle()
 
 ### Code Coverage — JaCoCo
 
-JaCoCo 0.8.12 is configured via `setupJacocoReport()` in `CommonSetupPlugin`. Each module gets a `jacocoDebugTestReport` task that generates both HTML and XML reports.
+JaCoCo 0.8.12 is configured via `setupJacocoReport()` in `CommonSetupPlugin`. Each module gets a `jacocoDebugTestReport` task that generates both HTML and XML reports. A merged report aggregating all modules is generated via `jacocoMergedReport` at the root level.
+- **Minimum Threshold**: 95% (verified by `jacocoMergedCoverageVerification`).
+- **Reports**: HTML/XML reports generated at root level. Coverage data is reported to Codecov.
+- **Exclusions**: Compose internals, generated code, DI, and UI-only packages (theme, navigation, etc.) are excluded from reports.
 
 ```bash
-./gradlew jacocoAll                        # Run JaCoCo on all modules
+./gradlew jacocoAll                        # Run JaCoCo on all modules (individual reports)
+./gradlew jacocoMergedReport               # Generate merged report for all modules
+./gradlew jacocoMergedCoverageVerification # Run tests, report and verify 95% threshold
 ./gradlew :app:jacocoDebugTestReport       # Specific module
 ```
 
-Reports are generated at `<module>/build/reports/jacoco/jacocoDebugTestReport/`.
+Individual reports are generated at `<module>/build/reports/jacoco/jacocoDebugTestReport/`.
+Merged report is generated at `build/reports/jacoco/jacocoMergedReport/html/index.html`.
+
+The excludes list is defined once in `setupJacocoReport()` and exposed via `project.extra["jacocoExcludes"]` so the root `build.gradle.kts` can reuse it without duplication.
 
 **Excluded from coverage:**
 - Generated code (`**/generated/**`, `**/ksp/**`)
 - DI modules (`**/di/**`, `**/*Module*.*`, `**/*Component*.*`)
 - Android boilerplate (`**/R.class`, `**/BuildConfig.*`, `**/Manifest*.*`)
-- Koin/Dagger generated classes (`**/*_Factory*.*`, `**/*_MembersInjector*.*`)
-
-**Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `FirebaseTrackerTest`.
+- Koin generated classes (`**/*_Factory*.*`)
+- DAOs (`**/dao/**`)
+- Kotlin internal classes (lambdas, anonymous classes, `WhenMappings`, `DefaultImpls`)
+- UI boilerplate (`**/ui/theme/**`, `**/ui/navigation/**`, `**/ui/screens/**/*Screen*`, etc.)
 
 ### Codecov
 
-Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR via `codecov/codecov-action@v4`.
+Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR and on every push to `develop` via `codecov/codecov-action@v4`.
 
-- Coverage badge is dynamic and updates automatically with each PR
-- Currently only `:app` module XML is being picked up — remaining modules to be fixed when more tests are added
+- Coverage badge is dynamic and updates automatically with each merge to `develop`
+- The merged report XML (`build/reports/jacoco/jacocoMergedReport/jacocoMergedReport.xml`) is uploaded, covering all modules
 - `CODECOV_TOKEN` stored as GitHub Actions Secret
+
+**Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `FirebaseTrackerTest`.
 
 ---
 
@@ -577,7 +589,9 @@ File: `.github/workflows/pr-validation.yml`
 - `google-services.json` decoded from secret before every Gradle task that needs it
 - Jobs:
   1. `check` — Detekt + Spotless (runs first)
-  2. `build-and-test` — `assembleDebug` + `testAll` + `jacocoAll` + Codecov upload (runs after check)
+  2. `build-and-test` — `assembleDebug` + `jacocoMergedCoverageVerification` (Min 95% code coverage) + Codecov upload (runs after check)
+- **Quality Gate**: The build fails automatically if the aggregated coverage is below **95%**.
+- **Reports**: Coverage reported to **Codecov**
 
 **Approximate CI times after cache optimization:**
 - `check`: ~1 min
@@ -589,7 +603,7 @@ File: `.github/workflows/coverage.yml`
 
 - Triggers on push to `develop` only (`on: push: branches: [develop]`)
 - Runs after a PR is merged — avoids re-running the full validation pipeline on develop
-- Single job: `jacocoAll` + Codecov upload
+- Single job: `jacocoMergedReport` + Codecov upload
 - Much faster than full PR validation since build and tests already passed in the PR
 
 > **Why a separate workflow?** PRs already run the full pipeline. Running it again on develop after merge is redundant. The coverage workflow only does what's needed to update Codecov and the badge.
@@ -717,13 +731,15 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 ./gradlew assembleDebug
 ./gradlew assembleRelease
 
-# Tests
+# Testing & Coverage
 ./gradlew testAll
 ./gradlew :app:testDebugUnitTest
 
 # Coverage
-./gradlew jacocoAll
-./gradlew :app:jacocoDebugTestReport
+./gradlew jacocoAll                        # individual reports per module
+./gradlew jacocoMergedReport               # merged report for all modules
+./gradlew :app:jacocoDebugTestReport       # specific module
+./gradlew jacocoMergedCoverageVerification # coverage verification
 
 # Static analysis
 ./gradlew detektAll
@@ -763,9 +779,9 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [x] Set up GitHub Actions CI/CD pipelines (PR validation)
 - [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
-- [x] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
-- [x] Remove Robolectric dependency
-- [ ] Add Detekt JUnit 5 rules plugin
+- [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
+- [ ] Remove Robolectric dependency
+- [ ] ~~Add Detekt JUnit 5 rules plugin~~ — evaluated and discarded. The available plugin (`de.joshuagleitze:detekt-junit5`) only offers value for preventing JUnit 4/5 mixing, which is already fully migrated. Not worth the dependency.
 - [ ] Set up deploy pipeline
 - [ ] Evaluate Arrow dependency (keep or remove)
 - [ ] Introduce dedicated mapper classes (currently using extension functions)

@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package jsanzo.movies.remote.dto.response
 
 import jsanzo.movies.data.model.DataMovie

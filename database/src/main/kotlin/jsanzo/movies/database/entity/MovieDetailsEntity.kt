@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package jsanzo.movies.database.entity
 
 import androidx.room.Entity
@@ -23,6 +25,7 @@ data class MovieDetailsEntity(
     val homepage: String?,
     val id: Int,
     val imdbId: String?,
+    val originCountry: String,
     val originalLanguage: String,
     val originalTitle: String,
     val overview: String?,
@@ -72,6 +75,7 @@ data class MovieProductionCountryEntity(
 
 @Serializable
 data class MovieSpokenLanguageEntity(
+    val englishName: String,
     val iso: String,
     val name: String,
 )
@@ -85,6 +89,7 @@ fun DataMovieDetails.toMovieDetailsEntity() = MovieDetailsEntity(
     homepage,
     id,
     imdbId,
+    originCountry.joinToString(","),
     originalLanguage,
     originalTitle,
     overview,
@@ -113,6 +118,7 @@ fun MovieDetailsEntity.toDataMovieDetails() = DataMovieDetails(
     homepage,
     id,
     imdbId,
+    originCountry.split(","),
     originalLanguage,
     originalTitle,
     overview,
@@ -181,11 +187,13 @@ fun MovieProductionCountryEntity.toDataMovieProductionCountry() = DataMovieProdu
 )
 
 fun DataMovieSpokenLanguage.toMovieSpokenLanguageEntity() = MovieSpokenLanguageEntity(
+    englishName,
     iso,
     name,
 )
 
 fun MovieSpokenLanguageEntity.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
+    englishName,
     iso,
     name,
 )

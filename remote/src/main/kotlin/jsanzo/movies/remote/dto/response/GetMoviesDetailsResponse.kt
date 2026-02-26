@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package jsanzo.movies.remote.dto.response
 
 import jsanzo.movies.data.model.DataMovieCollection
@@ -103,6 +105,7 @@ fun GetMoviesDetailsResponse.toDataMovieDetails() = DataMovieDetails(
     homepage,
     id,
     imdbId,
+    originCountry,
     originalLanguage,
     originalTitle,
     overview,
@@ -147,6 +150,7 @@ fun GetMoviesProductionCountry.toDataMovieProductionCountry() = DataMovieProduct
 )
 
 fun GetMoviesSpokenLanguage.toDataMovieSpokenLanguage() = DataMovieSpokenLanguage(
+    englishName,
     iso,
     name,
 )

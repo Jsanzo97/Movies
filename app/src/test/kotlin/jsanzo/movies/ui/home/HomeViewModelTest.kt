@@ -10,11 +10,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import jsanzo.movies.domain.error.InvalidParametersError
-import jsanzo.movies.domain.model.DomainMovie
-import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import jsanzo.movies.tracking.MovieTracker
+import jsanzo.movies.ui.model.domainMovie
+import jsanzo.movies.ui.model.domainMovieResult
 import jsanzo.movies.ui.screens.home.HomeViewModel
 import jsanzo.movies.ui.screens.home.HomeViewState
 import jsanzo.movies.ui.screens.home.Loading
@@ -47,41 +47,15 @@ class HomeViewModelTest {
     private val lastElementVisibleToNeedMore = 10
     private val lastElementVisibleToNotNeedMore = 1
 
-    private val mockedDomainMovieResult = DomainMovieResult(
-        posterPath = null,
-        adult = false,
-        overview = "",
-        releaseDate = "",
-        genreIds = listOf(),
-        id = 1,
-        originalTitle = "",
-        originalLanguage = "",
-        title = "",
-        backdropPath = null,
-        popularity = 0.0,
-        voteCount = 0,
-        video = false,
-        voteAverage = 0.0,
-    )
-
-    private val mockedDomainMovie = DomainMovie(
-        page = 0,
-        results = (1..20).map { id ->
-            mockedDomainMovieResult.copy(id = id)
-        },
-        totalResults = 0,
-        totalPages = 0,
-    )
-
     private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { mockedGetMoviesUseCase(validPage) } returns mockedDomainMovie.right()
-        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns mockedDomainMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage) } returns domainMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns domainMovie.right()
         coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
-        coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns None
+        coEvery { mockedSaveMovieUseCase(domainMovieResult) } returns None
         coEvery { mockedSaveMovieUseCase(any()) } returns InvalidParametersError.some()
 
         homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase, mockedMovieTracker)
@@ -107,7 +81,7 @@ class HomeViewModelTest {
         homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesSuccess>()
 
         val state = homeViewModelStateFlow.value as MoviesSuccess
-        state.movies shouldBe mockedDomainMovie.results
+        state.movies shouldBe domainMovie.results
     }
 
     @Test
@@ -126,8 +100,8 @@ class HomeViewModelTest {
 
         val previousState = homeViewModelStateFlow.value
 
-        coEvery { mockedSaveMovieUseCase(mockedDomainMovieResult) } returns InvalidParametersError.some()
-        homeViewModel.saveMovie(mockedDomainMovieResult)
+        coEvery { mockedSaveMovieUseCase(domainMovieResult) } returns InvalidParametersError.some()
+        homeViewModel.saveMovie(domainMovieResult)
         testDispatcher.scheduler.advanceUntilIdle()
 
         homeViewModelStateFlow.value shouldBe previousState
@@ -154,5 +128,64 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 0) { mockedGetMoviesUseCase(validPage + 1) }
+    }
+
+    @Test
+    fun `trackScreenView calls tracker trackHomeShown`() = runTest {
+        homeViewModel.trackScreenView()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedMovieTracker.trackHomeShown() }
+    }
+
+    @Test
+    fun `saveMovie calls tracker trackMovieClicked`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.saveMovie(domainMovieResult)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedMovieTracker.trackMovieClicked(domainMovieResult.id, domainMovieResult.title) }
+    }
+
+    @Test
+    fun `MoviesError contains correct message`() {
+        val error = MoviesError("Something went wrong")
+        error.message shouldBe "Something went wrong"
+    }
+
+    @Test
+    fun `getMovies does nothing when a loading job is already active`() = runTest {
+        homeViewModel.getMovies(validPage)
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+    }
+
+    @Test
+    fun `state does not change to Loading when page is not 1`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val stateBeforeSecondLoad = homeViewModelStateFlow.value
+
+        homeViewModel.getMovies(validPage + 1)
+        stateBeforeSecondLoad.shouldBeInstanceOf<MoviesSuccess>()
+    }
+
+    @Test
+    fun `notifyLastElementVisible does nothing when same element is notified twice`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { mockedGetMoviesUseCase(validPage + 2) }
     }
 }
