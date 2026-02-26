@@ -8,23 +8,23 @@
 
     <string name="media_image_content_description">Image of the movie title</string>
 
-    <string name="movie_title">Title:</string>
-    <string name="movie_score">Score:</string>
-    <string name="movie_language">Language:</string>
-    <string name="movie_date">Date:</string>
+    <string name="movie_title">Title</string>
+    <string name="movie_score">Score</string>
+    <string name="movie_language">Language</string>
+    <string name="movie_date">Date</string>
 
-    <string name="movie_details_title">Title:</string>
-    <string name="movie_details_punctuation">Punctuation:</string>
-    <string name="movie_details_release_date">Date:</string>
-    <string name="movie_details_language">Languages:</string>
-    <string name="movie_details_genres">Genres:</string>
-    <string name="movie_details_webpage">Webpage:</string>
-    <string name="movie_details_overview">Overview:</string>
-    <string name="movie_details_runtime">Runtime:</string>
-    <string name="movie_details_production">Production Companies:</string>
-    <string name="movie_details_country">Countries:</string>
-    <string name="movie_details_status">Status:</string>
-    <string name="movie_details_revenue">Revenue:</string>
+    <string name="movie_details_title">Title</string>
+    <string name="movie_details_punctuation">Punctuation</string>
+    <string name="movie_details_release_date">Date</string>
+    <string name="movie_details_language">Languages</string>
+    <string name="movie_details_genres">Genres</string>
+    <string name="movie_details_webpage">Webpage</string>
+    <string name="movie_details_overview">Overview</string>
+    <string name="movie_details_runtime">Runtime</string>
+    <string name="movie_details_production">Production Companies</string>
+    <string name="movie_details_country">Countries</string>
+    <string name="movie_details_status">Status</string>
+    <string name="movie_details_revenue">Revenue</string>
 
     <string name="movie_details_duration_value">%1$d minutes</string>
     <string name="movie_details_revenue_value" translatable="false">%1$d $</string>

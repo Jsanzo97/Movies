@@ -1,30 +1,30 @@
 package jsanzo.movies.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import jsanzo.movies.ui.screens.details.DetailsScreen
 import jsanzo.movies.ui.screens.home.HomeScreen
 
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination = AppDestinations.Home,
-    ) {
-        composable<AppDestinations.Home> {
-            HomeScreen(
-                onNavigateToDetails = { movieId ->
-                    navController.navigate(AppDestinations.Details(movieId))
-                },
-            )
-        }
-        composable<AppDestinations.Details> { backStackEntry ->
-            val destination = backStackEntry.toRoute<AppDestinations.Details>()
-            DetailsScreen(movieId = destination.movieId)
-        }
-    }
+    val backStack = rememberNavBackStack(AppDestinations.Home)
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
+        entryProvider = entryProvider {
+            entry<AppDestinations.Home> {
+                HomeScreen(
+                    onNavigateToDetails = { movieId ->
+                        backStack.add(AppDestinations.Details(movieId))
+                    },
+                )
+            }
+            entry<AppDestinations.Details> { key ->
+                DetailsScreen(movieId = key.movieId)
+            }
+        },
+    )
 }
