@@ -8,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
@@ -123,7 +124,48 @@ internal fun Project.setupJacocoReport() {
         toolVersion = "0.8.12"
     }
 
-    afterEvaluate {        
+    val excludes = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/di/**",
+        "**/dao/**",
+        "**/*_Factory*.*",
+        "**/generated/**",
+        "**/ksp/**",
+        $$"**/*$lambda$*",
+        $$"**/*$inlined$*",
+        $$"**/*$default$*",
+        $$"**/*$sam$*",
+        "**/*$*Function*",
+        $$"**/*$1*",
+        $$"**/*$2*",
+        $$"**/*$3*",
+        $$"**/*$4*",
+        $$"**/*$5*",
+        $$"**/*$6*",
+        $$"**/*$7*",
+        $$"**/*$8*",
+        $$"**/*$9*",
+        "**/*ComposableSingletons*",
+        "**/*WhenMappings*",
+        "**/*DefaultImpls*",
+        "**/ui/theme/**",
+        "**/ui/navigation/**",
+        "**/ui/screens/**/*Screen*",
+        "**/ui/screens/**/*ViewStateProvider*",
+        "**/LocalDatabase*",
+        "**/ui/ComposeActivity*",
+        "**/model/**",
+        "**/MoviesApplication*",
+    )
+
+    extra["jacocoExcludes"] = excludes
+
+    afterEvaluate {
         extensions.findByName("android")?.let { ext ->
             val variants = when (ext) {
                 is com.android.build.api.dsl.ApplicationExtension -> listOf("debug")
@@ -134,8 +176,20 @@ internal fun Project.setupJacocoReport() {
             variants.forEach { variant ->
                 val variantName = variant.replaceFirstChar { it.uppercase() }
 
+                val compileTask = tasks.names.firstOrNull {
+                    it.startsWith("compile${variantName}Kotlin")
+                }
+
+                val androidTasksToWaitFor = listOf(
+                    "process${variantName}Manifest",
+                    "merge${variantName}Assets",
+                    "compile${variantName}LibraryResources",
+                    "merge${variantName}JavaResource",
+                ).filter { tasks.names.contains(it) }
+
                 tasks.register("jacoco${variantName}TestReport", JacocoReport::class.java) {
-                    dependsOn("test${variantName}UnitTest")
+                    dependsOn(listOfNotNull("test${variantName}UnitTest", compileTask))
+                    if (androidTasksToWaitFor.isNotEmpty()) mustRunAfter(androidTasksToWaitFor)
                     group = "verification"
                     description = "Generate JaCoCo coverage report for $variant variant"
 
@@ -143,48 +197,6 @@ internal fun Project.setupJacocoReport() {
                         xml.required.set(true)
                         html.required.set(true)
                     }
-
-                    val excludes = listOf(
-                        "**/R.class",
-                        "**/R$*.class",
-                        "**/BuildConfig.*",
-                        "**/Manifest*.*",
-                        "**/*Test*.*",
-                        "android/**/*.*",
-                        "**/di/**",
-                        "**/*_Factory*.*",
-                        "**/*_MembersInjector*.*",
-                        "**/*Module*.*",
-                        "**/*Component*.*",
-                        "**/generated/**",
-                        "**/ksp/**",
-                        $$"**/*$lambda$*",
-                        $$"**/*$inlined$*",
-                        $$"**/*$default$*",
-                        $$"**/*$sam$*",
-                        "**/*$*Function*",
-                        $$"**/*$1*",
-                        $$"**/*$2*",
-                        $$"**/*$3*",
-                        $$"**/*$4*",
-                        $$"**/*$5*",
-                        $$"**/*$6*",
-                        $$"**/*$7*",
-                        $$"**/*$8*",
-                        $$"**/*$9*",
-                        "**/*ComposableSingletons*",
-                        "**/ComposableSingletons${'$'}*",
-                        "**/*WhenMappings*",
-                        "**/*DefaultImpls*",
-                        "**/*_Generated*",
-                        "**/ui/theme/**",
-                        "**/ui/navigation/**",
-                        "**/ui/navigation/**",
-                        "**/ui/screens/**/*Screen*",
-                        "**/ui/screens/**/*ViewStateProvider*",
-                        "**/ui/ComposeActivity*",
-                        "**/MoviesApplication*",
-                    )
 
                     val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/$variant/classes") {
                         exclude(excludes)

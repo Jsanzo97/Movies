@@ -839,24 +839,6 @@ style:
     excludeImports:
       - 'java.util.*'
 
-#compiler:
-#  CompilerInfo:
-#    active: false
-#    ignoreDiagnostic: []
-#  CompilerWarning:
-#    active: true
-#    ignoreDiagnostic:
-#      - 'OPT_IN_IS_NOT_ENABLED'
-
-#JUnit:
-#  active: true
-#  MissingTestAnnotation:
-#    active: true
-#  TestFunctionsShouldReturnUnit:
-#    active: true
-#  UnnecessaryNested:
-#    active: true
-
 Compose:
   CompositionLocalAllowlist:
     active: true

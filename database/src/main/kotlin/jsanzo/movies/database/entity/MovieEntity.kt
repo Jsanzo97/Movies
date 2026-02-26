@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package jsanzo.movies.database.entity
 
 import androidx.room.Entity

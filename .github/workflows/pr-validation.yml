@@ -78,33 +78,18 @@ jobs:
       - name: Decode google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
 
-      - name: Build & Tests
-        run: ./gradlew assembleDebug testAll
+      - name: Build, Test & Verify Coverage
+        run: ./gradlew assembleDebug jacocoMergedCoverageVerification
         env:
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
           SERVER_ENDPOINT: ${{ secrets.SERVER_ENDPOINT }}
           SERVER_API_KEY: ${{ secrets.SERVER_API_KEY }}
-
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Test Results
-          path: '**/build/test-results/**/*.xml'
-          reporter: java-junit
-          fail-on-error: false
-
-      - name: Run JaCoCo
-        run: ./gradlew jacocoAll
-        if: always()
-        env:
-          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: '**/build/reports/jacoco/**/jacocoDebugTestReport.xml'
+          files: 'build/reports/jacoco/jacocoMergedReport/jacocoMergedReport.xml'
           fail_ci_if_error: false
           verbose: true

@@ -9,6 +9,7 @@ data class DomainMovieDetails(
     val homepage: String?,
     val id: Int,
     val imdbId: String?,
+    val originCountry: List<String>,
     val originalLanguage: String,
     val originalTitle: String,
     val overview: String?,

@@ -8,9 +8,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import jsanzo.movies.domain.error.NotFoundError
-import jsanzo.movies.domain.model.DomainMovieDetails
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import jsanzo.movies.tracking.MovieTracker
+import jsanzo.movies.ui.model.domainMovieDetails
 import jsanzo.movies.ui.screens.details.DetailsError
 import jsanzo.movies.ui.screens.details.DetailsSuccess
 import jsanzo.movies.ui.screens.details.DetailsViewModel
@@ -37,34 +37,6 @@ class DetailsViewModelTest {
     private val mockedGetMovieDetailsUseCase: GetMovieDetailsUseCase = mockk()
 
     private lateinit var detailsViewModelStateFlow: StateFlow<DetailsViewState>
-
-    private val domainMovieDetails = DomainMovieDetails(
-        adult = false,
-        backdropPath = null,
-        belongsToCollection = null,
-        budget = 0,
-        genres = listOf(),
-        homepage = null,
-        id = 1,
-        imdbId = null,
-        originalLanguage = "",
-        originalTitle = "",
-        overview = null,
-        popularity = 0.0,
-        posterPath = null,
-        productionCompanies = listOf(),
-        productionCountries = listOf(),
-        releaseDate = "",
-        revenue = 0,
-        runtime = null,
-        spokenLanguages = listOf(),
-        status = "",
-        tagline = null,
-        title = "",
-        video = false,
-        voteAverage = 0.0,
-        voteCount = 0,
-    )
 
     private val validMovieId = 0
     private val invalidMovieId = -1
@@ -115,5 +87,19 @@ class DetailsViewModelTest {
         coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
 
         detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsError>()
+    }
+
+    @Test
+    fun `trackScreenView calls tracker trackDetailsShown`() = runTest {
+        detailsViewModel.trackScreenView(validMovieId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedMovieTracker.trackDetailsShown(validMovieId) }
+    }
+
+    @Test
+    fun `DetailsError contains correct message`() {
+        val error = DetailsError("An unexpected error occurred")
+        error.message shouldBe "An unexpected error occurred"
     }
 }

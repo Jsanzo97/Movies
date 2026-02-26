@@ -95,9 +95,10 @@ This avoids duplicating Gradle configuration across modules. Adding a new module
 Two GitHub Actions workflows:
 
 ```
-PR:      check (Detekt + Spotless) → build-and-test (assembleDebug + testAll + jacocoAll + Codecov)
-develop: coverage (jacocoAll + Codecov)
+PR:      check (Detekt + Spotless) → build-and-test (assembleDebug + jacocoMergedCoverageVerification + Codecov)
+develop: coverage (jacocoMergedReport + Codecov)
 ```
+**Quality Gate**: Code coverage from merged report must be over 95%
 
 | Optimization | Detail |
 |---|---|
@@ -107,7 +108,7 @@ develop: coverage (jacocoAll + Codecov)
 | Single build+test job | Avoids spinning up two runners for tasks that share the same cache |
 | Separate coverage workflow | Avoids re-running full pipeline on develop after merge |
 
-**Approximate times:** `check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min after cache has been written
+**Approximate times (after Gradle cache is written):** `check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
 
 ### Secrets
 All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
@@ -150,8 +151,10 @@ ViewModel tests use `Dispatchers.setMain(testDispatcher)` + `advanceUntilIdle()`
 Coverage is measured with **JaCoCo 0.8.12** and reported to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR.
 
 ```bash
-./gradlew jacocoAll                     # generate coverage reports for all modules
-./gradlew :app:jacocoDebugTestReport    # specific module
+./gradlew jacocoMergedReport                # generate merged coverage report for all modules
+./gradlew jacocoAll                         # generate individual reports per module
+./gradlew :app:jacocoDebugTestReport        # specific module
+./gradlew jacocoMergedCoverageVerification  # verify merged coverage is over 95%
 ```
 
 ---

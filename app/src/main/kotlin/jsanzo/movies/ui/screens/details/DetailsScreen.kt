@@ -321,6 +321,7 @@ private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewSta
                 homepage = "https://www.harrypotter.com",
                 id = 1,
                 imdbId = "tt1201607",
+                originCountry = listOf(""),
                 originalLanguage = "en",
                 originalTitle = "Harry Potter and the Deathly Hallows",
                 overview = "Harry, Ron and Hermione search for Voldemort's remaining horcruxes in their effort to destroy the Dark Lord.",
@@ -341,7 +342,7 @@ private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewSta
                 revenue = 1_341_511_219,
                 runtime = 130,
                 spokenLanguages = listOf(
-                    DomainMovieSpokenLanguage("en", "English"),
+                    DomainMovieSpokenLanguage("", "en", "English"),
                 ),
                 status = "Released",
                 tagline = "It all ends here.",
