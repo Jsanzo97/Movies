@@ -4,6 +4,9 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 sealed interface AppDestinations : NavKey {
+
+    @Serializable data object Splash : AppDestinations
+
     @Serializable
     data object Home : AppDestinations
 

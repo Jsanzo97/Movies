@@ -93,3 +93,4 @@ jobs:
           files: 'build/reports/jacoco/jacocoMergedReport/jacocoMergedReport.xml'
           fail_ci_if_error: false
           verbose: true
+          comment: false
