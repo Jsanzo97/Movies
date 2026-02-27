@@ -41,4 +41,22 @@ class MovieTrackerTest {
         tracker.trackPageLoaded(1)
         verify { mockedAnalytics.logEvent("page_loaded", any()) }
     }
+
+    @Test
+    fun `trackSplashShown logs screen_view event with splash screen name`() {
+        tracker.trackSplashShown()
+        verify { mockedAnalytics.logEvent("screen_view", any()) }
+    }
+
+    @Test
+    fun `trackForceUpdateShown logs force_update_shown event with current version`() {
+        tracker.trackForceUpdateShown("1.0.0")
+        verify { mockedAnalytics.logEvent("force_update_shown", any()) }
+    }
+
+    @Test
+    fun `trackRemoteConfigError logs remote_config_error event`() {
+        tracker.trackRemoteConfigError()
+        verify { mockedAnalytics.logEvent("remote_config_error", any()) }
+    }
 }

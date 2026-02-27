@@ -37,6 +37,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.core)
     implementation(libs.okhttp.core)
+    
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     debugImplementation(libs.chucker)
     releaseImplementation(libs.chucker.no.op)

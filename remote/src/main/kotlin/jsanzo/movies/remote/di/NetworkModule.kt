@@ -22,6 +22,12 @@ const val APP_WS = "APP_WS"
 class NetworkModule {
 
     @Single
+    fun json(): Json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    @Single
     @Named(BASIC_OK_HTTP_CLIENT)
     fun basicOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
@@ -31,12 +37,15 @@ class NetworkModule {
 
     @Single
     @Named(APP_WS)
-    fun appWs(@Named(APP_OK_HTTP_CLIENT) okHttpClient: OkHttpClient): Retrofit {
+    fun appWs(
+        @Named(APP_OK_HTTP_CLIENT) okHttpClient: OkHttpClient,
+        json: Json,
+    ): Retrofit {
         val contentType = "application/json".toMediaType()
         return Retrofit.Builder()
             .client(okHttpClient)
             .baseUrl(BuildConfig.SERVER_ENDPOINT)
-            .addConverterFactory(Json.asConverterFactory(contentType))
+            .addConverterFactory(json.asConverterFactory(contentType))
             .build()
     }
 

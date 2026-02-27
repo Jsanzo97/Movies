@@ -9,6 +9,9 @@ interface MovieTracker {
     fun trackMovieClicked(movieId: Int, movieTitle: String)
     fun trackErrorShown(screen: String, error: String)
     fun trackPageLoaded(page: Int)
+    fun trackSplashShown()
+    fun trackForceUpdateShown(currentVersion: String)
+    fun trackRemoteConfigError()
 }
 
 internal class FirebaseTracker(
@@ -46,5 +49,21 @@ internal class FirebaseTracker(
         analytics.logEvent("page_loaded") {
             param("page", page.toLong())
         }
+    }
+
+    override fun trackSplashShown() {
+        analytics.logEvent("screen_view") {
+            param("screen_name", "splash")
+        }
+    }
+
+    override fun trackForceUpdateShown(currentVersion: String) {
+        analytics.logEvent("force_update_shown") {
+            param("current_version", currentVersion)
+        }
+    }
+
+    override fun trackRemoteConfigError() {
+        analytics.logEvent("remote_config_error") {}
     }
 }
