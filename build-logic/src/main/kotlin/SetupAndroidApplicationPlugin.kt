@@ -102,6 +102,8 @@ private fun Project.apply() {
         "implementation"(platform(libs().getLibrary("firebase-bom")))
         "implementation"(libs().getLibrary("firebase-analytics"))
         "implementation"(libs().getLibrary("firebase-crashlytics"))
+        "implementation"(libs().getLibrary("lottie-compose"))
+        "implementation"(libs().getLibrary("androidx-splashscreen"))
 
         "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
     }
