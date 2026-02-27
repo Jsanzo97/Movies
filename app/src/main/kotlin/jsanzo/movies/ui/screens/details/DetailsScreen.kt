@@ -35,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
@@ -48,6 +47,7 @@ import jsanzo.movies.domain.model.DomainMovieProductionCompany
 import jsanzo.movies.domain.model.DomainMovieProductionCountry
 import jsanzo.movies.domain.model.DomainMovieSpokenLanguage
 import jsanzo.movies.ui.BASE_IMAGE_URL_ORIGINAL
+import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -75,31 +75,35 @@ private fun DetailsScreenContent(
     state: DetailsViewState,
     modifier: Modifier = Modifier,
 ) {
-    when (state) {
-        is Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        when (state) {
+            is Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        }
 
-        is DetailsSuccess -> DetailsContent(
-            movieDetails = state.movieDetails,
-            modifier = modifier,
-        )
+            is DetailsSuccess -> DetailsContent(
+                movieDetails = state.movieDetails,
+            )
 
-        is DetailsError -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = state.message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                )
+            is DetailsError -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }
@@ -293,8 +297,8 @@ private fun formatProductions(productions: List<DomainMovieProductionCompany>) =
 
 private fun formatCountries(countries: List<DomainMovieProductionCountry>) = countries.joinToString(", ") { it.name }
 
-@Preview(showBackground = true)
 @Composable
+@PreviewOnDevices
 private fun DetailsScreenPreview(
     @PreviewParameter(DetailsViewStateProvider::class) state: DetailsViewState,
 ) {

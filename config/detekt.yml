@@ -793,7 +793,7 @@ style:
     active: true
     allowedNames: ''
     ignoreAnnotated:
-      - 'Preview'
+      - 'PreviewOnDevices'
   UnusedPrivateProperty:
     active: true
     allowedNames: '_|ignored|expected|serialVersionUID'

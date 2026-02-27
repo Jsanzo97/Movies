@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.tooling.preview.Preview
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -43,3 +44,8 @@ class ComposeActivity : ComponentActivity() {
         }
     }
 }
+
+@Preview(name = "Small Phone", device = "spec:width=360dp,height=640dp,dpi=480", apiLevel = 36, showBackground = true)
+@Preview(name = "Medium Phone", device = "spec:width=411dp,height=891dp,dpi=420", apiLevel = 36, showBackground = true)
+@Preview(name = "Large Phone", device = "spec:width=600dp,height=1024dp,dpi=480", apiLevel = 36, showBackground = true)
+annotation class PreviewOnDevices
