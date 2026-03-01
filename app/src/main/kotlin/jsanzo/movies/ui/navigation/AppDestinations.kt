@@ -7,6 +7,8 @@ sealed interface AppDestinations : NavKey {
 
     @Serializable data object Splash : AppDestinations
 
+    @Serializable data object ForceUpdate : AppDestinations
+
     @Serializable
     data object Home : AppDestinations
 

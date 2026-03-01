@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-Multi-module Android application built with Kotlin that displays movies using The Movie Database (TMDB) API. Follows Clean Architecture with MVVM presentation pattern. Fully migrated to Jetpack Compose and Navigation Compose. Migrating from JUnit 4 to JUnit 5.
+Multi-module Android application built with Kotlin that displays movies using The Movie Database (TMDB) API. Follows Clean Architecture with MVVM presentation pattern. Fully migrated to Jetpack Compose and Navigation3. Tests fully migrated to JUnit 5.
 
 ---
 
@@ -18,18 +18,19 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | UI | Jetpack Compose | Migration from XML/Fragments complete |
 | Architecture | MVVM + Clean Architecture | |
 | DI | Koin 4.1.1 | Using Koin Annotations for DI |
-| Navigation | Navigation Compose | Migration from Jetpack Navigation Component + Safe Args complete |
+| Navigation | Navigation3 1.0.1 | Migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack` |
 | Networking | Retrofit 3.0.0 + OkHttp 5.3.2 | |
 | Serialization | Kotlinx Serialization 1.10.0 | Applied via CommonSetupPlugin to all modules |
 | Database | Room 2.8.4 | |
 | Async | Coroutines 1.10.2 + Flow + StateFlow | |
 | Image loading | Coil 2.7.0 | Replaced Glide |
 | Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
-| Analytics & Crashlytics | Firebase BOM 33.7.0 | Crashlytics + Analytics with DebugView |
+| Analytics & Crashlytics | Firebase BOM 34.9.0 | Crashlytics + Analytics + Remote Config with DebugView |
+| Splash | Lottie 6.6.6 | Animated splash screen with JSON animation |
 | HTTP inspector | Chucker | debugImplementation only, no-op in release |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
-| Min SDK | 24 | |
+| Min SDK | 26 | |
 | Target/Compile SDK | 36 | |
 | Java compatibility | Java 21 | |
 
@@ -135,7 +136,7 @@ Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key deci
 - The `org.jetbrains.kotlin.plugin.compose` plugin is declared with `apply false` in the **root** `build.gradle.kts` to make it available on the classpath without triggering classpath conflicts
 - It is then applied explicitly in `app/build.gradle.kts` via `alias(libs.plugins.compose.compiler)`
 
-> **Why not apply it from the convention plugin?** Applying it programmatically via `pluginManager.apply()` from `build-logic` causes `org.jetbrains:annotations` version conflicts with AGP 9.0.1 and Kotlin 2.x embedded in Gradle. The `apply false` in root + explicit apply in `:app` is the correct workaround.
+> **Why not apply it from the convention plugin?** Applying it programmatically via `pluginManager.apply()` from `build-logic` causes `org.jetbrains:annotations` version conflicts with AGP 9.0.1 + Kotlin 2.x embedded in Gradle. The `apply false` in root + explicit apply in `:app` is the correct workaround.
 
 ### Compose dependencies (added in `SetupAndroidApplicationPlugin`)
 ```kotlin
@@ -143,13 +144,15 @@ Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key deci
 "implementation"(libs().getLibrary("compose-ui"))
 "implementation"(libs().getLibrary("compose-material3"))
 "implementation"(libs().getLibrary("compose-ui-tooling-preview"))
-"implementation"(libs().getLibrary("navigation-compose"))
+"implementation"(libs().getLibrary("androidx-navigation3-ui"))
+"implementation"(libs().getLibrary("androidx-navigation3-runtime"))
 "implementation"(libs().getLibrary("androidx-lifecycle-runtime-compose"))
 "implementation"(libs().getLibrary("koin-compose"))
 "implementation"(libs().getLibrary("coil-compose"))
-"implementation"(libs().getLibrary("material-icons-core"))
-"implementation"(libs().getLibrary("accompanist-systemuicontroller"))
+"implementation"(libs().getLibrary("compose-material-icons-extended"))
 "implementation"(libs().getLibrary("accompanist-permissions"))
+"implementation"(libs().getLibrary("lottie-compose"))
+"implementation"(libs().getLibrary("kotlinx-coroutines-play-services"))
 "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
 ```
 
@@ -163,14 +166,20 @@ app/src/main/kotlin/jsanzo/movies/
 │   │   ├── AppDestinations.kt
 │   │   └── AppNavigation.kt
 │   └── screens/
+│       ├── splash/
+│       │   ├── SplashScreen.kt
+│       │   ├── SplashViewModel.kt
+│       │   └── SplashViewState.kt
 │       ├── home/
 │       │   ├── HomeScreen.kt
 │       │   ├── HomeViewModel.kt
 │       │   └── HomeViewState.kt
-│       └── details/
-│           ├── DetailsScreen.kt
-│           ├── DetailsViewModel.kt
-│           └── DetailsViewState.kt
+│       ├── details/
+│       │   ├── DetailsScreen.kt
+│       │   ├── DetailsViewModel.kt
+│       │   └── DetailsViewState.kt
+│       └── forceupdate/
+│           └── ForceUpdateScreen.kt
 ├── theme/
 │   └── MoviesTheme.kt
 ├── ComposeActivity.kt
@@ -179,13 +188,19 @@ app/src/main/kotlin/jsanzo/movies/
 ```
 
 ### Navigation
-Type-safe Navigation Compose using `@Serializable` data objects/classes:
+Type-safe Navigation3 using `NavKey` + `@Serializable` data objects/classes:
 ```kotlin
-sealed interface AppDestinations {
-  @Serializable data object Home : AppDestinations
-  @Serializable data class Details(val movieId: Int) : AppDestinations
+sealed interface AppDestinations : NavKey {
+    @Serializable data object Splash : AppDestinations
+    @Serializable data object Home : AppDestinations
+    @Serializable data object ForceUpdate : AppDestinations
+    @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
+
+Navigation is managed via `rememberNavBackStack` and `NavDisplay`. No `NavController` — forward navigation uses `backStack.add()`, back navigation uses `backStack.removeLastOrNull()`.
+
+Slide animations configured via `transitionSpec` (left→right on navigate) and `popTransitionSpec` (right→left on back). The Splash→Home and Splash→ForceUpdate transitions use `fadeIn/fadeOut`.
 
 `ComposeActivity` is the sole launcher Activity. All XML navigation, Fragments, Safe Args, and related dependencies have been removed.
 
@@ -193,15 +208,21 @@ sealed interface AppDestinations {
 
 ## Theme
 
-`MoviesTheme` in `ui/theme/MoviesTheme.kt` defines light and dark color schemes based on the existing XML theme colors. Respects system dark mode via `isSystemInDarkTheme()`. Status bar color is set via `accompanist-systemuicontroller`.
+`MoviesTheme` in `ui/theme/MoviesTheme.kt` defines a full Material 3 color scheme generated from seed color `#1B4B8A` (navy blue). Supports Dynamic Color on Android 12+ (API 31+), falling back to the hardcoded M3 palette on older versions. Respects system dark mode via `isSystemInDarkTheme()`.
 
-Colors:
-- Primary: `#FF6200EE` (Purple500)
-- PrimaryContainer: `#FF3700B3` (Purple700)
-- Secondary: `#FF03DAC5` (Teal200)
-- SecondaryContainer: `#FF018786` (Teal700)
+### Color seed
+`#1B4B8A` — navy blue, neutral and professional, lets movie posters be the visual focus.
 
-`ComposeActivity` uses `@style/AppTheme.NoActionBar` in the manifest to avoid a black background flash before Compose renders.
+### Dynamic Color
+On Android 12+ (`Build.VERSION_CODES.S`), the color scheme adapts to the user's wallpaper via `dynamicLightColorScheme` / `dynamicDarkColorScheme`. On older versions the hardcoded M3 palette is used.
+
+### Typography
+Full M3 typography scale defined explicitly in `AppTypography` — all 15 text styles from `displayLarge` to `labelSmall` with proper weights and line heights.
+
+### Window insets
+`WindowCompat.setDecorFitsSystemWindows(window, false)` set in `MoviesTheme` so content draws edge-to-edge. Status bar and navigation bar icon colors adapt to dark/light theme via `isAppearanceLightStatusBars` and `isAppearanceLightNavigationBars`.
+
+`ComposeActivity` uses `@style/Theme.Movies.Splash` in the manifest — a translucent theme that prevents the white flash before Compose renders. After Compose is ready the theme is effectively replaced by `MoviesTheme`.
 
 ---
 
@@ -235,7 +256,7 @@ Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggre
 | `AppModule` | `:app/di` | Main module, includes all other modules. |
 | `DataModule` | `:data/di` | Provides repository implementations. |
 | `DatabaseModule`| `:database/di`| Provides Room DB, DAOs, and the local datastore. |
-| `RemoteModule` | `:remote/di` | Provides the remote datastore (`MoviesService`). |
+| `RemoteModule` | `:remote/di` | Provides the remote datastore (`MoviesService`) and `FirebaseRemoteConfig`. |
 | `NetworkModule`| `:remote/di` | Provides Retrofit and OkHttp dependencies. |
 | `AppRemoteModule`| `:remote/di/`| Provides build-variant specific network config (e.g., Chucker). |
 | `DomainModule` | `:domain/di` | Provides UseCases. |
@@ -263,6 +284,11 @@ alias(libs.plugins.firebase.crashlytics)
 "implementation"(platform(libs().getLibrary("firebase-bom")))
 "implementation"(libs().getLibrary("firebase-analytics"))
 "implementation"(libs().getLibrary("firebase-crashlytics"))
+```
+- Firebase Remote Config dependency added in `:remote/build.gradle.kts`:
+```kotlin
+implementation(platform(libs.firebase.bom))
+implementation(libs.firebase.config)
 ```
 
 ### Tracker interface
@@ -301,6 +327,9 @@ fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
 | `trackMovieClicked(movieId, movieTitle)` | `movie_clicked` | `movie_id`, `movie_title` |
 | `trackErrorShown(screen, error)` | `error_shown` | `screen`, `error` |
 | `trackPageLoaded(page)` | `page_loaded` | `page` |
+| `trackSplashShown()` | `screen_view` | `screen_name: "splash"` |
+| `trackForceUpdateShown(currentVersion)` | `force_update_shown` | `current_version` |
+| `trackRemoteConfigError()` | `remote_config_error` | — |
 
 ### Where events are triggered
 - `trackHomeShown()` — `HomeViewModel.trackScreenView()` called from `HomeScreen` `LaunchedEffect`
@@ -308,10 +337,51 @@ fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
 - `trackMovieClicked()` — `HomeViewModel.saveMovie()`
 - `trackErrorShown()` — `HomeViewModel.getMovies()` and `DetailsViewModel.getDetails()` on error
 - `trackPageLoaded()` — `HomeViewModel.getMovies()` on success
+- `trackSplashShown()` — `SplashViewModel.trackScreenView()` called from `SplashScreen` `LaunchedEffect`
+- `trackForceUpdateShown()` — `SplashViewModel.mustUpdate()` when `mustUpdate = true`
+- `trackRemoteConfigError()` — `SplashViewModel.mustUpdate()` on error
 
 ### Pending Firebase functions (not yet implemented)
 - `setUserId(userId)` — for when user login is added
 - `logError(throwable, message)` — for recording handled errors in Crashlytics without crashing
+
+### Remote Config
+Firebase Remote Config is used to enforce a minimum app version. On every launch, before navigating to Home, the app fetches the `min_version` key from Remote Config and compares it against the current app version.
+
+**Key:** `min_version`
+**Value format:** `{ "latestVersionAvailable": "1.0.0" }`
+
+If the current app version is lower than `minVersion`, the user is redirected to `ForceUpdateScreen` and cannot proceed.
+
+**Configuration:**
+- `minimumFetchIntervalInSeconds = 0` — no caching, always fetches fresh values
+- `fetchAndActivate().await()` called before reading any value — ensures the latest value is always used
+
+**Flow:**
+```
+SplashScreen (Lottie animation)
+    ↓ animation ends
+SplashViewModel.mustUpdate(currentVersion)
+    ↓ fetches Remote Config via MustUpdateUseCase
+    ├── mustUpdate = true  → ForceUpdateScreen (no back navigation)
+    └── mustUpdate = false → HomeScreen
+```
+
+**Error handling:** if Remote Config fetch fails, the user is let through to Home — fail open strategy.
+
+**`MustUpdateUseCase`** compares semantic versions (major.minor.patch) and returns `true` if the current version is strictly lower than `minVersion`.
+
+**Koin provider** (`RemoteModule`):
+```kotlin
+@Single
+fun firebaseRemoteConfig(): FirebaseRemoteConfig {
+    val remoteConfig = FirebaseRemoteConfig.getInstance()
+    remoteConfig.setConfigSettingsAsync(remoteConfigSettings {
+        minimumFetchIntervalInSeconds = 0
+    })
+    return remoteConfig
+}
+```
 
 ### DebugView
 Enable/disable Firebase Analytics DebugView via Gradle tasks (defined in `app/build.gradle.kts`):
@@ -348,6 +418,62 @@ fun RequestNotificationPermission() {
   }
 }
 ```
+
+---
+
+## Splash Screen
+
+### Overview
+Animated splash screen using Lottie. No SplashScreen API — uses a translucent window theme (`Theme.Movies.Splash`) to avoid the white flash before Compose renders.
+
+The animation file is at `app/src/main/res/raw/splash_movies_animation.json`.
+
+### ViewState
+```kotlin
+sealed class SplashViewState
+data object SplashLoading : SplashViewState()
+data object MustUpdate : SplashViewState()
+data object UpToDate : SplashViewState()
+```
+
+### Screen / Content split
+`SplashScreen` owns the ViewModel, state collection, version check trigger, and navigation callbacks. `SplashContent` is a pure composable that only receives `progress: () -> Float` — making it previewable without ViewModel or context.
+
+```kotlin
+@Composable
+fun SplashScreen(
+    onNavigateToHome: () -> Unit,
+    onNavigateToForceUpdate: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SplashViewModel = koinViewModel(),
+)
+
+@Composable
+private fun SplashContent(
+    progress: () -> Float,
+    modifier: Modifier = Modifier,
+)
+```
+
+### Flow
+1. Lottie animation plays once (occupies 50% of screen width, `aspectRatio(1f)`)
+2. When `animationState.isAtEnd && animationState.isPlaying` → calls `viewModel.mustUpdate(version)`
+3. Version read from `context.packageManager.getPackageInfo().versionName`
+4. ViewModel fetches Remote Config via `MustUpdateUseCase`
+5. State transitions to `MustUpdate` or `UpToDate` → navigation triggered via `LaunchedEffect(state)`
+
+### Key decisions
+- Animation sized via `fillMaxWidth(0.5f)` + `aspectRatio(1f)`
+- On Remote Config error → fail open, navigate to Home
+- Preview uses `SplashContent(progress = { 0.5f })` to show animation at midpoint without needing ViewModel
+
+---
+
+## Force Update Screen
+
+Placeholder screen shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is added.
+
+Design not yet implemented.
 
 ---
 
@@ -394,13 +520,13 @@ private fun checkNeedNewPage() {
 ```
 
 ### UI key decisions
-- `SearchBar` with `RectangleShape` and `expanded = false` (never expands, no suggestions)
+- `OutlinedTextField` styled as search bar at top — local filtering only, no API calls
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
 - `@Stable` / `@Immutable` annotations on ViewState for Compose stability
 - `key = { _, movie -> movie.id }` in `itemsIndexed` to prevent duplicate key crashes
 - `remember(state, searchQuery)` for filtered movie list to avoid recalculation on every recomposition
-- `windowInsetsPadding(WindowInsets.safeDrawing)` on root Column
-- `Column` as root container with `SearchBar` fixed at top and `LazyColumn` below
+- `windowInsetsPadding(WindowInsets.statusBars)` on root Column
+- `Surface` as root container with `colorScheme.background`
 - Movie cards: `RoundedCornerShape(12.dp)` on images, `titleSmall` bold for title, `bodySmall` + `onSurfaceVariant` for labels
 - Error state uses `colorScheme.error`
 
@@ -423,6 +549,7 @@ data class DetailsError(val message: String) : DetailsViewState()
 
 ### UI key decisions
 - `LaunchedEffect(movieId)` triggers `viewModel.getDetails(movieId)` once on entry
+- `Surface` wrapping `DetailsScreenContent` with `colorScheme.background` to prevent dark mode text rendering issues
 - Layout: top `Row` with poster image (130dp wide, 195dp tall, `RoundedCornerShape(12.dp)`) + basic info column; remaining fields in full-width sections below
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
 - `verticalScroll` on root `Column` for long content
@@ -559,6 +686,7 @@ Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo9
 - Coverage badge is dynamic and updates automatically with each merge to `develop`
 - The merged report XML (`build/reports/jacoco/jacocoMergedReport/jacocoMergedReport.xml`) is uploaded, covering all modules
 - `CODECOV_TOKEN` stored as GitHub Actions Secret
+- Codecov PR comments disabled via `comment: false`
 
 **Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `FirebaseTrackerTest`.
 
@@ -592,6 +720,7 @@ File: `.github/workflows/pr-validation.yml`
   2. `build-and-test` — `assembleDebug` + `jacocoMergedCoverageVerification` (Min 95% code coverage) + Codecov upload (runs after check)
 - **Quality Gate**: The build fails automatically if the aggregated coverage is below **95%**.
 - **Reports**: Coverage reported to **Codecov**
+- Codecov PR comments disabled via `comment: false`
 
 **Approximate CI times after cache optimization:**
 - `check`: ~1 min
@@ -709,18 +838,19 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 | Retrofit | 3.0.0 |
 | OkHttp | 5.3.2 |
 | Room | 2.8.4 |
-| Navigation Compose | 2.9.0 |
-| Compose BOM | 2025.06.00 |
+| Navigation3 | 1.0.1 |
+| Compose BOM | 2026.02.00 |
 | Coil | 2.7.0 |
-| Accompanist | 0.36.0 |
+| Accompanist | 0.37.3 |
 | Arrow | 2.2.1.1 |
 | Detekt | 1.23.8 |
 | detekt-rules-compose | 0.4.27 |
-| Firebase BOM | 33.7.0 |
-| Google Services plugin | 4.4.2 |
-| Firebase Crashlytics plugin | 3.0.3 |
+| Firebase BOM | 34.9.0 |
+| Google Services plugin | 4.4.4 |
+| Firebase Crashlytics plugin | 3.0.6 |
 | Lifecycle | 2.10.0 |
 | KSP | 2.3.5 |
+| Lottie | 6.6.6 |
 
 ---
 
@@ -731,7 +861,7 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 ./gradlew assembleDebug
 ./gradlew assembleRelease
 
-# Testing & Coverage
+# Tests
 ./gradlew testAll
 ./gradlew :app:testDebugUnitTest
 
@@ -772,16 +902,16 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Migrate Home screen to Jetpack Compose
 - [x] Migrate Details screen to Jetpack Compose
 - [x] Migrate Navigation to Navigation Compose
+- [x] Migrate Navigation Compose to Navigation3
 - [x] Remove XML layouts, Fragments, Safe Args and related dependencies
 - [x] Restructure project defining Koin modules on its module instead of app
 - [x] Add Compose + Navigation Compose setup
 - [x] Add detekt-rules-compose with Compose rules in detekt.yml
 - [x] Apply kotlinx-serialization plugin via CommonSetupPlugin to all modules
 - [x] Set up GitHub Actions CI/CD pipelines (PR validation)
-- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local search only finds movies already loaded in memory
-- [ ] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
-- [ ] Remove Robolectric dependency
-- [ ] ~~Add Detekt JUnit 5 rules plugin~~ — evaluated and discarded. The available plugin (`de.joshuagleitze:detekt-junit5`) only offers value for preventing JUnit 4/5 mixing, which is already fully migrated. Not worth the dependency.
-- [ ] Set up deploy pipeline
-- [ ] Evaluate Arrow dependency (keep or remove)
-- [ ] Introduce dedicated mapper classes (currently using extension functions)
+- [x] Migrate tests to JUnit 5 with `android-junit5` (Mannodermaus)
+- [x] Remove Robolectric dependency
+- [x] Migrate theme to Material 3 with M3 color tokens, typography scale and dynamic color
+- [x] Add animated Lottie splash screen
+- [x] Add Firebase Remote Config force update check
+- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current l

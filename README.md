@@ -5,7 +5,7 @@
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.02.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26-grey?style=flat&labelColor=green)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-grey?style=flat&logo=githubactions&logoColor=white&labelColor=yellow)
-![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics%20%2B%20RemoteConfig-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
 ![JUnit5](https://img.shields.io/badge/JUnit5-5.11.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
 [![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
@@ -31,7 +31,7 @@ build-logic → (no dependencies)
 | `:app` | UI layer — Compose screens, ViewModels, navigation |
 | `:domain` | Business logic — UseCases, entities, repository interfaces |
 | `:data` | Repository implementations orchestrating remote and local sources |
-| `:remote` | Retrofit API, remote DTOs |
+| `:remote` | Retrofit API, remote DTOs, Firebase Remote Config |
 | `:database` | Room database, DAOs, local entities |
 | `:build-logic` | Convention plugins for shared Gradle configuration |
 
@@ -50,10 +50,11 @@ Repository implementations orchestrate remote and local datastores with a cache-
 
 ### UI
 - **Jetpack Compose** — fully migrated from XML/Fragments
-- **Navigation Compose** — type-safe navigation using `@Serializable` destinations
+- **Navigation3 1.0.1** — migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack`, no `NavController`. Slide animations via `transitionSpec`/`popTransitionSpec`
 - **Coil** — async image loading with loading/error states
-- **Material 3** — theming with light/dark mode support via `isSystemInDarkTheme()`
-- **Accompanist** — system UI controller and permissions
+- **Material 3** — full M3 color scheme generated from seed `#1B4B8A`, dynamic color on Android 12+, explicit typography scale
+- **Lottie** — animated splash screen with JSON animation (`splash_movies_animation.json`)
+- **Accompanist** — permissions
 
 ### Networking & persistence
 - **Retrofit 3 + OkHttp 5** — REST client with Kotlinx Serialization converter
@@ -107,6 +108,7 @@ develop: coverage (jacocoMergedReport + Codecov)
 | Configuration cache | Enabled globally, persisted between runs |
 | Single build+test job | Avoids spinning up two runners for tasks that share the same cache |
 | Separate coverage workflow | Avoids re-running full pipeline on develop after merge |
+| Codecov PR comments | Disabled via `comment: false` |
 
 **Approximate times (after Gradle cache is written):** `check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
 
@@ -126,14 +128,25 @@ All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
 
 - **Crashlytics** — automatic crash reporting in both debug and release builds
 - **Analytics** — custom event tracking via a `Tracker` interface implemented by `FirebaseTracker`
+- **Remote Config** — enforces a minimum app version. On every launch the app fetches `min_version` from Remote Config (no cache, `minimumFetchIntervalInSeconds = 0`) and compares it against the current version using semantic versioning. If the app is outdated, the user is redirected to `ForceUpdateScreen` and cannot proceed. On fetch error, the user is let through — fail open strategy.
 
-ViewModels depend on `Tracker`, not `FirebaseTracker`, keeping them testable without the Firebase SDK. The Firebase implementation is wired via Koin in `AppModule`.
+ViewModels depend on `MovieTracker`, not `FirebaseTracker`, keeping them testable without the Firebase SDK. The Firebase implementation is wired via Koin in `AppModule`.
 
 Debug Analytics events can be monitored in Firebase DebugView using Gradle tasks:
 ```bash
 ./gradlew enableFirebaseDebug
 ./gradlew disableFirebaseDebug
 ```
+
+---
+
+## 🎬 Splash Screen
+
+Animated splash using Lottie — no Android SplashScreen API. The manifest applies a translucent theme (`Theme.Movies.Splash`) that prevents any white flash before Compose renders.
+
+**Flow:** animation plays once → on end, `SplashViewModel` fetches Remote Config → navigates to `Home` or `ForceUpdateScreen`.
+
+The screen is split into `SplashScreen` (ViewModel + state + navigation) and `SplashContent` (pure composable receiving `progress: () -> Float`) so the preview works without a ViewModel.
 
 ---
 

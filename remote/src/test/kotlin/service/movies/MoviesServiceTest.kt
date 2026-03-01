@@ -6,8 +6,11 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 import jsanzo.movies.data.error.UnrecognizedRemoteError
+import jsanzo.movies.remote.dto.response.GetMoviesDetailsResponse
+import jsanzo.movies.remote.dto.response.GetMoviesResponse
 import jsanzo.movies.remote.dto.response.toDataMovie
 import jsanzo.movies.remote.dto.response.toDataMovieDetails
+import jsanzo.movies.remote.service.NetworkHandler
 import jsanzo.movies.remote.service.movies.MoviesRemoteWebService
 import jsanzo.movies.remote.service.movies.MoviesService
 import kotlinx.coroutines.test.runTest
@@ -15,21 +18,20 @@ import org.junit.jupiter.api.Test
 import retrofit2.Response
 import service.model.getMovieDetails
 import service.model.getMovieResponse
-import java.io.IOException
 
 class MoviesServiceTest {
 
     private val moviesRemoteWebService: MoviesRemoteWebService = mockk()
+    private val networkHandler: NetworkHandler = mockk()
     private val apiKey = "12345"
-    private val moviesService = MoviesService(moviesRemoteWebService, apiKey)
+    private val moviesService = MoviesService(moviesRemoteWebService, networkHandler, apiKey)
 
     private val page = 1
     private val movieId = 123
 
     @Test
     fun `getMovies returns data movie on success`() = runTest {
-        val response = Response.success(getMovieResponse)
-        coEvery { moviesRemoteWebService.getMovies(page, apiKey) } returns response
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns getMovieResponse.right()
 
         val result = moviesService.getMovies(page)
 
@@ -38,7 +40,7 @@ class MoviesServiceTest {
 
     @Test
     fun `getMovies returns movie error on failure`() = runTest {
-        coEvery { moviesRemoteWebService.getMovies(page, apiKey) } throws IOException("Network Error")
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
 
         val result = moviesService.getMovies(page)
 
@@ -47,8 +49,7 @@ class MoviesServiceTest {
 
     @Test
     fun `getMovieDetails returns domain movie details on success`() = runTest {
-        val response = Response.success(getMovieDetails)
-        coEvery { moviesRemoteWebService.getMovieDetails(movieId, apiKey) } returns response
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns getMovieDetails.right()
 
         val result = moviesService.getMovieDetails(movieId)
 
@@ -57,17 +58,17 @@ class MoviesServiceTest {
 
     @Test
     fun `getMovieDetails without collection returns domain movie details without collection on success`() = runTest {
-        val response = Response.success(getMovieDetails.copy(belongsToCollection = null))
-        coEvery { moviesRemoteWebService.getMovieDetails(movieId, apiKey) } returns response
+        val detailsWithoutCollection = getMovieDetails.copy(belongsToCollection = null)
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns detailsWithoutCollection.right()
 
         val result = moviesService.getMovieDetails(movieId)
 
-        result shouldBe getMovieDetails.toDataMovieDetails().copy(belongsToCollection = null).right()
+        result shouldBe detailsWithoutCollection.toDataMovieDetails().right()
     }
 
     @Test
     fun `getMovieDetails returns movie error on failure`() = runTest {
-        coEvery { moviesRemoteWebService.getMovieDetails(movieId, apiKey) } throws IOException("Network Error")
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
 
         val result = moviesService.getMovieDetails(movieId)
 

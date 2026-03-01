@@ -19,7 +19,8 @@ import kotlinx.serialization.json.Json
         MovieEntity::class,
         MovieDetailsEntity::class,
     ],
-    version = 1,
+    version = 2,
+    exportSchema = false,
 )
 @TypeConverters(
     Converters::class,
