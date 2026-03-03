@@ -8,6 +8,7 @@ import jsanzo.movies.domain.utils.onSuccess
 import jsanzo.movies.tracking.MovieTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -29,14 +30,14 @@ class SplashViewModel(
             .onSuccess { mustUpdate ->
                 if (mustUpdate) {
                     firebaseTracker.trackForceUpdateShown(actualVersion)
-                    _state.value = MustUpdate
+                    _state.update { MustUpdate }
                 } else {
-                    _state.value = UpToDate
+                    _state.update { UpToDate }
                 }
             }
             .onError {
                 firebaseTracker.trackRemoteConfigError()
-                _state.value = UpToDate
+                _state.update { UpToDate }
             }
     }
 }

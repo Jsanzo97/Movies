@@ -46,7 +46,6 @@ import jsanzo.movies.domain.model.DomainMovieGenre
 import jsanzo.movies.domain.model.DomainMovieProductionCompany
 import jsanzo.movies.domain.model.DomainMovieProductionCountry
 import jsanzo.movies.domain.model.DomainMovieSpokenLanguage
-import jsanzo.movies.ui.BASE_IMAGE_URL_ORIGINAL
 import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
@@ -129,7 +128,7 @@ private fun DetailsContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SubcomposeAsyncImage(
-                model = movieDetails.posterPath?.let { BASE_IMAGE_URL_ORIGINAL + it },
+                model = movieDetails.posterPath,
                 contentDescription = movieDetails.title,
                 contentScale = ContentScale.Crop,
                 loading = {

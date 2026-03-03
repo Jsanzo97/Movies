@@ -20,7 +20,7 @@ data class DataMovieResult(
 )
 
 fun DataMovieResult.toMovieResult() = DomainMovieResult(
-    posterPath,
+    "https://image.tmdb.org/t/p/original/$posterPath",
     adult,
     overview,
     releaseDate,

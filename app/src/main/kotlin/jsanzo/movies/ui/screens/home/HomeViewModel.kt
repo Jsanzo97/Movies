@@ -11,6 +11,7 @@ import jsanzo.movies.tracking.MovieTracker
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -34,7 +35,7 @@ class HomeViewModel(
         if (loadingJob?.isActive == true) return
         loadingJob = viewModelScope.launch {
             if (page == 1) {
-                _state.value = Loading
+                _state.update { Loading }
             }
 
             getMoviesUseCase(page)
@@ -44,11 +45,11 @@ class HomeViewModel(
                     moviesRetrieved.addAll(newMovies)
                     nextPageToRetrieve++
                     firebaseTracker.trackPageLoaded(page)
-                    _state.value = MoviesSuccess(moviesRetrieved.toList())
+                    _state.update { MoviesSuccess(moviesRetrieved.toList()) }
                 }
                 .onError { error ->
                     firebaseTracker.trackErrorShown("home", error.toString())
-                    _state.value = MoviesError(error.toString())
+                    _state.update { MoviesError(error.toString()) }
                 }
         }
     }

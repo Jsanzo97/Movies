@@ -39,10 +39,16 @@ build-logic → (no dependencies)
 ViewModels expose `StateFlow<ViewState>` with sealed classes per screen (`Loading`, `ScreenSuccess`, `ScreenError`). Navigation side effects are handled via `SharedFlow` to avoid encoding navigation state into the ViewState.
 
 ### Domain layer
-Zero Android dependencies. UseCases follow a single-responsibility pattern with `suspend operator fun invoke()`. Error handling uses Arrow's `Either` type throughout the data flow.
+Zero Android dependencies. UseCases follow a single-responsibility pattern with `suspend operator fun invoke()`. Error handling uses Arrow's `Either` and `Option` type throughout the data flow.
 
 ### Data layer
 Repository implementations orchestrate remote and local datastores with a cache-first fallback strategy — if the remote call fails, the last locally stored data is returned.
+
+### Remote layer
+Remote datastores implementations to retrieve the information from the API with the `NetworkHandler` to manage all the requests
+
+### Database layer
+Dao and database implementations to persist the data locally. Only movies clicked to see its details are stored in local database
 
 ---
 
@@ -50,10 +56,10 @@ Repository implementations orchestrate remote and local datastores with a cache-
 
 ### UI
 - **Jetpack Compose** — fully migrated from XML/Fragments
-- **Navigation3 1.0.1** — migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack`, no `NavController`. Slide animations via `transitionSpec`/`popTransitionSpec`
+- **Navigation3 1.0.1** — migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack`, no `NavController`. Slide animations via `transitionSpec`/`popTransitionSpec`. `android:enableOnBackInvokedCallback="true"` required in the manifest for back gesture animations to work correctly on Android 14+.
 - **Coil** — async image loading with loading/error states
 - **Material 3** — full M3 color scheme generated from seed `#1B4B8A`, dynamic color on Android 12+, explicit typography scale
-- **Lottie** — animated splash screen with JSON animation (`splash_movies_animation.json`)
+- **Lottie** — animated splash screen and force update screen with JSON animations
 - **Accompanist** — permissions
 
 ### Networking & persistence
@@ -140,13 +146,19 @@ Debug Analytics events can be monitored in Firebase DebugView using Gradle tasks
 
 ---
 
+## 🚀 Force Update Screen
+
+Shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is pushed.
+
+Displays a looping Lottie rocket animation themed to the app's color palette, with an "Update" button that deep-links to the Play Store preventing a crash if the Play Store is not available on the device.
+
+---
+
 ## 🎬 Splash Screen
 
 Animated splash using Lottie — no Android SplashScreen API. The manifest applies a translucent theme (`Theme.Movies.Splash`) that prevents any white flash before Compose renders.
 
 **Flow:** animation plays once → on end, `SplashViewModel` fetches Remote Config → navigates to `Home` or `ForceUpdateScreen`.
-
-The screen is split into `SplashScreen` (ViewModel + state + navigation) and `SplashContent` (pure composable receiving `progress: () -> Float`) so the preview works without a ViewModel.
 
 ---
 

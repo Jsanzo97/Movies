@@ -1,12 +1,5 @@
 <resources>
     <string name="application_name" translatable="false">Movie List</string>
-    <string name="loading">Loading…</string>
-    <string name="error">Something went wrong</string>
-
-    <string name="custom_dialog_fragment_ok">ACCEPT</string>
-    <string name="custom_dialog_fragment_cancel">Cancel</string>
-
-    <string name="media_image_content_description">Image of the movie title</string>
 
     <string name="movie_title">Title</string>
     <string name="movie_score">Score</string>
@@ -28,4 +21,8 @@
 
     <string name="movie_details_duration_value">%1$d minutes</string>
     <string name="movie_details_revenue_value" translatable="false">%1$d $</string>
+
+    <string name="force_update_title">There is a new version available!</string>
+    <string name="force_update_description">To continue enjoying the latest news, it is necessary to update the application</string>
+    <string name="force_update_button">Update</string>
 </resources>
