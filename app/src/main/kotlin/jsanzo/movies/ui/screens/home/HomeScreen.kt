@@ -54,7 +54,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import jsanzo.movies.R
 import jsanzo.movies.domain.model.DomainMovieResult
-import jsanzo.movies.ui.BASE_IMAGE_URL_ORIGINAL
 import jsanzo.movies.ui.PreviewOnDevices
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.androidx.compose.koinViewModel
@@ -202,7 +201,7 @@ private fun MovieItem(
                 .heightIn(min = 120.dp),
         ) {
             SubcomposeAsyncImage(
-                model = movie.posterPath?.let { BASE_IMAGE_URL_ORIGINAL + it },
+                model = movie.posterPath,
                 contentDescription = movie.title,
                 contentScale = ContentScale.Crop,
                 loading = {

@@ -26,7 +26,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Image loading | Coil 2.7.0 | Replaced Glide |
 | Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
 | Analytics & Crashlytics | Firebase BOM 34.9.0 | Crashlytics + Analytics + Remote Config with DebugView |
-| Splash | Lottie 6.6.6 | Animated splash screen with JSON animation |
+| Splash + ForceUpdate | Lottie 6.6.6 | Animated splash screen + force update screen with JSON animations |
 | HTTP inspector | Chucker | debugImplementation only, no-op in release |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
@@ -201,6 +201,8 @@ sealed interface AppDestinations : NavKey {
 Navigation is managed via `rememberNavBackStack` and `NavDisplay`. No `NavController` — forward navigation uses `backStack.add()`, back navigation uses `backStack.removeLastOrNull()`.
 
 Slide animations configured via `transitionSpec` (left→right on navigate) and `popTransitionSpec` (right→left on back). The Splash→Home and Splash→ForceUpdate transitions use `fadeIn/fadeOut`.
+
+`android:enableOnBackInvokedCallback="true"` is set in `AndroidManifest.xml` on the `<application>` tag. Without this flag, Android 14+ intercepts the back gesture at the system level before Nav3 can handle it, causing `popTransitionSpec` and `predictivePopTransitionSpec` to never fire.
 
 `ComposeActivity` is the sole launcher Activity. All XML navigation, Fragments, Safe Args, and related dependencies have been removed.
 
@@ -471,9 +473,34 @@ private fun SplashContent(
 
 ## Force Update Screen
 
-Placeholder screen shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is added.
+Screen shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is added.
 
-Design not yet implemented.
+### Design
+- Lottie animation looping infinitely (`LottieConstants.IterateForever`) centered on screen, sized at `fillMaxWidth(0.6f)` + `aspectRatio(1f)`
+- Animation file: `app/src/main/res/raw/force_update_animation.json` (rocket animation themed to app colors)
+- Headline and body text centered below the animation
+- "Actualizar" `Button` anchored to `Alignment.BottomCenter`
+
+### Screen / Content split
+`ForceUpdateScreen` owns the ViewModel and opens the Play Store via `LocalUriHandler`. `ForceUpdateContent` is a pure composable receiving no external state — previewable without context.
+
+```kotlin
+@Composable
+fun ForceUpdateScreen(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    ForceUpdateContent(
+        onUpdateClick = { runCatching { uriHandler.openUri(PLAY_STORE_URL) } },
+        modifier = modifier,
+    )
+}
+```
+
+Play Store URL: `market://details?id=jsanzo.movies`
+
+### Key decisions
+- `runCatching` around `openUri` prevents crash if Play Store is not installed on the device
+- `windowInsetsPadding(WindowInsets.safeDrawing)` on root `Box`
+- `Surface` as root with `colorScheme.background`
 
 ---
 
@@ -914,4 +941,5 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Migrate theme to Material 3 with M3 color tokens, typography scale and dynamic color
 - [x] Add animated Lottie splash screen
 - [x] Add Firebase Remote Config force update check
+- [x] Implement Force Update screen (Lottie animation, themed colors, Play Store deep link)
 - [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current l

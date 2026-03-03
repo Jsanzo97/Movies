@@ -45,7 +45,7 @@ fun DataMovieDetails.toMovieDetails() = DomainMovieDetails(
     originalTitle,
     overview,
     popularity,
-    posterPath,
+    "https://image.tmdb.org/t/p/original/$posterPath",
     productionCompanies.map { it.toMovieProductionCompany() },
     productionCountries.map { it.toMovieProductionCountry() },
     releaseDate,

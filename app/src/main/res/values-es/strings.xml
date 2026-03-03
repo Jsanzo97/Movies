@@ -1,14 +1,4 @@
 <resources>
-
-    <!-- COMMON STRINGS -->
-    <string name="loading">Cargando…</string>
-    <string name="error">Algo salió mal</string>
-
-    <string name="custom_dialog_fragment_ok">ACEPTAR</string>
-    <string name="custom_dialog_fragment_cancel">CANCELAR</string>
-
-    <string name="media_image_content_description">Imagen del título de la película</string>
-
     <string name="movie_title">Título</string>
     <string name="movie_score">Puntuación</string>
     <string name="movie_language">Idioma</string>
@@ -28,5 +18,9 @@
     <string name="movie_details_revenue">Ingresos</string>
 
     <string name="movie_details_duration_value">%1$d minutos</string>
+
+    <string name="force_update_title">!Hay una nueva version disponible!</string>
+    <string name="force_update_description">Para seguir dsifrutando de las ultimas novedades necesitas actualizar la app</string>
+    <string name="force_update_button">Actualizar</string>
 
 </resources>
