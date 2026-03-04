@@ -74,4 +74,22 @@ class MoviesServiceTest {
 
         result shouldBe UnrecognizedRemoteError("Network Error").left()
     }
+
+    @Test
+    fun `searchMovies returns data movie on success`() = runTest {
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns getMovieResponse.right()
+
+        val result = moviesService.searchMovies("harry potter")
+
+        result shouldBe getMovieResponse.toDataMovie().right()
+    }
+
+    @Test
+    fun `searchMovies returns movie error on failure`() = runTest {
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
+
+        val result = moviesService.searchMovies("harry potter")
+
+        result shouldBe UnrecognizedRemoteError("Network Error").left()
+    }
 }

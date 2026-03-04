@@ -59,4 +59,10 @@ class MovieTrackerTest {
         tracker.trackRemoteConfigError()
         verify { mockedAnalytics.logEvent("remote_config_error", any()) }
     }
+
+    @Test
+    fun `trackSearchPerformed logs search_performed event`() {
+        tracker.trackSearchPerformed("harry potter", 10)
+        verify { mockedAnalytics.logEvent("search_performed", any()) }
+    }
 }
