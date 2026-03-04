@@ -1,10 +1,14 @@
 <resources>
     <string name="application_name" translatable="false">Movie List</string>
 
-    <string name="movie_title">Title</string>
-    <string name="movie_score">Score</string>
-    <string name="movie_language">Language</string>
-    <string name="movie_date">Date</string>
+    <string name="home_screen_movie_title">Title</string>
+    <string name="home_screen_movie_score">Score</string>
+    <string name="home_screen_movie_language">Language</string>
+    <string name="home_screen_movie_date">Date</string>
+    <string name="home_screen_search_placeholder">Search movies…</string>
+    <string name="home_screen_search_icon_content_description">Search</string>
+    <string name="home_screen_loading_movies">Loading movies</string>
+    <string name="home_screen_movie_item_description">%1$s, score %2$s, released on %3$s</string>
 
     <string name="movie_details_title">Title</string>
     <string name="movie_details_punctuation">Punctuation</string>
@@ -21,8 +25,11 @@
 
     <string name="movie_details_duration_value">%1$d minutes</string>
     <string name="movie_details_revenue_value" translatable="false">%1$d $</string>
+    <string name="movie_details_loading">Loading movie details</string>
+    <string name="movie_details_webpage_link_description">Visit official webpage</string>
 
     <string name="force_update_title">There is a new version available!</string>
     <string name="force_update_description">To continue enjoying the latest news, it is necessary to update the application</string>
     <string name="force_update_button">Update</string>
+
 </resources>

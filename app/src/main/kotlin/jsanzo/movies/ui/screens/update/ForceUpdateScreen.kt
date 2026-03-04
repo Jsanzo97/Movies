@@ -21,6 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,14 +54,19 @@ private fun ForceUpdateContent(
     onUpdateClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.force_update_animation))
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.force_update_animation),
+    )
     val progress by animateLottieCompositionAsState(
         composition = composition,
         iterations = LottieConstants.IterateForever,
     )
 
+    val updateTitle = stringResource(R.string.force_update_title)
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .semantics { paneTitle = updateTitle },
         color = MaterialTheme.colorScheme.background,
     ) {
         Box(
@@ -68,7 +76,9 @@ private fun ForceUpdateContent(
                 .padding(horizontal = 24.dp),
         ) {
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .semantics(mergeDescendants = true) {},
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -81,11 +91,12 @@ private fun ForceUpdateContent(
                 )
 
                 Text(
-                    text = stringResource(R.string.force_update_title),
+                    text = updateTitle,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.semantics { heading() },
                 )
 
                 Text(

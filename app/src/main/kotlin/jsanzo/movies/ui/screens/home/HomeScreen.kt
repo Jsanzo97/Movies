@@ -45,6 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -114,8 +117,12 @@ private fun HomeContent(
             .collect { onLastVisibleIndex(it) }
     }
 
+    val appName = stringResource(R.string.application_name)
+
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .semantics { paneTitle = appName },
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(
@@ -131,8 +138,13 @@ private fun HomeContent(
                         onSearch = {},
                         expanded = false,
                         onExpandedChange = {},
-                        placeholder = { Text("Search") },
-                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        placeholder = { Text(stringResource(R.string.home_screen_search_placeholder)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Search,
+                                contentDescription = stringResource(R.string.home_screen_search_icon_content_description),
+                            )
+                        },
                     )
                 },
                 expanded = false,
@@ -162,8 +174,11 @@ private fun HomeContent(
                 }
 
                 if (state is Loading) {
+                    val loadingMessage = stringResource(R.string.home_screen_loading_movies)
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .semantics { contentDescription = loadingMessage },
                     )
                 }
 
@@ -187,12 +202,22 @@ private fun MovieItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val movieDescription = stringResource(
+        R.string.home_screen_movie_item_description,
+        movie.title,
+        movie.voteAverage.toString(),
+        movie.releaseDate,
+    )
+
     Card(
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = movieDescription
+            },
     ) {
         Row(
             modifier = Modifier
@@ -202,7 +227,7 @@ private fun MovieItem(
         ) {
             SubcomposeAsyncImage(
                 model = movie.posterPath,
-                contentDescription = movie.title,
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 loading = {
                     Box(
@@ -243,15 +268,15 @@ private fun MovieItem(
                     overflow = TextOverflow.Ellipsis,
                 )
                 LabeledText(
-                    label = stringResource(R.string.movie_score),
+                    label = stringResource(R.string.home_screen_movie_score),
                     value = movie.voteAverage.toString(),
                 )
                 LabeledText(
-                    label = stringResource(R.string.movie_date),
+                    label = stringResource(R.string.home_screen_movie_date),
                     value = movie.releaseDate,
                 )
                 LabeledText(
-                    label = stringResource(R.string.movie_language),
+                    label = stringResource(R.string.home_screen_movie_language),
                     value = movie.originalLanguage.uppercase(),
                 )
             }
@@ -267,11 +292,12 @@ private fun LabeledText(
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "$label: ",
+            text = "$label:",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
