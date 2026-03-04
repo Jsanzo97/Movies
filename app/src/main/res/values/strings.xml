@@ -9,6 +9,7 @@
     <string name="home_screen_search_icon_content_description">Search</string>
     <string name="home_screen_loading_movies">Loading movies</string>
     <string name="home_screen_movie_item_description">%1$s, score %2$s, released on %3$s</string>
+    <string name="home_screen_no_results">No results found</string>
 
     <string name="movie_details_title">Title</string>
     <string name="movie_details_punctuation">Punctuation</string>

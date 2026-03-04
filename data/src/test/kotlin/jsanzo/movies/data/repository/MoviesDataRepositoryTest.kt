@@ -192,4 +192,41 @@ class MoviesDataRepositoryTest {
         result.shouldBeInstanceOf<Some<*>>()
         result.getOrNull() shouldBe IOOperationError
     }
+
+    @Test
+    fun `searchMovies returns remote data when remote call succeeds`() = runTest {
+        val query = "harry potter"
+        coEvery { remoteMoviesDatastore.searchMovies(query) } returns dataMovie.right()
+
+        val result = repository.searchMovies(query)
+
+        coVerify(exactly = 1) { remoteMoviesDatastore.searchMovies(query) }
+        coVerify(exactly = 0) { localMoviesDatastore.searchMovies(any()) }
+        result shouldBe dataMovie.toMovie().right()
+    }
+
+    @Test
+    fun `searchMovies returns local data when remote call fails`() = runTest {
+        val query = "harry potter"
+        coEvery { remoteMoviesDatastore.searchMovies(query) } returns NotFound.left()
+        coEvery { localMoviesDatastore.searchMovies(query) } returns dataMovie.right()
+
+        val result = repository.searchMovies(query)
+
+        coVerify(exactly = 1) { remoteMoviesDatastore.searchMovies(query) }
+        coVerify(exactly = 1) { localMoviesDatastore.searchMovies(query) }
+        result shouldBe dataMovie.toMovie().right()
+    }
+
+    @Test
+    fun `searchMovies returns error when both remote and local fail`() = runTest {
+        val query = "harry potter"
+        coEvery { remoteMoviesDatastore.searchMovies(query) } returns NotFound.left()
+        coEvery { localMoviesDatastore.searchMovies(query) } returns ReadingError.left()
+
+        val result = repository.searchMovies(query)
+
+        result.shouldBeInstanceOf<Either.Left<*>>()
+        result.value shouldBe IOOperationError
+    }
 }

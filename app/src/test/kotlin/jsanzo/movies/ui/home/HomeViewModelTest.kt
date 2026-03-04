@@ -12,6 +12,7 @@ import io.mockk.mockk
 import jsanzo.movies.domain.error.InvalidParametersError
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import jsanzo.movies.domain.usecase.SearchMoviesUseCase
 import jsanzo.movies.tracking.MovieTracker
 import jsanzo.movies.ui.model.domainMovie
 import jsanzo.movies.ui.model.domainMovieResult
@@ -41,13 +42,14 @@ class HomeViewModelTest {
 
     private val mockedGetMoviesUseCase: GetMoviesUseCase = mockk()
     private val mockedSaveMovieUseCase: SaveMovieUseCase = mockk()
+    private val mockedSearchMoviesUseCase: SearchMoviesUseCase = mockk()
+    private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
 
     private val validPage = 1
     private val invalidPage = -1
     private val lastElementVisibleToNeedMore = 10
     private val lastElementVisibleToNotNeedMore = 1
-
-    private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
+    private val searchQuery = "harry potter"
 
     @BeforeEach
     fun setUp() {
@@ -57,8 +59,14 @@ class HomeViewModelTest {
         coEvery { mockedGetMoviesUseCase(invalidPage) } returns InvalidParametersError.left()
         coEvery { mockedSaveMovieUseCase(domainMovieResult) } returns None
         coEvery { mockedSaveMovieUseCase(any()) } returns InvalidParametersError.some()
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns domainMovie.right()
 
-        homeViewModel = HomeViewModel(mockedGetMoviesUseCase, mockedSaveMovieUseCase, mockedMovieTracker)
+        homeViewModel = HomeViewModel(
+            mockedGetMoviesUseCase,
+            mockedSaveMovieUseCase,
+            mockedSearchMoviesUseCase,
+            mockedMovieTracker,
+        )
         homeViewModelStateFlow = homeViewModel.state
     }
 
@@ -187,5 +195,83 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 0) { mockedGetMoviesUseCase(validPage + 2) }
+    }
+
+    @Test
+    fun `state is MoviesSuccess after onSearchQueryChange with valid query`() = runTest {
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedSearchMoviesUseCase(searchQuery) }
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesSuccess>()
+
+        val state = homeViewModelStateFlow.value as MoviesSuccess
+        state.movies shouldBe domainMovie.results
+    }
+
+    @Test
+    fun `state is MoviesError after onSearchQueryChange when search fails`() = runTest {
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns InvalidParametersError.left()
+
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModelStateFlow.value.shouldBeInstanceOf<MoviesError>()
+    }
+
+    @Test
+    fun `trackErrorShown called with home_search when search fails`() = runTest {
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns InvalidParametersError.left()
+
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedMovieTracker.trackErrorShown("home_search", any()) }
+    }
+
+    @Test
+    fun `state restores moviesRetrieved when search query is cleared`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.onSearchQueryChange("")
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = homeViewModelStateFlow.value as MoviesSuccess
+        state.movies shouldBe domainMovie.results
+    }
+
+    @Test
+    fun `getMovies not triggered by notifyLastElementVisible when search query is active`() = runTest {
+        homeViewModel.getMovies(validPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { mockedGetMoviesUseCase(validPage + 1) }
+    }
+
+    @Test
+    fun `trackSearchPerformed called with query and results count on search success`() = runTest {
+        homeViewModel.onSearchQueryChange(searchQuery)
+        testDispatcher.scheduler.advanceTimeBy(301)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            mockedMovieTracker.trackSearchPerformed(searchQuery, domainMovie.results.size)
+        }
     }
 }

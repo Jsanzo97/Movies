@@ -12,4 +12,5 @@ interface MoviesRepository {
     suspend fun getMovies(page: Int): Either<MovieError, DomainMovie>
     suspend fun getMovieDetails(movieId: Int): Either<MovieError, DomainMovieDetails>
     suspend fun saveMovie(movie: DomainMovieResult): Option<MovieError>
+    suspend fun searchMovies(query: String): Either<MovieError, DomainMovie>
 }

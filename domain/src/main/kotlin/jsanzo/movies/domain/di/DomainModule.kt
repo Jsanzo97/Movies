@@ -6,6 +6,7 @@ import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.MustUpdateUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
+import jsanzo.movies.domain.usecase.SearchMoviesUseCase
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 
@@ -23,4 +24,7 @@ class DomainModule {
 
     @Single
     fun mustUpdateUseCase(remoteConfigRepository: RemoteConfigRepository): MustUpdateUseCase = MustUpdateUseCase(remoteConfigRepository)
+
+    @Single
+    fun searchMoviesUseCase(moviesRepository: MoviesRepository): SearchMoviesUseCase = SearchMoviesUseCase(moviesRepository)
 }

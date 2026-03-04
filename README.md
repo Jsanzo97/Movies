@@ -103,7 +103,7 @@ All screens implement Compose semantics for TalkBack and other assistive technol
 
 - `paneTitle` on the root `Surface` of every screen — TalkBack announces the screen name on navigation
 - `heading()` on title and section header `Text` composables — allows users to navigate by headings
-- `mergeDescendants = true` on composite elements (e.g. `InfoChip`, movie cards) — TalkBack reads them as a single unit
+- `mergeDescendants = true` on composite elements (e.g. movie cards, empty search state) — TalkBack reads them as a single unit
 - `contentDescription` on loading indicators and icon-only elements
 - `Role.Button` on clickable non-button elements (e.g. the homepage link in `DetailsScreen`)
 - Decorative images adjacent to a title use `contentDescription = null`
@@ -113,6 +113,14 @@ All screens implement Compose semantics for TalkBack and other assistive technol
 ## 🌐 RTL Support
 
 Navigation slide animations adapt to the system layout direction via `LocalLayoutDirection`. A `directionMultiplier` captured outside the `transitionSpec` lambdas mirrors all slide directions in RTL locales. Row-based layouts (`MovieItem`, `DetailsContent` header) invert automatically via Compose's built-in RTL support. Label/value pairs use an explicit `Spacer(4.dp)` between the two `Text` elements instead of embedding the space in the label string, so the `:` separator always stays visually attached to the label in both directions.
+
+---
+
+## 🔍 Movie Search
+
+The home screen `SearchBar` triggers a real API search via the `/search/movie` endpoint rather than filtering the already-loaded list. A 500ms debounce ensures the API is only called once the user stops typing. Any in-flight search is cancelled via `currentJob?.cancel()` before launching a new one. Clearing the search restores the paginated list without any extra API call. If the network call fails, the search falls back to a local Room query (`LIKE '%query%'`) over movies the user has previously visited in details. Pagination is paused while a search query is active.
+
+When a search returns no results, an empty state is shown with a themed icon and a descriptive text.
 
 ---
 
@@ -152,7 +160,7 @@ All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
 ## 🔥 Firebase
 
 - **Crashlytics** — automatic crash reporting in both debug and release builds
-- **Analytics** — custom event tracking via a `Tracker` interface implemented by `FirebaseTracker`
+- **Analytics** — custom event tracking via a `MovieTracker` interface implemented by `FirebaseTracker`
 - **Remote Config** — enforces a minimum app version. On every launch the app fetches `min_version` from Remote Config (no cache, `minimumFetchIntervalInSeconds = 0`) and compares it against the current version using semantic versioning. If the app is outdated, the user is redirected to `ForceUpdateScreen` and cannot proceed. On fetch error, the user is let through — fail open strategy.
 
 ViewModels depend on `MovieTracker`, not `FirebaseTracker`, keeping them testable without the Firebase SDK. The Firebase implementation is wired via Koin in `AppModule`.
@@ -192,7 +200,7 @@ Animated splash using Lottie — no Android SplashScreen API. The manifest appli
 | Kotest | Assertions — `shouldBe`, `shouldBeInstanceOf` |
 | Coroutines Test | `runTest` + `StandardTestDispatcher` for deterministic coroutine execution |
 
-ViewModel tests use `Dispatchers.setMain(testDispatcher)` + `advanceUntilIdle()` to control coroutine execution deterministically.
+ViewModel tests use `Dispatchers.setMain(testDispatcher)` + `advanceUntilIdle()` to control coroutine execution deterministically. Tests that exercise the search debounce additionally use `advanceTimeBy(301)` to advance the virtual clock past the 300ms window before calling `advanceUntilIdle()`.
 
 Coverage is measured with **JaCoCo 0.8.12** and reported to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR.
 
@@ -228,6 +236,9 @@ Powered by [The Movie Database API v3](https://developer.themoviedb.org/docs).
 ```
 Base URL: https://api.themoviedb.org/3/movie/
 Images:   https://image.tmdb.org/t/p/original
+Movies:   GET movie/popular
+Details:  GET movie/{movie_id}
+Search:   GET search/movie?query=...
 ```
 
 API key and base URL are injected at build time via `BuildConfig` fields, read from `local.properties` locally and from GitHub Secrets in CI.

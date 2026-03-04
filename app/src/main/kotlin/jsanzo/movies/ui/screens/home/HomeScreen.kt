@@ -35,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -78,7 +77,10 @@ fun HomeScreen(
     HomeContent(
         state = state,
         searchQuery = searchQuery,
-        onSearchQueryChange = { searchQuery = it },
+        onSearchQueryChange = {
+            searchQuery = it
+            viewModel.onSearchQueryChange(it)
+        },
         onMovieClick = {
             viewModel.saveMovie(it)
             onNavigateToDetails(it.id)
@@ -99,14 +101,9 @@ private fun HomeContent(
     onLastVisibleIndex: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val movies = remember(state, searchQuery) {
-        if (state is MoviesSuccess) {
-            state.movies.filter {
-                it.title.contains(searchQuery, ignoreCase = true)
-            }
-        } else {
-            emptyList()
-        }
+    val movies = when (state) {
+        is MoviesSuccess -> state.movies
+        else -> emptyList()
     }
 
     val listState = rememberLazyListState()
@@ -158,37 +155,66 @@ private fun HomeContent(
             ) {}
 
             Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    itemsIndexed(
-                        items = movies,
-                        key = { _, movie -> movie.id },
-                    ) { _, movie ->
-                        MovieItem(
-                            movie = movie,
-                            onClick = { onMovieClick(movie) },
+                when (state) {
+                    is Loading -> {
+                        val loadingMessage = stringResource(R.string.home_screen_loading_movies)
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .semantics { contentDescription = loadingMessage },
                         )
                     }
-                }
 
-                if (state is Loading) {
-                    val loadingMessage = stringResource(R.string.home_screen_loading_movies)
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .semantics { contentDescription = loadingMessage },
-                    )
-                }
+                    is MoviesSuccess -> {
+                        if (movies.isNotEmpty()) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                itemsIndexed(
+                                    items = movies,
+                                    key = { _, movie -> movie.id },
+                                ) { _, movie ->
+                                    MovieItem(
+                                        movie = movie,
+                                        onClick = { onMovieClick(movie) },
+                                    )
+                                }
+                            }
+                        } else if (searchQuery.isNotBlank()) {
+                            val noResultsDescription = stringResource(R.string.home_screen_no_results)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .semantics(mergeDescendants = true) {
+                                        contentDescription = noResultsDescription
+                                    },
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_empty_search),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = noResultsDescription,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
 
-                if (state is MoviesError) {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
+                    is MoviesError -> {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
                 }
             }
         }
