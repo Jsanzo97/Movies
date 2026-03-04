@@ -13,7 +13,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -45,7 +50,9 @@ fun SplashScreen(
         }
     }
 
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_movies_animation))
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.splash_movies_animation),
+    )
     val animationState = animateLottieCompositionAsState(composition = composition)
 
     if (animationState.isAtEnd && animationState.isPlaying) {
@@ -57,6 +64,7 @@ fun SplashScreen(
     }
 
     SplashContent(
+        composition = composition,
         progress = { animationState.progress },
         modifier = modifier,
     )
@@ -64,15 +72,20 @@ fun SplashScreen(
 
 @Composable
 private fun SplashContent(
+    composition: LottieComposition?,
     progress: () -> Float,
     modifier: Modifier = Modifier,
 ) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splash_movies_animation))
+    val appName = stringResource(R.string.application_name)
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .semantics {
+                contentDescription = appName
+                paneTitle = appName
+            },
         contentAlignment = Alignment.Center,
     ) {
         LottieAnimation(
@@ -90,7 +103,10 @@ private fun SplashContent(
 private fun SplashScreenPreview() {
     MoviesTheme {
         Surface {
-            SplashContent(progress = { 0.5f })
+            SplashContent(
+                composition = null,
+                progress = { 0.5f },
+            )
         }
     }
 }

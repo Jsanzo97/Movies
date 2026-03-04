@@ -97,6 +97,25 @@ This avoids duplicating Gradle configuration across modules. Adding a new module
 
 ---
 
+## ♿ Accessibility
+
+All screens implement Compose semantics for TalkBack and other assistive technologies:
+
+- `paneTitle` on the root `Surface` of every screen — TalkBack announces the screen name on navigation
+- `heading()` on title and section header `Text` composables — allows users to navigate by headings
+- `mergeDescendants = true` on composite elements (e.g. `InfoChip`, movie cards) — TalkBack reads them as a single unit
+- `contentDescription` on loading indicators and icon-only elements
+- `Role.Button` on clickable non-button elements (e.g. the homepage link in `DetailsScreen`)
+- Decorative images adjacent to a title use `contentDescription = null`
+
+---
+
+## 🌐 RTL Support
+
+Navigation slide animations adapt to the system layout direction via `LocalLayoutDirection`. A `directionMultiplier` captured outside the `transitionSpec` lambdas mirrors all slide directions in RTL locales. Row-based layouts (`MovieItem`, `DetailsContent` header) invert automatically via Compose's built-in RTL support. Label/value pairs use an explicit `Spacer(4.dp)` between the two `Text` elements instead of embedding the space in the label string, so the `:` separator always stays visually attached to the label in both directions.
+
+---
+
 ## 🚀 CI/CD
 
 Two GitHub Actions workflows:
@@ -158,6 +177,8 @@ Displays a looping Lottie rocket animation themed to the app's color palette, wi
 
 Animated splash using Lottie — no Android SplashScreen API. The manifest applies a translucent theme (`Theme.Movies.Splash`) that prevents any white flash before Compose renders.
 
+`LottieComposition` is loaded once in `SplashScreen` and passed down to `SplashContent` to avoid loading it twice. `SplashContent` accepts `composition` and `progress` as parameters, making it previewable without a ViewModel by passing `composition = null`.
+
 **Flow:** animation plays once → on end, `SplashViewModel` fetches Remote Config → navigates to `Home` or `ForceUpdateScreen`.
 
 ---
@@ -181,6 +202,9 @@ Coverage is measured with **JaCoCo 0.8.12** and reported to [Codecov](https://ap
 ./gradlew :app:jacocoDebugTestReport        # specific module
 ./gradlew jacocoMergedCoverageVerification  # verify merged coverage is over 95%
 ```
+
+## 📱 Compose Previews
+Screens use a custom `@PreviewOnDevices` multipreview annotation to provide small, medium and large devices preview with rtl support
 
 ---
 

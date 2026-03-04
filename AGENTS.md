@@ -191,10 +191,10 @@ app/src/main/kotlin/jsanzo/movies/
 Type-safe Navigation3 using `NavKey` + `@Serializable` data objects/classes:
 ```kotlin
 sealed interface AppDestinations : NavKey {
-    @Serializable data object Splash : AppDestinations
-    @Serializable data object Home : AppDestinations
-    @Serializable data object ForceUpdate : AppDestinations
-    @Serializable data class Details(val movieId: Int) : AppDestinations
+  @Serializable data object Splash : AppDestinations
+  @Serializable data object Home : AppDestinations
+  @Serializable data object ForceUpdate : AppDestinations
+  @Serializable data class Details(val movieId: Int) : AppDestinations
 }
 ```
 
@@ -205,6 +205,17 @@ Slide animations configured via `transitionSpec` (left→right on navigate) and 
 `android:enableOnBackInvokedCallback="true"` is set in `AndroidManifest.xml` on the `<application>` tag. Without this flag, Android 14+ intercepts the back gesture at the system level before Nav3 can handle it, causing `popTransitionSpec` and `predictivePopTransitionSpec` to never fire.
 
 `ComposeActivity` is the sole launcher Activity. All XML navigation, Fragments, Safe Args, and related dependencies have been removed.
+
+#### RTL support in navigation animations
+`AppNavigation` reads `LocalLayoutDirection` to detect RTL locales and adjusts slide animation directions accordingly via a `directionMultiplier`:
+```kotlin
+val layoutDirection = LocalLayoutDirection.current
+val isRtl = layoutDirection == LayoutDirection.Rtl
+// isRtl is captured outside the lambda — LocalLayoutDirection is a CompositionLocal
+// and transitionSpec lambdas execute outside composition, so the value must be captured beforehand.
+val directionMultiplier = if (isRtl) -1 else 1
+```
+This value is reused in `transitionSpec`, `popTransitionSpec`, and `predictivePopTransitionSpec` so all slide directions are consistently mirrored in RTL.
 
 ---
 
@@ -225,6 +236,43 @@ Full M3 typography scale defined explicitly in `AppTypography` — all 15 text s
 `WindowCompat.setDecorFitsSystemWindows(window, false)` set in `MoviesTheme` so content draws edge-to-edge. Status bar and navigation bar icon colors adapt to dark/light theme via `isAppearanceLightStatusBars` and `isAppearanceLightNavigationBars`.
 
 `ComposeActivity` uses `@style/Theme.Movies.Splash` in the manifest — a translucent theme that prevents the white flash before Compose renders. After Compose is ready the theme is effectively replaced by `MoviesTheme`.
+
+---
+
+## Accessibility
+
+All screens implement Compose semantics for TalkBack and other assistive technologies:
+
+### Conventions applied across screens
+- `paneTitle` on the root `Surface` of every screen — TalkBack announces the screen name on navigation.
+- `heading()` on title/section header `Text` composables — allows users to navigate by headings.
+- `mergeDescendants = true` on composite elements (e.g. `InfoChip`, movie cards) — TalkBack reads them as a single unit.
+- `contentDescription` on loading indicators and icon-only elements.
+- `Role.Button` on clickable non-button elements (e.g. the homepage link in `DetailsScreen`).
+- Images that are decorative when adjacent to a title use `contentDescription = null`.
+
+### Screen-specific notes
+
+**HomeScreen**
+- `paneTitle` set to the app name on the root `Surface`.
+- `MovieItem` card uses `mergeDescendants = true` with a formatted `contentDescription` combining title, score and release date — TalkBack reads the full card as one announcement.
+- Loading indicator has an explicit `contentDescription`.
+
+**DetailsScreen**
+- `paneTitle` is dynamic: shows the movie title when in `DetailsSuccess` state, falls back to a generic string otherwise.
+- Movie title `Text` uses `heading()`.
+- Section titles in `DetailSection` use `heading()`.
+- `InfoChip` uses `mergeDescendants = true` so label and value are read together.
+- Homepage link has `contentDescription` combining a localised prefix with the URL, and `Role.Button`.
+- Poster image uses `contentDescription = null` (decorative, title is adjacent).
+
+**SplashScreen**
+- Root `Box` has both `contentDescription` and `paneTitle` set to the app name.
+
+**ForceUpdateScreen**
+- Root `Surface` has `paneTitle` set to the update title string.
+- Update title `Text` uses `heading()`.
+- Center `Column` uses `mergeDescendants = true`.
 
 ---
 
@@ -439,7 +487,7 @@ data object UpToDate : SplashViewState()
 ```
 
 ### Screen / Content split
-`SplashScreen` owns the ViewModel, state collection, version check trigger, and navigation callbacks. `SplashContent` is a pure composable that only receives `progress: () -> Float` — making it previewable without ViewModel or context.
+`SplashScreen` owns the ViewModel, state collection, version check trigger, and navigation callbacks. It loads `LottieComposition` once via `rememberLottieComposition` and passes it down to `SplashContent` to avoid loading it twice. `SplashContent` is a pure composable receiving `composition` and `progress` — making it previewable without ViewModel or context (pass `composition = null` in the preview).
 
 ```kotlin
 @Composable
@@ -452,6 +500,7 @@ fun SplashScreen(
 
 @Composable
 private fun SplashContent(
+    composition: LottieComposition?,
     progress: () -> Float,
     modifier: Modifier = Modifier,
 )
@@ -466,8 +515,9 @@ private fun SplashContent(
 
 ### Key decisions
 - Animation sized via `fillMaxWidth(0.5f)` + `aspectRatio(1f)`
+- `LottieComposition` loaded once in `SplashScreen` and passed to `SplashContent` — avoids double loading
 - On Remote Config error → fail open, navigate to Home
-- Preview uses `SplashContent(progress = { 0.5f })` to show animation at midpoint without needing ViewModel
+- Preview uses `SplashContent(composition = null, progress = { 0.5f })` to show animation at midpoint without needing ViewModel
 
 ---
 
@@ -476,7 +526,7 @@ private fun SplashContent(
 Screen shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is added.
 
 ### Design
-- Lottie animation looping infinitely (`LottieConstants.IterateForever`) centered on screen, sized at `fillMaxWidth(0.6f)` + `aspectRatio(1f)`
+- Lottie animation looping infinitely (`LottieConstants.IterateForever`) centered on screen, sized at `fillMaxWidth(0.8f)` + `aspectRatio(1f)`
 - Animation file: `app/src/main/res/raw/force_update_animation.json` (rocket animation themed to app colors)
 - Headline and body text centered below the animation
 - "Actualizar" `Button` anchored to `Alignment.BottomCenter`
@@ -547,7 +597,7 @@ private fun checkNeedNewPage() {
 ```
 
 ### UI key decisions
-- `OutlinedTextField` styled as search bar at top — local filtering only, no API calls
+- `SearchBar` (Material 3) styled as search bar at top — local filtering only, no API calls
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
 - `@Stable` / `@Immutable` annotations on ViewState for Compose stability
 - `key = { _, movie -> movie.id }` in `itemsIndexed` to prevent duplicate key crashes
@@ -942,4 +992,6 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Add animated Lottie splash screen
 - [x] Add Firebase Remote Config force update check
 - [x] Implement Force Update screen (Lottie animation, themed colors, Play Store deep link)
-- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current l
+- [x] Add accessibility semantics (paneTitle, heading, mergeDescendants, contentDescription, Role) across all screens
+- [x] Add RTL support in navigation animations
+- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local filter is a placeholder

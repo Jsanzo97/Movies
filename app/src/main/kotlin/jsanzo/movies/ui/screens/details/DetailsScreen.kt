@@ -33,6 +33,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -74,17 +80,25 @@ private fun DetailsScreenContent(
     state: DetailsViewState,
     modifier: Modifier = Modifier,
 ) {
+    val movieDetailsTitle = stringResource(R.string.movie_details_title)
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .semantics {
+                paneTitle = if (state is DetailsSuccess) state.movieDetails.title else movieDetailsTitle
+            },
         color = MaterialTheme.colorScheme.background,
     ) {
         when (state) {
             is Loading -> {
+                val loadingMessage = stringResource(R.string.movie_details_loading)
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        modifier = Modifier.semantics { contentDescription = loadingMessage },
+                    )
                 }
             }
 
@@ -129,7 +143,7 @@ private fun DetailsContent(
         ) {
             SubcomposeAsyncImage(
                 model = movieDetails.posterPath,
-                contentDescription = movieDetails.title,
+                contentDescription = null, // Poster is decorative when title is next to it
                 contentScale = ContentScale.Crop,
                 loading = {
                     Box(
@@ -164,6 +178,7 @@ private fun DetailsContent(
                     text = movieDetails.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() },
                 )
                 movieDetails.tagline?.takeIf { it.isNotBlank() }?.let {
                     Text(
@@ -235,6 +250,7 @@ private fun DetailsContent(
 
             movieDetails.homepage?.takeIf { it.isNotBlank() }?.let { homepage ->
                 val uriHandler = LocalUriHandler.current
+                val linkDescription = stringResource(R.string.movie_details_webpage_link_description)
 
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -248,7 +264,12 @@ private fun DetailsContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { uriHandler.openUri(homepage) },
+                        modifier = Modifier
+                            .semantics {
+                                contentDescription = "$linkDescription: $homepage"
+                                role = Role.Button
+                            }
+                            .clickable { uriHandler.openUri(homepage) },
                     )
                 }
             }
@@ -258,13 +279,17 @@ private fun DetailsContent(
 
 @Composable
 private fun InfoChip(label: String, value: String) {
-    Row(verticalAlignment = Alignment.Top) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier.semantics(mergeDescendants = true) {},
+    ) {
         Text(
-            text = "$label: ",
+            text = "$label:",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
@@ -280,6 +305,7 @@ private fun DetailSection(title: String, body: String) {
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.semantics { heading() },
         )
         Text(
             text = body,
