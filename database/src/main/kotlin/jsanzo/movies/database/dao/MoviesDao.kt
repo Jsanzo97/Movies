@@ -19,6 +19,9 @@ interface MoviesDao {
     @Query("select * from Movies")
     fun getMovies(): List<MovieEntity>
 
+    @Query("SELECT * FROM Movies WHERE title LIKE '%' || :query || '%'")
+    fun searchMovies(query: String): List<MovieEntity>
+
     @Query("select * from `Movie details` where id == :movieId")
     fun getMovieDetails(movieId: Int): MovieDetailsEntity
 }

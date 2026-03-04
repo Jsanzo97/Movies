@@ -9,4 +9,5 @@ interface RemoteMoviesDatastore {
 
     suspend fun getMovies(page: Int): Either<DataError, DataMovie>
     suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails>
+    suspend fun searchMovies(query: String): Either<DataError, DataMovie>
 }

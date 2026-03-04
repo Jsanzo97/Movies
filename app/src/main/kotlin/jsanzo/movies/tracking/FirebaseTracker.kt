@@ -12,6 +12,7 @@ interface MovieTracker {
     fun trackSplashShown()
     fun trackForceUpdateShown(currentVersion: String)
     fun trackRemoteConfigError()
+    fun trackSearchPerformed(query: String, resultsCount: Int)
 }
 
 internal class FirebaseTracker(
@@ -65,5 +66,12 @@ internal class FirebaseTracker(
 
     override fun trackRemoteConfigError() {
         analytics.logEvent("remote_config_error") {}
+    }
+
+    override fun trackSearchPerformed(query: String, resultsCount: Int) {
+        analytics.logEvent("search_performed") {
+            param("query", query)
+            param("results_count", resultsCount.toLong())
+        }
     }
 }

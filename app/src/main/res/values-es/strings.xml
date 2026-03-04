@@ -7,6 +7,7 @@
     <string name="home_screen_search_icon_content_description">Buscar</string>
     <string name="home_screen_loading_movies">Cargando películas</string>
     <string name="home_screen_movie_item_description">%1$s, puntuación %2$s, estrenada el %3$s</string>
+    <string name="home_screen_no_results">No se han encontrado resultados</string>
 
     <string name="movie_details_title">Título</string>
     <string name="movie_details_punctuation">Puntuación</string>

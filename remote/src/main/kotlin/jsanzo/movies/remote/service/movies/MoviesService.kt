@@ -28,4 +28,10 @@ class MoviesService(
     }.map { response ->
         response.toDataMovieDetails()
     }
+
+    override suspend fun searchMovies(query: String): Either<DataError, DataMovie> = networkHandler.executeNetworkRequest {
+        moviesRemoteWebService.searchMovies(query, apiKey)
+    }.map { response ->
+        response.toDataMovie()
+    }
 }

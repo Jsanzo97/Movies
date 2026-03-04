@@ -61,4 +61,17 @@ class MoviesStorage(
             WritingError.some()
         }
     }
+
+    override suspend fun searchMovies(query: String): Either<DataError, DataMovie> {
+        return try {
+            DataMovie(
+                0,
+                moviesDao.searchMovies(query).map { it.toDataMovieResult() },
+                0,
+                0,
+            ).right()
+        } catch (_: Exception) {
+            ReadingError.left()
+        }
+    }
 }

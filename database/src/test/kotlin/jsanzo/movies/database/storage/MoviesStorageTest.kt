@@ -108,4 +108,30 @@ class MoviesStorageTest {
 
         result shouldBe WritingError.some()
     }
+
+    @Test
+    fun `searchMovies returns data movie with filtered results on success`() = runTest {
+        val query = "harry"
+        val movieEntities = listOf(dataMovieResult.toMovieEntity())
+        coEvery { moviesDao.searchMovies(query) } returns movieEntities
+
+        val result = moviesStorage.searchMovies(query)
+
+        result shouldBe DataMovie(
+            0,
+            movieEntities.map { it.toDataMovieResult() },
+            0,
+            0,
+        ).right()
+    }
+
+    @Test
+    fun `searchMovies returns reading error on failure`() = runTest {
+        val query = "harry"
+        coEvery { moviesDao.searchMovies(query) } throws Exception()
+
+        val result = moviesStorage.searchMovies(query)
+
+        result shouldBe ReadingError.left()
+    }
 }

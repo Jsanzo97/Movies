@@ -9,15 +9,21 @@ import retrofit2.http.Query
 
 interface MoviesRemoteWebService {
 
-    @GET("popular")
+    @GET("movie/popular")
     suspend fun getMovies(
         @Query("page") page: Int,
         @Query("api_key") apiKey: String,
     ): Response<GetMoviesResponse>
 
-    @GET("{movie_id}")
+    @GET("movie/{movie_id}")
     suspend fun getMovieDetails(
         @Path("movie_id") movieId: Int,
         @Query("api_key") apiKey: String,
     ): Response<GetMoviesDetailsResponse>
+
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("api_key") apiKey: String,
+    ): Response<GetMoviesResponse>
 }

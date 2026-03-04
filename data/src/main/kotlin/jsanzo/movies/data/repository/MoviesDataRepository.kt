@@ -59,4 +59,15 @@ class MoviesDataRepository(
             .map { error -> error.toMovieError().some() }
             .getOrElse { None }
     }
+
+    override suspend fun searchMovies(query: String): Either<MovieError, DomainMovie> = withContext(dispatcher) {
+        remoteMoviesDatastore.searchMovies(query)
+            .map { it.toMovie() }
+            .recover {
+                localMoviesDatastore.searchMovies(query)
+                    .mapLeft { it.toMovieError() }
+                    .map { it.toMovie() }
+                    .bind()
+            }
+    }
 }

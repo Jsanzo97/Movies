@@ -257,6 +257,7 @@ All screens implement Compose semantics for TalkBack and other assistive technol
 - `paneTitle` set to the app name on the root `Surface`.
 - `MovieItem` card uses `mergeDescendants = true` with a formatted `contentDescription` combining title, score and release date — TalkBack reads the full card as one announcement.
 - Loading indicator has an explicit `contentDescription`.
+- Empty search state uses `mergeDescendants = true` on the `Column` with a `contentDescription` matching the no-results string — the decorative icon uses `contentDescription = null`.
 
 **DetailsScreen**
 - `paneTitle` is dynamic: shows the movie title when in `DetailsSuccess` state, falls back to a generic string otherwise.
@@ -342,19 +343,23 @@ implementation(libs.firebase.config)
 ```
 
 ### Tracker interface
-`Tracker` is an interface defined in `:app/tracking/Tracker.kt`. `FirebaseTracker` implements it. ViewModels depend on `Tracker` not `FirebaseTracker`, making them testable without Firebase:
+`MovieTracker` is an interface defined in `:app/tracking/MovieTracker.kt`. `FirebaseTracker` implements it. ViewModels depend on `MovieTracker` not `FirebaseTracker`, making them testable without Firebase:
 
 ```kotlin
-interface Tracker {
-  fun trackHomeShown()
-  fun trackDetailsShown(movieId: Int)
-  fun trackMovieClicked(movieId: Int, movieTitle: String)
-  fun trackErrorShown(screen: String, error: String)
-  fun trackPageLoaded(page: Int)
+interface MovieTracker {
+    fun trackHomeShown()
+    fun trackDetailsShown(movieId: Int)
+    fun trackMovieClicked(movieId: Int, movieTitle: String)
+    fun trackErrorShown(screen: String, error: String)
+    fun trackPageLoaded(page: Int)
+    fun trackSplashShown()
+    fun trackForceUpdateShown(currentVersion: String)
+    fun trackRemoteConfigError()
+    fun trackSearchPerformed(query: String, resultsCount: Int)
 }
 ```
 
-In tests, `Tracker` is mocked with `mockk(relaxed = true)` so all tracking calls are ignored automatically.
+In tests, `MovieTracker` is mocked with `mockk(relaxed = true)` so all tracking calls are ignored automatically.
 
 ### FirebaseTracker
 Located in `:app/tracking/FirebaseTracker.kt`. Single source of truth for all analytics events. Provided via `AppModule`:
@@ -380,16 +385,18 @@ fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
 | `trackSplashShown()` | `screen_view` | `screen_name: "splash"` |
 | `trackForceUpdateShown(currentVersion)` | `force_update_shown` | `current_version` |
 | `trackRemoteConfigError()` | `remote_config_error` | — |
+| `trackSearchPerformed(query, resultsCount)` | `search_performed` | `query`, `results_count` |
 
 ### Where events are triggered
 - `trackHomeShown()` — `HomeViewModel.trackScreenView()` called from `HomeScreen` `LaunchedEffect`
 - `trackDetailsShown()` — `DetailsViewModel.trackScreenView(movieId)` called from `DetailsScreen` `LaunchedEffect`
 - `trackMovieClicked()` — `HomeViewModel.saveMovie()`
-- `trackErrorShown()` — `HomeViewModel.getMovies()` and `DetailsViewModel.getDetails()` on error
+- `trackErrorShown()` — `HomeViewModel.getMovies()`, `HomeViewModel.searchMovies()` and `DetailsViewModel.getDetails()` on error
 - `trackPageLoaded()` — `HomeViewModel.getMovies()` on success
 - `trackSplashShown()` — `SplashViewModel.trackScreenView()` called from `SplashScreen` `LaunchedEffect`
 - `trackForceUpdateShown()` — `SplashViewModel.mustUpdate()` when `mustUpdate = true`
 - `trackRemoteConfigError()` — `SplashViewModel.mustUpdate()` on error
+- `trackSearchPerformed()` — `HomeViewModel.searchMovies()` on success, with query and results count
 
 ### Pending Firebase functions (not yet implemented)
 - `setUserId(userId)` — for when user login is added
@@ -571,14 +578,21 @@ data class MoviesError(val message: String) : HomeViewState()
 
 Navigation to details is handled as a side effect via `SharedFlow<Int>` instead of a ViewState.
 
+### Search
+The `SearchBar` calls `viewModel.onSearchQueryChange(query)` on every keystroke. The ViewModel holds a private `MutableStateFlow<String>` observed in `init` with `debounce(500ms)` + `distinctUntilChanged`. When the debounce fires:
+- **Query blank and `moviesRetrieved` not empty** → restores `moviesRetrieved` in state without any API call
+- **Query not blank** → calls `SearchMoviesUseCase`, cancelling any in-flight search via `loadingJob?.cancel()`
+
+The search result is not cached — every query hits the API fresh. On network failure the local fallback searches by title in the Room database (`LIKE '%query%'`) over the movies the user has previously visited in details.
+
 ### ViewModel key decisions
-- `loadingJob` pattern to prevent duplicate page requests during fast scroll:
+- `currentJob` pattern to prevent duplicate page requests during fast scroll:
 ```kotlin
-private var loadingJob: Job? = null
+private var currentJob: Job? = null
 
 fun getMovies(page: Int = nextPageToRetrieve) {
-  if (loadingJob?.isActive == true) return
-  loadingJob = viewModelScope.launch { ... }
+  if (currentJob?.isActive == true) return
+  currentJob = viewModelScope.launch { ... }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -589,19 +603,23 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ### Pagination logic
 ```kotlin
 private fun checkNeedNewPage() {
-  val totalLoaded = moviesRetrieved.size
-  if (lastVisible + threshold >= totalLoaded) {
-    getMovies()
-  }
+    if (searchQuery.value.isNotBlank()) return
+    if (lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
+        getMovies()
+    }
 }
 ```
 
 ### UI key decisions
-- `SearchBar` (Material 3) styled as search bar at top — local filtering only, no API calls
+- `SearchBar` (Material 3) at top — API search via ViewModel, no local filtering
+- `Box` content uses a `when` over `state` — `Loading`, `MoviesSuccess` and `MoviesError` are each their own branch
+- Within `MoviesSuccess`: list shown if `movies.isNotEmpty()`, empty state shown if `movies.isEmpty() && searchQuery.isNotBlank()`
+- Empty search state: centered `Column` with `ic_empty_search` icon (`tint = colorScheme.primary`, `contentDescription = null`) + `Text`. The `Column` uses `mergeDescendants = true` with a `contentDescription` matching the no-results string for TalkBack
+- `ic_empty_search` vector uses `fillColor = "#FFFFFF"` — color is fully controlled by the `tint` parameter in Compose
+- `movies` read directly from `MoviesSuccess.movies` — no `remember` filtering
 - `SubcomposeAsyncImage` with loading indicator and error fallback (`ic_error_load`)
 - `@Stable` / `@Immutable` annotations on ViewState for Compose stability
 - `key = { _, movie -> movie.id }` in `itemsIndexed` to prevent duplicate key crashes
-- `remember(state, searchQuery)` for filtered movie list to avoid recalculation on every recomposition
 - `windowInsetsPadding(WindowInsets.statusBars)` on root Column
 - `Surface` as root container with `colorScheme.background`
 - Movie cards: `RoundedCornerShape(12.dp)` on images, `titleSmall` bold for title, `bodySmall` + `onSurfaceVariant` for labels
@@ -719,6 +737,14 @@ private val testDispatcher = StandardTestDispatcher()
 @AfterEach fun tearDown() { Dispatchers.resetMain() }
 
 // In tests that use viewModelScope.launch:
+testDispatcher.scheduler.advanceUntilIdle()
+```
+
+### Debounce testing pattern
+Tests that exercise the search debounce use `advanceTimeBy(301)` before `advanceUntilIdle()` to advance the virtual clock past the 300ms debounce window:
+```kotlin
+homeViewModel.onSearchQueryChange(query)
+testDispatcher.scheduler.advanceTimeBy(301)
 testDispatcher.scheduler.advanceUntilIdle()
 ```
 
@@ -862,9 +888,10 @@ Install: `./gradlew installGitHooks`
 ## API Configuration
 
 ```
-Base URL:  https://api.themoviedb.org/3/movie/ or BuildConfig.SERVER_ENDPOINT
+Base URL:  https://api.themoviedb.org/3/ or BuildConfig.SERVER_ENDPOINT
 API Key:   BuildConfig.SERVER_API_KEY
 Image URL: https://image.tmdb.org/t/p/original (defined as BASE_IMAGE_URL_ORIGINAL in screen files)
+Search:    GET search/movie?query=...
 ```
 
 ### Secrets management
@@ -873,7 +900,7 @@ API keys and URLs are never hardcoded in source code. They are read from `local.
 
 **`local.properties`** (gitignored, local only):
 ```properties
-SERVER_ENDPOINT=https://api.themoviedb.org/3/movie/
+SERVER_ENDPOINT=https://api.themoviedb.org/3/
 SERVER_API_KEY=your_api_key_here
 ```
 
@@ -994,4 +1021,6 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Implement Force Update screen (Lottie animation, themed colors, Play Store deep link)
 - [x] Add accessibility semantics (paneTitle, heading, mergeDescendants, contentDescription, Role) across all screens
 - [x] Add RTL support in navigation animations
-- [ ] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) instead of local filtering — current local filter is a placeholder
+- [x] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) and local DB fallback
+- [x] Add empty search state (icon + text) with accessibility semantics
+- [x] Add `trackSearchPerformed` event to `MovieTracker` and `FirebaseTracker`

@@ -30,4 +30,13 @@ class MoviesDaoTest {
         val result = moviesDao.getMovieDetails(123)
         result shouldBe result
     }
+
+    @Test
+    fun `searchMovies returns filtered list correctly`() = runTest {
+        val query = "harry"
+        val movies = listOf(movieEntity)
+        coEvery { moviesDao.searchMovies(query) } returns movies
+
+        moviesDao.searchMovies(query) shouldBe movies
+    }
 }
