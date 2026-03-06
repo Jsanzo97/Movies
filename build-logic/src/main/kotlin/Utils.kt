@@ -28,5 +28,3 @@ internal val Project.jdkVersion: Int get() = libs().findVersion("jdk").get().req
 internal fun VersionCatalog.getLibrary(library: String): Provider<MinimalExternalModuleDependency> {
     return findLibrary(library).get()
 }
-
-

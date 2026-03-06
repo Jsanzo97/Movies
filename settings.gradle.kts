@@ -23,3 +23,4 @@ include(":database")
 include(":domain")
 include(":remote")
 
+include(":datastore")

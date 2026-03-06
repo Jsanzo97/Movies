@@ -20,7 +20,7 @@ data class DataMovieDetails(
     val productionCompanies: List<DataMovieProductionCompany>,
     val productionCountries: List<DataMovieProductionCountry>,
     val releaseDate: String,
-    val revenue: Int,
+    val revenue: Long,
     val runtime: Int?,
     val spokenLanguages: List<DataMovieSpokenLanguage>,
     val status: String,

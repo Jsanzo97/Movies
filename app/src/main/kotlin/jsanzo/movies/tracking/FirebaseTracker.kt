@@ -13,6 +13,7 @@ interface MovieTracker {
     fun trackForceUpdateShown(currentVersion: String)
     fun trackRemoteConfigError()
     fun trackSearchPerformed(query: String, resultsCount: Int)
+    fun trackLayoutModeChanged(mode: String)
 }
 
 internal class FirebaseTracker(
@@ -72,6 +73,12 @@ internal class FirebaseTracker(
         analytics.logEvent("search_performed") {
             param("query", query)
             param("results_count", resultsCount.toLong())
+        }
+    }
+
+    override fun trackLayoutModeChanged(mode: String) {
+        analytics.logEvent("layout_mode_changed") {
+            param("mode", mode)
         }
     }
 }

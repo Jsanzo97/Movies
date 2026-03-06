@@ -24,6 +24,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import jsanzo.movies.R
+import jsanzo.movies.presentation.SplashViewModel
 import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.compose.viewmodel.koinViewModel

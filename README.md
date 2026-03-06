@@ -2,11 +2,11 @@
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-grey?style=flat&logo=kotlin&logoColor=white&labelColor=7F52FF)
 ![Android](https://img.shields.io/badge/Android-SDK%2036-grey?style=flat&logo=android&logoColor=white&labelColor=green)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.02.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26-grey?style=flat&labelColor=green)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-grey?style=flat&logo=githubactions&logoColor=white&labelColor=yellow)
 ![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics%20%2B%20RemoteConfig-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
-![JUnit5](https://img.shields.io/badge/JUnit5-5.11.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
+![JUnit5](https://img.shields.io/badge/JUnit5-1.3.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
 [![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
 ![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=yellow)
@@ -22,7 +22,7 @@ The project follows **Clean Architecture** with an **MVVM** presentation pattern
 ```
 app      → domain
 domain   → data
-data     → remote, database
+data     → remote, database, datastore
 build-logic → (no dependencies)
 ```
 
@@ -31,6 +31,7 @@ build-logic → (no dependencies)
 | `:app` | UI layer — Compose screens, ViewModels, navigation |
 | `:domain` | Business logic — UseCases, entities, repository interfaces |
 | `:data` | Repository implementations orchestrating remote and local sources |
+| `:datastore` | DataStore Preferences — persists user preferences |
 | `:remote` | Retrofit API, remote DTOs, Firebase Remote Config |
 | `:database` | Room database, DAOs, local entities |
 | `:build-logic` | Convention plugins for shared Gradle configuration |
@@ -65,6 +66,7 @@ Dao and database implementations to persist the data locally. Only movies clicke
 ### Networking & persistence
 - **Retrofit 3 + OkHttp 5** — REST client with Kotlinx Serialization converter
 - **Room 2.8** — local persistence with KSP-generated DAOs
+- **DataStore Preferences** — persists user preferences across sessions
 - **Kotlinx Serialization** — JSON parsing across all modules
 
 ### Dependency injection
@@ -121,6 +123,12 @@ Navigation slide animations adapt to the system layout direction via `LocalLayou
 The home screen `SearchBar` triggers a real API search via the `/search/movie` endpoint rather than filtering the already-loaded list. A 500ms debounce ensures the API is only called once the user stops typing. Any in-flight search is cancelled via `currentJob?.cancel()` before launching a new one. Clearing the search restores the paginated list without any extra API call. If the network call fails, the search falls back to a local Room query (`LIKE '%query%'`) over movies the user has previously visited in details. Pagination is paused while a search query is active.
 
 When a search returns no results, an empty state is shown with a themed icon and a descriptive text.
+
+---
+
+## 🖌️ Layout Mode
+
+The home screen supports three grid densities: **Grid2**, **Grid3**, and **Grid4** (columns). The selected layout is persisted via **DataStore Preferences** and restored on every launch. Transitions between layouts are animated via `AnimatedContent`.
 
 ---
 
@@ -199,11 +207,21 @@ Animated splash using Lottie — no Android SplashScreen API. The manifest appli
 | MockK | Mocking with `coEvery`, `coVerify`, `relaxed` mocks |
 | Kotest | Assertions — `shouldBe`, `shouldBeInstanceOf` |
 | Coroutines Test | `runTest` + `StandardTestDispatcher` for deterministic coroutine execution |
+| Turbine | `StateFlow` / `Flow` assertions via `.test {}`, `awaitItem()` |
 
-ViewModel tests use `Dispatchers.setMain(testDispatcher)` + `advanceUntilIdle()` to control coroutine execution deterministically. Tests that exercise the search debounce additionally use `advanceTimeBy(301)` to advance the virtual clock past the 300ms window before calling `advanceUntilIdle()`.
+Tests will follow the structured naming `Given-When-Then`
+
+ViewModel tests use `Dispatchers.setMain(testDispatcher)` to control coroutine execution deterministically. `StateFlow` and `Flow` emissions are asserted with **Turbine** — the `.test {}` block subscribes to the flow and `awaitItem()` suspends until the next emission arrives.
+
+Two scheduler helpers control when coroutines run:
+- **`advanceUntilIdle()`** — runs all pending coroutines to completion, including time-based delays. Used after triggering an action that launches a coroutine (e.g. `getMovies()`, `saveMovie()`) to let it complete before asserting the resulting state.
+- **`runCurrent()`** — executes only the coroutines already queued at the current virtual time, without advancing the clock. Used when testing concurrent guards (e.g. `isLoadingPage`) where the first coroutine must remain suspended while the second call arrives — advancing time would complete the first job and make the guard invisible to the test.
+
+Tests that exercise the search debounce combine both: `advanceTimeBy(501)` advances the virtual clock past the 500ms window, then `advanceUntilIdle()` completes the resulting coroutine.
+
+`StateFlow` instances using `WhileSubscribed` require an active collector to start the upstream. The Turbine `.test {}` block acts as that collector automatically — no manual `collect {}` job is needed.
 
 Coverage is measured with **JaCoCo 0.8.12** and reported to [Codecov](https://app.codecov.io/github/jsanzo97/movies) on every PR.
-
 ```bash
 ./gradlew jacocoMergedReport                # generate merged coverage report for all modules
 ./gradlew jacocoAll                         # generate individual reports per module

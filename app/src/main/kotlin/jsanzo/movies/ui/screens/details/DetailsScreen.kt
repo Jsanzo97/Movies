@@ -1,6 +1,5 @@
 package jsanzo.movies.ui.screens.details
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -45,13 +45,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import jsanzo.movies.R
-import jsanzo.movies.domain.model.DomainMovieDetails
-import jsanzo.movies.domain.model.DomainMovieGenre
-import jsanzo.movies.domain.model.DomainMovieProductionCompany
-import jsanzo.movies.domain.model.DomainMovieProductionCountry
-import jsanzo.movies.domain.model.DomainMovieSpokenLanguage
+import jsanzo.movies.presentation.DetailsViewModel
 import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
@@ -125,7 +122,7 @@ private fun DetailsScreenContent(
 @Suppress("LongMethod")
 @Composable
 private fun DetailsContent(
-    movieDetails: DomainMovieDetails,
+    movieDetails: MovieDetailsUi,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -141,32 +138,18 @@ private fun DetailsContent(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SubcomposeAsyncImage(
-                model = movieDetails.posterPath,
-                contentDescription = null, // Poster is decorative when title is next to it
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(movieDetails.posterPath)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_error_load),
-                            contentDescription = null,
-                        )
-                    }
-                },
+                placeholder = painterResource(R.drawable.ic_error_load),
+                error = painterResource(R.drawable.ic_error_load),
                 modifier = Modifier
-                    .width(130.dp)
-                    .height(195.dp)
+                    .width(120.dp)
+                    .height(200.dp)
                     .clip(RoundedCornerShape(12.dp)),
             )
 
@@ -190,14 +173,14 @@ private fun DetailsContent(
                 Spacer(modifier = Modifier.height(4.dp))
                 InfoChip(label = stringResource(R.string.movie_details_punctuation), value = movieDetails.voteAverage.toString())
                 InfoChip(label = stringResource(R.string.movie_details_release_date), value = movieDetails.releaseDate)
-                InfoChip(label = stringResource(R.string.movie_details_language), value = formatLanguages(movieDetails.spokenLanguages))
+                InfoChip(label = stringResource(R.string.movie_details_language), value = movieDetails.spokenLanguages)
                 movieDetails.runtime?.let {
                     InfoChip(
                         label = stringResource(R.string.movie_details_runtime),
                         value = stringResource(R.string.movie_details_duration_value, it),
                     )
                 }
-                InfoChip(label = stringResource(R.string.movie_details_genres), value = formatGenres(movieDetails.genres))
+                InfoChip(label = stringResource(R.string.movie_details_genres), value = movieDetails.genres)
             }
         }
 
@@ -213,12 +196,12 @@ private fun DetailsContent(
 
             DetailSection(
                 title = stringResource(R.string.movie_details_production),
-                body = formatProductions(movieDetails.productionCompanies),
+                body = movieDetails.productionCompanies,
             )
 
             DetailSection(
                 title = stringResource(R.string.movie_details_country),
-                body = formatCountries(movieDetails.productionCountries),
+                body = movieDetails.productionCountries,
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
@@ -314,14 +297,6 @@ private fun DetailSection(title: String, body: String) {
     }
 }
 
-private fun formatLanguages(languages: List<DomainMovieSpokenLanguage>) = languages.joinToString(", ") { it.name }
-
-private fun formatGenres(genres: List<DomainMovieGenre>) = genres.joinToString(", ") { it.name }
-
-private fun formatProductions(productions: List<DomainMovieProductionCompany>) = productions.joinToString(", ") { it.name }
-
-private fun formatCountries(countries: List<DomainMovieProductionCountry>) = countries.joinToString(", ") { it.name }
-
 @Composable
 @PreviewOnDevices
 private fun DetailsScreenPreview(
@@ -338,41 +313,24 @@ private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewSta
     override val values: Sequence<DetailsViewState> = sequenceOf(
         Loading,
         DetailsSuccess(
-            movieDetails = DomainMovieDetails(
+            movieDetails = MovieDetailsUi(
                 adult = false,
                 backdropPath = null,
-                belongsToCollection = null,
                 budget = 200_000_000,
-                genres = listOf(
-                    DomainMovieGenre(1, "Fantasy"),
-                    DomainMovieGenre(2, "Adventure"),
-                ),
+                genres = "Fantasy, Adventure",
                 homepage = "https://www.harrypotter.com",
                 id = 1,
-                imdbId = "tt1201607",
-                originCountry = listOf(""),
                 originalLanguage = "en",
                 originalTitle = "Harry Potter and the Deathly Hallows",
                 overview = "Harry, Ron and Hermione search for Voldemort's remaining horcruxes in their effort to destroy the Dark Lord.",
                 popularity = 150.0,
                 posterPath = null,
-                productionCompanies = listOf(
-                    DomainMovieProductionCompany(
-                        name = "Warner Bros.",
-                        id = 1,
-                        logoPath = null,
-                        originCountry = "US",
-                    ),
-                ),
-                productionCountries = listOf(
-                    DomainMovieProductionCountry("US", "United States of America"),
-                ),
+                productionCompanies = "Warner Bros.",
+                productionCountries = "United States of America",
                 releaseDate = "2011-07-15",
                 revenue = 1_341_511_219,
                 runtime = 130,
-                spokenLanguages = listOf(
-                    DomainMovieSpokenLanguage("", "en", "English"),
-                ),
+                spokenLanguages = "English",
                 status = "Released",
                 tagline = "It all ends here.",
                 title = "Harry Potter and the Deathly Hallows: Part 2",

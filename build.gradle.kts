@@ -14,6 +14,7 @@ plugins {
 
 apply(plugin = "jacoco")
 
+
 tasks.register("detektAll") {
     group = "verification"
     dependsOn(subprojects.mapNotNull { it.tasks.findByName("detekt") })
@@ -36,32 +37,37 @@ val jacocoExcludes = listOf(
     "**/*_Factory*.*",
     "**/generated/**",
     "**/ksp/**",
-    $$"**/*$lambda$*",
-    $$"**/*$inlined$*",
-    $$"**/*$default$*",
-    $$"**/*$sam$*",
-    "**/*$*Function*",
-    $$"**/*$1*",
-    $$"**/*$2*",
-    $$"**/*$3*",
-    $$"**/*$4*",
-    $$"**/*$5*",
-    $$"**/*$6*",
-    $$"**/*$7*",
-    $$"**/*$8*",
-    $$"**/*$9*",
+    "**/*\$lambda$*",
+    "**/*\$inlined$*",
+    "**/*\$default$*",
+    "**/*\$sam$*",
+    "**/*\$*Function*",
+    "**/*\$1*",
+    "**/*\$2*",
+    "**/*\$3*",
+    "**/*\$4*",
+    "**/*\$5*",
+    "**/*\$6*",
+    "**/*\$7*",
+    "**/*\$8*",
+    "**/*\$9*",
     "**/*ComposableSingletons*",
     "**/*WhenMappings*",
     "**/*DefaultImpls*",
-    "**/ui/theme/**",
-    "**/ui/navigation/**",
-    "**/ui/screens/**/*Screen*",
-    "**/ui/screens/**/*ViewStateProvider*",
-    "**/LocalDatabase*",
-    "**/ui/ComposeActivity*",
-    "**/model/**",
+    "**/ui/**",
     "**/MoviesApplication*",
+    "**/LocalDatabase*",
+    "**/model/**",
+    "**/error/**",
+    "**/entity/**",
+    "**/Converters*.*",
+    "**/DataStore*.*",
+    "**/dto/response/**",
 )
+
+allprojects {
+    extra.set("jacocoExcludes", jacocoExcludes)
+}
 
 tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"

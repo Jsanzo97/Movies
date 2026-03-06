@@ -1,24 +1,25 @@
 package jsanzo.movies.ui.details
 
+import app.cash.turbine.test
 import arrow.core.left
 import arrow.core.right
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.mockk
+import io.mockk.verify
 import jsanzo.movies.domain.error.NotFoundError
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
+import jsanzo.movies.presentation.DetailsViewModel
 import jsanzo.movies.tracking.MovieTracker
 import jsanzo.movies.ui.model.domainMovieDetails
 import jsanzo.movies.ui.screens.details.DetailsError
 import jsanzo.movies.ui.screens.details.DetailsSuccess
-import jsanzo.movies.ui.screens.details.DetailsViewModel
-import jsanzo.movies.ui.screens.details.DetailsViewState
 import jsanzo.movies.ui.screens.details.Loading
+import jsanzo.movies.ui.screens.details.toMovieDetailsUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -35,22 +36,15 @@ class DetailsViewModelTest {
     private lateinit var detailsViewModel: DetailsViewModel
 
     private val mockedGetMovieDetailsUseCase: GetMovieDetailsUseCase = mockk()
-
-    private lateinit var detailsViewModelStateFlow: StateFlow<DetailsViewState>
-
-    private val validMovieId = 0
-    private val invalidMovieId = -1
-
     private val mockedMovieTracker: MovieTracker = mockk(relaxed = true)
+
+    private val validMovieId = 1
+    private val invalidMovieId = -1
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
-        coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns domainMovieDetails.right()
-
         detailsViewModel = DetailsViewModel(mockedGetMovieDetailsUseCase, mockedMovieTracker)
-        detailsViewModelStateFlow = detailsViewModel.state
     }
 
     @AfterEach
@@ -59,47 +53,63 @@ class DetailsViewModelTest {
     }
 
     @Test
-    fun `we are always in Loading state at the beginning`() {
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<Loading>()
+    fun `Given valid movie id, When getDetails is called, Then state is DetailsSuccess`() = runTest {
+        coEvery { mockedGetMovieDetailsUseCase(validMovieId) } returns domainMovieDetails.right()
+
+        detailsViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            detailsViewModel.getDetails(validMovieId)
+
+            awaitItem() shouldBe DetailsSuccess(domainMovieDetails.toMovieDetailsUi())
+
+            coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(validMovieId) }
+            confirmVerified(mockedGetMovieDetailsUseCase)
+        }
     }
 
     @Test
-    fun `we are in DetailsSuccess state after call getDetails() with valid id, also we get the movie details`() = runTest {
-        detailsViewModel.getDetails(validMovieId)
+    fun `Given invalid movie id, When getDetails is called, Then state is DetailsError`() = runTest {
+        coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        detailsViewModel.state.test {
+            awaitItem() shouldBe Loading
 
-        coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(validMovieId) }
+            detailsViewModel.getDetails(invalidMovieId)
 
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsSuccess>()
+            awaitItem() shouldBe DetailsError(NotFoundError.toString())
 
-        val state = detailsViewModelStateFlow.value as? DetailsSuccess
-
-        state?.movieDetails shouldBe domainMovieDetails
+            coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
+            confirmVerified(mockedGetMovieDetailsUseCase)
+        }
     }
 
     @Test
-    fun `we are in DetailsError state after call getDetails() with invalid id`() = runTest {
-        detailsViewModel.getDetails(invalidMovieId)
+    fun `Given invalid movie id, When getDetails is called, Then trackErrorShown is called`() = runTest {
+        coEvery { mockedGetMovieDetailsUseCase(invalidMovieId) } returns NotFoundError.left()
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        detailsViewModel.state.test {
+            awaitItem() shouldBe Loading
 
-        coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
+            detailsViewModel.getDetails(invalidMovieId)
 
-        detailsViewModelStateFlow.value.shouldBeInstanceOf<DetailsError>()
+            awaitItem() shouldBe DetailsError(NotFoundError.toString())
+
+            coVerify(exactly = 1) { mockedGetMovieDetailsUseCase(invalidMovieId) }
+            verify(exactly = 1) { mockedMovieTracker.trackErrorShown("details", NotFoundError.toString()) }
+            confirmVerified(mockedGetMovieDetailsUseCase, mockedMovieTracker)
+        }
     }
 
     @Test
-    fun `trackScreenView calls tracker trackDetailsShown`() = runTest {
-        detailsViewModel.trackScreenView(validMovieId)
-        testDispatcher.scheduler.advanceUntilIdle()
+    fun `Given any movie id, When trackScreenView is called, Then trackDetailsShown is called`() = runTest {
+        detailsViewModel.state.test {
+            awaitItem() shouldBe Loading
 
-        coVerify(exactly = 1) { mockedMovieTracker.trackDetailsShown(validMovieId) }
-    }
+            detailsViewModel.trackScreenView(validMovieId)
 
-    @Test
-    fun `DetailsError contains correct message`() {
-        val error = DetailsError("An unexpected error occurred")
-        error.message shouldBe "An unexpected error occurred"
+            coVerify(exactly = 1) { mockedMovieTracker.trackDetailsShown(validMovieId) }
+            confirmVerified(mockedMovieTracker)
+        }
     }
 }

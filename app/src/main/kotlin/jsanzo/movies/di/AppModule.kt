@@ -4,6 +4,7 @@ import android.app.Application
 import com.google.firebase.analytics.FirebaseAnalytics
 import jsanzo.movies.data.di.DataModule
 import jsanzo.movies.database.di.DatabaseModule
+import jsanzo.movies.datastore.di.DataStoreModule
 import jsanzo.movies.domain.di.DomainModule
 import jsanzo.movies.remote.di.NetworkModule
 import jsanzo.movies.remote.di.RemoteModule
@@ -20,6 +21,7 @@ import org.koin.core.annotation.Single
         DatabaseModule::class,
         NetworkModule::class,
         RemoteModule::class,
+        DataStoreModule::class,
     ],
 )
 @ComponentScan("jsanzo.movies")

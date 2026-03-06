@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.CommonExtension
-import com.android.build.api.dsl.TestedExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.Detekt
@@ -109,6 +107,7 @@ internal fun Project.setupJunitTests() {
         "testImplementation"(libs().getLibrary("kotest-runner-junit5"))
         "testImplementation"(libs().getLibrary("kotest-assertions-core"))
         "testImplementation"(libs().getLibrary("arrow-core"))
+        "testImplementation"(libs().getLibrary("turbine"))
     }
 }
 
@@ -119,48 +118,14 @@ internal fun Project.setupJacocoReport() {
         toolVersion = "0.8.12"
     }
 
-    val excludes = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*",
-        "**/di/**",
-        "**/dao/**",
-        "**/*_Factory*.*",
-        "**/generated/**",
-        "**/ksp/**",
-        $$"**/*$lambda$*",
-        $$"**/*$inlined$*",
-        $$"**/*$default$*",
-        $$"**/*$sam$*",
-        "**/*$*Function*",
-        $$"**/*$1*",
-        $$"**/*$2*",
-        $$"**/*$3*",
-        $$"**/*$4*",
-        $$"**/*$5*",
-        $$"**/*$6*",
-        $$"**/*$7*",
-        $$"**/*$8*",
-        $$"**/*$9*",
-        "**/*ComposableSingletons*",
-        "**/*WhenMappings*",
-        "**/*DefaultImpls*",
-        "**/ui/theme/**",
-        "**/ui/navigation/**",
-        "**/ui/screens/**/*Screen*",
-        "**/ui/screens/**/*ViewStateProvider*",
-        "**/LocalDatabase*",
-        "**/ui/ComposeActivity*",
-        "**/model/**",
-        "**/MoviesApplication*",
-    )
-
-    extra["jacocoExcludes"] = excludes
-
     afterEvaluate {
+        val excludes = if (rootProject.extra.has("jacocoExcludes")) {
+            @Suppress("UNCHECKED_CAST")
+            rootProject.extra.get("jacocoExcludes") as List<String>
+        } else {
+            emptyList()
+        }
+
         extensions.findByName("android")?.let { ext ->
             val variants = when (ext) {
                 is com.android.build.api.dsl.ApplicationExtension -> listOf("debug")

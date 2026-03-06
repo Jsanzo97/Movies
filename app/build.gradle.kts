@@ -50,6 +50,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":database"))
     implementation(project(":remote"))
+    implementation(project(":datastore"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
