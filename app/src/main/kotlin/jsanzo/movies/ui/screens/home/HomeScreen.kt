@@ -68,6 +68,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
+import com.skydoves.compose.stability.runtime.IgnoreStabilityReport
 import jsanzo.movies.R
 import jsanzo.movies.presentation.HomeViewModel
 import jsanzo.movies.ui.PreviewOnDevices
@@ -81,6 +82,7 @@ private const val ZOOM_OUT_THRESHOLD = 0.9f
 private const val ZOOM_IN_THRESHOLD = 1.1f
 private const val LAYOUT_TRANSITION_DURATION = 250
 
+@IgnoreStabilityReport
 @Composable
 fun HomeScreen(
     onNavigateToDetails: (Int) -> Unit,

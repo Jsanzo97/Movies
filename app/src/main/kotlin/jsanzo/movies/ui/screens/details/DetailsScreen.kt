@@ -47,12 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.skydoves.compose.stability.runtime.IgnoreStabilityReport
 import jsanzo.movies.R
 import jsanzo.movies.presentation.DetailsViewModel
 import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
 
+@IgnoreStabilityReport
 @Composable
 fun DetailsScreen(
     movieId: Int,

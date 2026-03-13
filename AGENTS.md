@@ -28,6 +28,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Analytics & Crashlytics | Firebase BOM 34.9.0 | Crashlytics + Analytics + Remote Config with DebugView |
 | Splash + ForceUpdate | Lottie 6.6.6 | Animated splash screen + force update screen with JSON animations |
 | HTTP inspector | Chucker | debugImplementation only, no-op in release |
+| Compose stability | compose-stability-analyzer 0.7.0 | Gradle plugin + IDE plugin. Gradle task: `stabilityCheck`. Baseline commited in `app/stability/` |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |
 | Min SDK | 26 | |
@@ -340,6 +341,39 @@ All screens use `Modifier.windowInsetsPadding(WindowInsets.safeDrawing)` on the 
 The project uses Koin Annotations for dependency injection. Each Gradle module is responsible for its own dependency providers. `@KoinViewModel` is used for ViewModels, with `@ComponentScan` for automatic scanning.
 
 Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggregated `AppModule`.
+
+### StrictMode
+
+StrictMode is enabled in debug builds only in `MoviesApplication`:
+
+```kotlin
+private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+override fun onCreate() {
+    super.onCreate()
+    setupStrictMode()
+    startKoin { ... }
+}
+
+private fun setupStrictMode() {
+    if (BuildConfig.DEBUG) {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads().detectDiskWrites().detectNetwork().detectCustomSlowCalls()
+                .penaltyLog().build()
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build()
+        )
+    }
+}
+```
+
+`detectUntaggedSockets()` is intentionally excluded from `ThreadPolicy` — Firebase/OkHttp background threads trigger it and it is not actionable.
+
+**Known acceptable violations:**
+- `UntaggedSocketViolation` — Firebase Crashlytics sending reports on its own thread. Library code, not actionable.
+- `LeakedClosableViolation` in `UnixSecureDirectoryStream` — triggered by the Android GC finalizer daemon. Not actionable.
 
 ### Koin Module Structure
 
@@ -656,16 +690,30 @@ The search result is not cached — every query hits the API fresh. On network f
 ```kotlin
 private var isLoadingPage = false
 
-fun getMovies(page: Int = nextPageToRetrieve) {
-  if (!isLoadingPage) {
-    viewModelScope.launch {
-      isLoadingPage = true
-      // ...
-      isLoadingPage = false
+fun getMovies() {
+    if (moviesRetrieved.isEmpty()) {
+        loadPage(nextPageToRetrieve)
     }
-  }
+}
+
+private fun checkNeedNewPage() {
+    if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
+        loadPage(nextPageToRetrieve)
+    }
+}
+
+private fun loadPage(page: Int) {
+    if (!isLoadingPage) {
+        viewModelScope.launch {
+            isLoadingPage = true
+            // ...
+            isLoadingPage = false
+        }
+    }
 }
 ```
+
+`getMovies()` is the public screen-facing call — only loads if no data. This prevents the `LaunchedEffect(Unit)` in `HomeScreen` from re-triggering a full load when navigating back from Details, which would overwrite a `MoviesSearch` state with `MovieListComplete`. `loadPage()` is internal, called by pagination via `checkNeedNewPage()` without the empty check.
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
 - Pagination based on `moviesRetrieved.size` (not a separate counter) to account for filtered duplicates
 - `nextPageToRetrieve` incremented only on `onSuccess`
@@ -675,7 +723,7 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ```kotlin
 private fun checkNeedNewPage() {
   if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
-    getMovies()
+    loadPage(nextPageToRetrieve)
   }
 }
 ```
@@ -751,6 +799,79 @@ Convention plugins are defined in `build-logic/src/main/kotlin/`.
 - `setupSerialization()` — applies `org.jetbrains.kotlin.plugin.serialization` to all modules
 - `setupKoin()` — configures Koin
 - `setupJacocoReport()` — configures JaCoCo 0.8.12, registers `jacocoDebugTestReport` task per module, exposes excludes list via `project.extra["jacocoExcludes"]`
+
+---
+
+## Compose Stability Analyzer
+
+Plugin: `com.github.skydoves.compose.stability.analyzer` version `0.7.0`
+
+### Setup
+
+**`app/build.gradle.kts`:**
+```kotlin
+alias(libs.plugins.stability.analyzer)
+
+composeStabilityAnalyzer {
+    stabilityValidation {
+        enabled.set(true)
+        outputDir.set(layout.projectDirectory.dir("stability"))
+        includeTests.set(false)
+        ignoreNonRegressiveChanges.set(true)
+        failOnStabilityChange.set(System.getenv("CI") == "true")
+    }
+}
+```
+
+`failOnStabilityChange` only fails on CI (`CI=true`) — locally it logs a warning only. `ignoreNonRegressiveChanges` means improvements (UNSTABLE → STABLE) never fail the check.
+
+### Baseline
+
+The baseline file is generated in `app/stability/` and **committed to the repo**. The CI `stabilityCheck` task compares against this baseline — any new UNSTABLE composable that is not in the baseline fails the build.
+
+`app/stability/` is **not** in `.gitignore`.
+
+### Gradle tasks
+
+```bash
+./gradlew stabilityDump       # Regenerate baseline for all variants (debug + release)
+./gradlew debugStabilityDump  # Regenerate for debug only
+./gradlew stabilityCheck      # Compare current composables against baseline — fails on regression
+```
+
+Always run `./gradlew stabilityDump` (not `debugStabilityDump`) before committing — otherwise the `releaseStabilityCheck` in CI will fail for the release variant.
+
+### `@IgnoreStabilityReport`
+
+Applied to composables that are intentionally UNSTABLE due to ViewModel parameters:
+
+```kotlin
+@IgnoreStabilityReport
+@Composable
+fun HomeScreen(..., viewModel: HomeViewModel) { ... }
+
+@IgnoreStabilityReport
+@Composable
+fun DetailsScreen(..., viewModel: DetailsViewModel) { ... }
+
+@IgnoreStabilityReport
+@Composable
+fun SplashScreen(..., viewModel: SplashViewModel) { ... }
+```
+
+ViewModels are always UNSTABLE (they have `StateFlow` and mutable properties). The pattern of extracting state in `Screen` and passing it down to a pure `Content` composable already isolates recompositions correctly — annotating the Screen with `@IgnoreStabilityReport` prevents false positives in the stability check.
+
+### Current stability report
+
+All composables are `skippable: true` except:
+- `HomeScreen`, `DetailsScreen`, `SplashScreen` — UNSTABLE due to ViewModel (expected, annotated with `@IgnoreStabilityReport`)
+- `SplashContent` — UNSTABLE due to `LottieComposition?` parameter (external library, not actionable)
+
+### IDE Heatmap (Recomposition Heatmap)
+
+The IDE plugin (`View → Tool Windows → Compose Stability Analyzer → Start Recomposition Heatmap`) requires ADB. **It does not work on Windows** — the plugin cannot resolve ADB even with `ANDROID_HOME`, `ANDROID_SDK_ROOT`, and `platform-tools` on PATH correctly configured. This is a known bug of the plugin on Windows.
+
+Use the Android Studio **Layout Inspector** (`View → Tool Windows → Layout Inspector`) as an alternative for runtime recomposition counts.
 
 ---
 
@@ -1093,14 +1214,16 @@ File: `.github/workflows/pr-validation.yml`
 - `cache: 'gradle'` on `actions/setup-java@v4` restores Gradle User Home before `setup-gradle` runs
 - `google-services.json` decoded from secret before every Gradle task that needs it
 - Jobs:
-  1. `check` — Detekt + Spotless (runs first)
-  2. `build-and-test` — `assembleDebug` + `jacocoMergedCoverageVerification` (Min 95% code coverage) + Codecov upload (runs after check)
+    1. `check` — Detekt + Spotless (runs first)
+    2. `stability-check` — `./gradlew stabilityCheck` comparing against committed baseline (runs after check, in parallel with build-and-test)
+    3. `build-and-test` — `assembleDebug` + `jacocoMergedCoverageVerification` (Min 95% code coverage) + Codecov upload (runs after check, in parallel with stability-check)
 - **Quality Gate**: The build fails automatically if the aggregated coverage is below **95%**.
 - **Reports**: Coverage reported to **Codecov**
 - Codecov PR comments disabled via `comment: false`
 
 **Approximate CI times after cache optimization:**
 - `check`: ~1 min
+- `stability-check`: ~1 min (runs in parallel with build-and-test)
 - `build-and-test`: ~2 min
 
 ### GitHub Actions — Coverage
@@ -1230,10 +1353,9 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 | KSP | 2.3.5 |
 | Lottie | 6.6.6 |
 | Turbine | 1.2.0 |
+| compose-stability-analyzer | 0.7.0 |
 
 ---
-
-## Common Commands
 
 ```bash
 # Build
@@ -1262,6 +1384,10 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 
 # Install git hooks
 ./gradlew installGitHooks
+
+# Compose Stability
+./gradlew stabilityDump       # Regenerate baseline for all variants
+./gradlew stabilityCheck      # Check composables against baseline (fails on regression)
 ```
 
 ---
@@ -1274,6 +1400,7 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - **detekt-rules-compose version cap**: Versions `0.5.x+` depend on `dev.detekt 2.0.0-alpha.2` which is not yet published in public repos. Max compatible version with Detekt 1.23.8 is `0.4.27`.
 - **KSP NullPointerException in CI**: KSP throws a harmless `NullPointerException` in `AWT-EventQueue-0` on headless environments. Does not fail the build. Suppressed via `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` in CI.
 - **Bundle not readable in JVM unit tests**: `Bundle` methods return `null`/`0` without Robolectric. `MovieTrackerTest` verifies only event names as a result — see testing section for details.
+- **Compose Stability Analyzer Heatmap on Windows**: The `Start Recomposition Heatmap` button in the IDE plugin tool window fails with `Cannot find adb` on Windows even with `ANDROID_HOME`, `ANDROID_SDK_ROOT`, and `platform-tools` on PATH. This is a known plugin bug. Use Layout Inspector as an alternative for runtime recomposition counts.
 
 ---
 
@@ -1306,3 +1433,5 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Persist layout mode preference via DataStore, expose as `StateFlow<LayoutModeUi>` in `HomeViewModel`
 - [x] Add `trackLayoutModeChanged` event to `MovieTracker` and `FirebaseTracker`
 - [x] Move ViewModels from `ui/screens/` to `presentation/` package
+- [x] Add StrictMode in debug builds (`MoviesApplication`)
+- [x] Add Compose Stability Analyzer plugin (Gradle + IDE), baseline committed in `app/stability/`, `stabilityCheck` enforced in CI
