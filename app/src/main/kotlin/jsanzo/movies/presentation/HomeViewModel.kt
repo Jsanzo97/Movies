@@ -89,7 +89,19 @@ class HomeViewModel(
         }
     }
 
-    fun getMovies(page: Int = nextPageToRetrieve) {
+    fun getMovies() {
+        if (moviesRetrieved.isEmpty()) {
+            loadPage(nextPageToRetrieve)
+        }
+    }
+
+    private fun checkNeedNewPage() {
+        if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
+            loadPage(nextPageToRetrieve)
+        }
+    }
+
+    private fun loadPage(page: Int) {
         if (!isLoadingPage) {
             viewModelScope.launch {
                 isLoadingPage = true
@@ -141,12 +153,6 @@ class HomeViewModel(
         if (lastVisible != lastElement) {
             lastVisible = lastElement
             checkNeedNewPage()
-        }
-    }
-
-    private fun checkNeedNewPage() {
-        if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
-            getMovies()
         }
     }
 

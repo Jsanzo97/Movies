@@ -61,10 +61,10 @@ class HomeViewModelTest {
     private val mockedSaveLayoutModeUseCase: SaveLayoutModeUseCase = mockk()
 
     private val validPage = 1
-    private val invalidPage = -1
     private val lastElementVisibleToNeedMore = 10
     private val lastElementVisibleToNotNeedMore = 1
     private val searchQuery = "harry potter"
+    private val searchResults = listOf(domainMovie)
 
     @BeforeEach
     fun setUp() {
@@ -110,7 +110,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -120,42 +120,64 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `Given invalid page, When getMovies is called, Then state is MoviesError`() = runTest {
-        coEvery { mockedGetMoviesUseCase(invalidPage) } returns NotFoundError.left()
+    fun `Given use case returns error, When getMovies is called, Then state is MoviesError`() = runTest {
+        coEvery { mockedGetMoviesUseCase(validPage) } returns NotFoundError.left()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(invalidPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MoviesError(NotFoundError.toString())
 
-            coVerify(exactly = 1) { mockedGetMoviesUseCase(invalidPage) }
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
             confirmVerified(mockedGetMoviesUseCase)
         }
     }
 
     @Test
-    fun `Given movies loaded, When saveMovie is called, Then state does not change`() = runTest {
+    fun `Given movies already loaded, When getMovies is called again, Then use case is not called again`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSaveMovieUseCase(domainMovie) } returns InvalidParametersError.some()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
-            homeViewModel.saveMovie(movieUi)
+            homeViewModel.getMovies()
             advanceUntilIdle()
 
             expectNoEvents()
+
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+            coVerify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
+            confirmVerified(mockedGetMoviesUseCase, mockedMovieTracker)
+        }
+    }
+
+    @Test
+    fun `Given loading in progress, When getMovies is called again, Then use case is called only once`() = runTest {
+        coEvery { mockedGetMoviesUseCase(validPage) } coAnswers {
+            delay(1_000)
+            listOfDomainMovie.right()
         }
 
-        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
-        coVerify(exactly = 1) { mockedSaveMovieUseCase(domainMovie) }
-        confirmVerified(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.getMovies()
+            runCurrent()
+            homeViewModel.getMovies()
+            advanceUntilIdle()
+
+            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
+
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+            coVerify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
+            confirmVerified(mockedGetMoviesUseCase, mockedMovieTracker)
+        }
     }
 
     @Test
@@ -166,7 +188,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -187,7 +209,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -202,86 +224,6 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `Given any state, When trackScreenView is called, Then trackHomeShown is called`() = runTest {
-        homeViewModel.state.test {
-            awaitItem() shouldBe Loading
-
-            homeViewModel.trackScreenView()
-
-            verify(exactly = 1) { mockedMovieTracker.trackHomeShown() }
-        }
-    }
-
-    @Test
-    fun `Given movies loaded, When saveMovie is called, Then trackMovieClicked is called`() = runTest {
-        coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSaveMovieUseCase(domainMovie) } returns InvalidParametersError.some()
-
-        homeViewModel.state.test {
-            awaitItem() shouldBe Loading
-
-            homeViewModel.getMovies(validPage)
-
-            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
-
-            homeViewModel.saveMovie(movieUi)
-            advanceUntilIdle()
-            expectNoEvents()
-
-            verify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
-            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
-            verify(exactly = 1) { mockedMovieTracker.trackMovieClicked(domainMovie.id, domainMovie.title) }
-            coVerify(exactly = 1) { mockedSaveMovieUseCase(domainMovie) }
-            confirmVerified(mockedMovieTracker, mockedSaveMovieUseCase)
-        }
-    }
-
-    @Test
-    fun `Given loading in progress, When getMovies is called again, Then use case is called only once`() = runTest {
-        coEvery { mockedGetMoviesUseCase(validPage) } coAnswers {
-            delay(1_000)
-            listOfDomainMovie.right()
-        }
-
-        homeViewModel.state.test {
-            awaitItem() shouldBe Loading
-
-            homeViewModel.getMovies(validPage)
-            runCurrent()
-            homeViewModel.getMovies(validPage)
-            advanceUntilIdle()
-
-            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
-
-            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
-            coVerify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
-            confirmVerified(mockedGetMoviesUseCase, mockedMovieTracker)
-        }
-    }
-
-    @Test
-    fun `Given page is not 1, When getMovies is called, Then state does not change to Loading`() = runTest {
-        coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns listOfDomainMovie2.right()
-
-        homeViewModel.state.test {
-            awaitItem() shouldBe Loading
-
-            homeViewModel.getMovies(validPage)
-
-            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
-
-            homeViewModel.getMovies(validPage + 1)
-
-            awaitItem() shouldBe MovieListComplete((listOfDomainMovie + listOfDomainMovie2).toMovieUi())
-
-            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
-            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
-            confirmVerified(mockedGetMoviesUseCase)
-        }
-    }
-
-    @Test
     fun `Given same element notified twice, When notifyLastElementVisible is called, Then next page is loaded only once`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
         coEvery { mockedGetMoviesUseCase(validPage + 1) } returns listOfDomainMovie2.right()
@@ -289,7 +231,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -309,21 +251,102 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `Given valid search query, When onSearchQueryChange is called, Then state is MoviesSearch`() = runTest {
+    fun `Given page is not 1, When pagination is triggered, Then state does not change to Loading`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns listOfDomainMovie.right()
+        coEvery { mockedGetMoviesUseCase(validPage + 1) } returns listOfDomainMovie2.right()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
+
+            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
+
+            homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
+
+            // No Loading emitted — goes directly to MovieListComplete
+            awaitItem() shouldBe MovieListComplete((listOfDomainMovie + listOfDomainMovie2).toMovieUi())
+
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage + 1) }
+            confirmVerified(mockedGetMoviesUseCase)
+        }
+    }
+
+    @Test
+    fun `Given movies loaded, When saveMovie is called, Then state does not change`() = runTest {
+        coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
+        coEvery { mockedSaveMovieUseCase(domainMovie) } returns InvalidParametersError.some()
+
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.getMovies()
+
+            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
+
+            homeViewModel.saveMovie(movieUi)
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+
+        coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+        coVerify(exactly = 1) { mockedSaveMovieUseCase(domainMovie) }
+        confirmVerified(mockedGetMoviesUseCase, mockedSaveMovieUseCase)
+    }
+
+    @Test
+    fun `Given movies loaded, When saveMovie is called, Then trackMovieClicked is called`() = runTest {
+        coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
+        coEvery { mockedSaveMovieUseCase(domainMovie) } returns InvalidParametersError.some()
+
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.getMovies()
+
+            awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
+
+            homeViewModel.saveMovie(movieUi)
+            advanceUntilIdle()
+            expectNoEvents()
+
+            verify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
+            coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
+            verify(exactly = 1) { mockedMovieTracker.trackMovieClicked(movieUi.id, movieUi.title) }
+            coVerify(exactly = 1) { mockedSaveMovieUseCase(domainMovie) }
+            confirmVerified(mockedMovieTracker, mockedSaveMovieUseCase)
+        }
+    }
+
+    @Test
+    fun `Given any state, When trackScreenView is called, Then trackHomeShown is called`() = runTest {
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.trackScreenView()
+
+            verify(exactly = 1) { mockedMovieTracker.trackHomeShown() }
+        }
+    }
+
+    @Test
+    fun `Given valid search query, When onSearchQueryChange is called, Then state is MoviesSearch`() = runTest {
+        coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns searchResults.right()
+
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
 
             awaitItem() shouldBe Loading
-            awaitItem() shouldBe MoviesSearch(listOfDomainMovie.toMovieUi())
+            awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
 
             coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
             coVerify(exactly = 1) { mockedSearchMoviesUseCase(searchQuery) }
@@ -339,7 +362,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -362,7 +385,7 @@ class HomeViewModelTest {
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -382,19 +405,19 @@ class HomeViewModelTest {
     @Test
     fun `Given search active, When query is cleared, Then state restores MovieListComplete`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns listOfDomainMovie.right()
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns searchResults.right()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
 
             awaitItem() shouldBe Loading
-            awaitItem() shouldBe MoviesSearch(listOfDomainMovie.toMovieUi())
+            awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
 
             homeViewModel.onSearchQueryChange("")
 
@@ -409,19 +432,19 @@ class HomeViewModelTest {
     @Test
     fun `Given search active, When notifyLastElementVisible is called, Then getMovies is not triggered`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns listOfDomainMovie.right()
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns searchResults.right()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
 
             awaitItem() shouldBe Loading
-            awaitItem() shouldBe MoviesSearch(listOfDomainMovie.toMovieUi())
+            awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
 
             homeViewModel.notifyLastElementVisible(lastElementVisibleToNeedMore)
 
@@ -437,23 +460,23 @@ class HomeViewModelTest {
     @Test
     fun `Given search succeeds, When onSearchQueryChange is called, Then trackSearchPerformed is called`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } returns listOfDomainMovie.right()
-        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns listOfDomainMovie.right()
+        coEvery { mockedSearchMoviesUseCase(searchQuery) } returns searchResults.right()
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.getMovies(validPage)
+            homeViewModel.getMovies()
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
 
             awaitItem() shouldBe Loading
-            awaitItem() shouldBe MoviesSearch(listOfDomainMovie.toMovieUi())
+            awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
 
             verify(exactly = 1) { mockedMovieTracker.trackPageLoaded(validPage) }
             coVerify(exactly = 1) { mockedGetMoviesUseCase(validPage) }
-            verify(exactly = 1) { mockedMovieTracker.trackSearchPerformed(searchQuery, listOfDomainMovie.size) }
+            verify(exactly = 1) { mockedMovieTracker.trackSearchPerformed(searchQuery, searchResults.size) }
             coVerify(exactly = 1) { mockedSearchMoviesUseCase(searchQuery) }
             confirmVerified(mockedGetMoviesUseCase, mockedSearchMoviesUseCase, mockedMovieTracker)
         }
