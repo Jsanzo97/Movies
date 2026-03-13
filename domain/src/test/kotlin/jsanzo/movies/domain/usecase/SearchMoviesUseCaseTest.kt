@@ -5,9 +5,10 @@ import arrow.core.right
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.mockk
-import jsanzo.movies.domain.error.InvalidParametersError
-import jsanzo.movies.domain.model.DomainMovie
+import jsanzo.movies.domain.error.NotFoundError
+import jsanzo.movies.domain.model.domainMovie
 import jsanzo.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -20,22 +21,24 @@ class SearchMoviesUseCaseTest {
     private val query = "harry potter"
 
     @Test
-    fun `invoke calls repository searchMovies with query`() = runTest {
-        val domainMovie = mockk<DomainMovie>()
+    fun `Given a query, When invoke is called, Then movies are returned`() = runTest {
         coEvery { repository.searchMovies(query) } returns domainMovie.right()
 
         val result = useCase(query)
 
-        coVerify(exactly = 1) { repository.searchMovies(query) }
         result shouldBe domainMovie.right()
+        coVerify(exactly = 1) { repository.searchMovies(query) }
+        confirmVerified(repository)
     }
 
     @Test
-    fun `invoke returns error when repository fails`() = runTest {
-        coEvery { repository.searchMovies(query) } returns InvalidParametersError.left()
+    fun `Given a repository error, When invoke is called, Then error is returned`() = runTest {
+        coEvery { repository.searchMovies(query) } returns NotFoundError.left()
 
         val result = useCase(query)
 
-        result shouldBe InvalidParametersError.left()
+        result shouldBe NotFoundError.left()
+        coVerify(exactly = 1) { repository.searchMovies(query) }
+        confirmVerified(repository)
     }
 }

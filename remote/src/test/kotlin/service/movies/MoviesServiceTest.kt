@@ -4,6 +4,8 @@ import arrow.core.left
 import arrow.core.right
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.mockk
 import jsanzo.movies.data.error.UnrecognizedRemoteError
 import jsanzo.movies.remote.dto.response.GetMoviesDetailsResponse
@@ -28,68 +30,83 @@ class MoviesServiceTest {
 
     private val page = 1
     private val movieId = 123
+    private val networkError = UnrecognizedRemoteError("Network Error")
 
     @Test
-    fun `getMovies returns data movie on success`() = runTest {
+    fun `Given a valid page, When getMovies is called, Then data movie is returned`() = runTest {
         coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns getMovieResponse.right()
 
         val result = moviesService.getMovies(page)
 
         result shouldBe getMovieResponse.toDataMovie().right()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `getMovies returns movie error on failure`() = runTest {
-        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
+    fun `Given a network error, When getMovies is called, Then error is returned`() = runTest {
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns networkError.left()
 
         val result = moviesService.getMovies(page)
 
-        result shouldBe UnrecognizedRemoteError("Network Error").left()
+        result shouldBe networkError.left()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `getMovieDetails returns domain movie details on success`() = runTest {
+    fun `Given a valid movie id, When getMovieDetails is called, Then data movie details are returned`() = runTest {
         coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns getMovieDetails.right()
 
         val result = moviesService.getMovieDetails(movieId)
 
         result shouldBe getMovieDetails.toDataMovieDetails().right()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `getMovieDetails without collection returns domain movie details without collection on success`() = runTest {
+    fun `Given movie details without collection, When getMovieDetails is called, Then data movie details without collection are returned`() = runTest {
         val detailsWithoutCollection = getMovieDetails.copy(belongsToCollection = null)
         coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns detailsWithoutCollection.right()
 
         val result = moviesService.getMovieDetails(movieId)
 
         result shouldBe detailsWithoutCollection.toDataMovieDetails().right()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `getMovieDetails returns movie error on failure`() = runTest {
-        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
+    fun `Given a network error, When getMovieDetails is called, Then error is returned`() = runTest {
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) } returns networkError.left()
 
         val result = moviesService.getMovieDetails(movieId)
 
-        result shouldBe UnrecognizedRemoteError("Network Error").left()
+        result shouldBe networkError.left()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesDetailsResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `searchMovies returns data movie on success`() = runTest {
+    fun `Given a query, When searchMovies is called, Then data movie is returned`() = runTest {
         coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns getMovieResponse.right()
 
         val result = moviesService.searchMovies("harry potter")
 
         result shouldBe getMovieResponse.toDataMovie().right()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
+        confirmVerified(networkHandler)
     }
 
     @Test
-    fun `searchMovies returns movie error on failure`() = runTest {
-        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns UnrecognizedRemoteError("Network Error").left()
+    fun `Given a network error, When searchMovies is called, Then error is returned`() = runTest {
+        coEvery { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) } returns networkError.left()
 
         val result = moviesService.searchMovies("harry potter")
 
-        result shouldBe UnrecognizedRemoteError("Network Error").left()
+        result shouldBe networkError.left()
+        coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
+        confirmVerified(networkHandler)
     }
 }

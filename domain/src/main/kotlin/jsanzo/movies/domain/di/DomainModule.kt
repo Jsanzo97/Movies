@@ -1,10 +1,13 @@
 package jsanzo.movies.domain.di
 
+import jsanzo.movies.domain.repository.DataStoreRepository
 import jsanzo.movies.domain.repository.MoviesRepository
 import jsanzo.movies.domain.repository.RemoteConfigRepository
+import jsanzo.movies.domain.usecase.GetLayoutModeUseCase
 import jsanzo.movies.domain.usecase.GetMovieDetailsUseCase
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.MustUpdateUseCase
+import jsanzo.movies.domain.usecase.SaveLayoutModeUseCase
 import jsanzo.movies.domain.usecase.SaveMovieUseCase
 import jsanzo.movies.domain.usecase.SearchMoviesUseCase
 import org.koin.core.annotation.Module
@@ -27,4 +30,10 @@ class DomainModule {
 
     @Single
     fun searchMoviesUseCase(moviesRepository: MoviesRepository): SearchMoviesUseCase = SearchMoviesUseCase(moviesRepository)
+
+    @Single
+    fun getLayoutModeUseCase(dataStoreRepository: DataStoreRepository): GetLayoutModeUseCase = GetLayoutModeUseCase(dataStoreRepository)
+
+    @Single
+    fun saveLayoutModeUseCase(dataStoreRepository: DataStoreRepository): SaveLayoutModeUseCase = SaveLayoutModeUseCase(dataStoreRepository)
 }

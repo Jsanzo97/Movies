@@ -1,6 +1,7 @@
 package jsanzo.movies.remote.service
 
 import arrow.core.Either
+import arrow.core.None
 import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
@@ -33,7 +34,10 @@ class NetworkHandler(private val json: Json) {
 
     private fun <T : Any> processResponse(response: Response<T>): Either<DataError, T> {
         return if (response.isSuccessful) {
-            response.body()?.right() ?: UnrecognizedRemoteError().left()
+            when (val body = response.body()) {
+                null -> UnrecognizedRemoteError().left()
+                else -> body.right()
+            }
         } else {
             val error = checkErrorResponse(response.errorBody()).fold(
                 {
@@ -53,7 +57,11 @@ class NetworkHandler(private val json: Json) {
         }
     }
 
-    private fun checkErrorResponse(body: ResponseBody?): Option<ErrorResponse> = Either.catch {
-        json.decodeFromString<ErrorResponse>(body?.string() ?: "")
-    }.getOrNone()
+    private fun checkErrorResponse(body: ResponseBody?): Option<ErrorResponse> = when (body) {
+        null -> None
+
+        else -> Either.catch {
+            json.decodeFromString<ErrorResponse>(body.string())
+        }.getOrNone()
+    }
 }

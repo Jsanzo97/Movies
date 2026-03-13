@@ -43,6 +43,7 @@ Movies/
 ├── app/             # Application module (com.android.application)
 ├── domain/          # UseCases, Entities, Repository interfaces, Errors
 ├── data/            # Repository implementations, Data entities
+├── datastore/       # DataStore Preferences implementation (LayoutMode persistence)
 ├── database/        # Room database, DAOs, DB entities
 ├── remote/          # Retrofit API, Remote DTOs, Remote data sources
 └── build-logic/     # Convention plugins (Gradle build logic)
@@ -51,11 +52,12 @@ Movies/
 ### Dependency Graph
 
 ```
-app      → domain, data, database, remote
-data     → domain, database, remote
-remote   → domain (for interfaces)
-database → domain (for interfaces)
-domain   → (no dependencies)
+app       → domain, data, datastore, database, remote
+data      → domain, database, remote
+datastore → data (implements DataStoreStorage defined in :data)
+remote    → domain (for interfaces)
+database  → domain (for interfaces)
+domain    → (no dependencies)
 ```
 
 ---
@@ -67,6 +69,7 @@ Base package: `jsanzo.movies`
 Each module appends its name automatically via `calculateNamespace()` in build-logic:
 - `:domain` → `jsanzo.movies.domain`
 - `:data` → `jsanzo.movies.data`
+- `:datastore` → `jsanzo.movies.datastore`
 - `:database` → `jsanzo.movies.database`
 - `:remote` → `jsanzo.movies.remote`
 - `:app` → `jsanzo.movies` (special case — root app module)
@@ -120,10 +123,30 @@ fun MovieResult.toDataMovieResult() = DataMovieResult()
 - DAOs for local persistence.
 - DB entities mapped to domain entities via extension functions.
 
+### DataStore Layer (`:datastore`)
+- Implements `DataStoreStorage` interface defined in `:data`.
+- Persists user preferences using `androidx.datastore:datastore-preferences`.
+- Single preferences file: `movies_preferences`.
+- `DataStoreStorageImpl` stores enum values as their name string and reads them back with a default fallback.
+- `DataStoreModule` (Koin) wires `DataStoreStorageImpl` as the `DataStoreStorage` singleton.
+
+#### DataStore architecture flow
+```
+domain: DomainLayoutModePreference, DataStoreRepository (interface), GetLayoutModeUseCase, SaveLayoutModeUseCase
+data:   DataStoreStorage (interface), DataStoreRepositoryImpl
+datastore: DataStoreStorageImpl, DataStoreModule
+app:    AppModule includes DataStoreModule
+```
+
+#### Key stored values
+| Key | Type | Default |
+|---|---|---|
+| `layout_mode` | String (enum name) | `Grid2` |
+
 ### Presentation Layer (`:app`)
+- ViewModels live in `presentation/` package (separated from UI screens).
 - ViewModels expose `StateFlow<ViewState>`.
-- Sealed classes for ViewState per screen.
-- Compose screens in `ui/screens/`.
+- Sealed classes for ViewState per screen, located in `ui/screens/`.
 
 ---
 
@@ -161,6 +184,10 @@ Compose is configured in `SetupAndroidApplicationPlugin` (`:app` only). Key deci
 app/src/main/kotlin/jsanzo/movies/
 ├── di/
 │   └── AppModule.kt
+├── presentation/
+│   ├── HomeViewModel.kt
+│   ├── DetailsViewModel.kt
+│   └── SplashViewModel.kt
 ├── ui/
 │   ├── navigation/
 │   │   ├── AppDestinations.kt
@@ -168,24 +195,38 @@ app/src/main/kotlin/jsanzo/movies/
 │   └── screens/
 │       ├── splash/
 │       │   ├── SplashScreen.kt
-│       │   ├── SplashViewModel.kt
 │       │   └── SplashViewState.kt
 │       ├── home/
 │       │   ├── HomeScreen.kt
-│       │   ├── HomeViewModel.kt
 │       │   └── HomeViewState.kt
 │       ├── details/
 │       │   ├── DetailsScreen.kt
-│       │   ├── DetailsViewModel.kt
 │       │   └── DetailsViewState.kt
 │       └── forceupdate/
 │           └── ForceUpdateScreen.kt
 ├── theme/
 │   └── MoviesTheme.kt
+├── tracking/
+│   ├── MovieTracker.kt
+│   └── FirebaseTracker.kt
 ├── ComposeActivity.kt
 ├── Constants.kt
 └── MoviesApplication.kt
 ```
+
+### Compose Previews
+
+All screens use a custom `@PreviewOnDevices` multipreview annotation that covers small, medium and large devices with LTR and RTL support, all at API level 36:
+
+```kotlin
+@Preview(name = "Small Phone", device = "spec:width=360dp,height=640dp,dpi=480", apiLevel = 36, showBackground = true)
+@Preview(name = "Medium Phone LTR", device = "spec:width=411dp,height=891dp,dpi=420", apiLevel = 36, showBackground = true, locale = "es")
+@Preview(name = "Medium Phone RTL", device = "spec:width=411dp,height=891dp,dpi=420", apiLevel = 36, showBackground = true, locale = "ar")
+@Preview(name = "Large Phone", device = "spec:width=600dp,height=1024dp,dpi=480", apiLevel = 36, showBackground = true)
+annotation class PreviewOnDevices
+```
+
+Screens split their composable into a `Screen` (owns ViewModel and state) and a `Content` (pure composable receiving only plain parameters) so `@PreviewOnDevices` can be applied to `Content` without needing a ViewModel or context. Nullable parameters like `LottieComposition` are passed as `null` in previews to show a static midpoint state.
 
 ### Navigation
 Type-safe Navigation3 using `NavKey` + `@Serializable` data objects/classes:
@@ -306,6 +347,7 @@ Koin is initialized in `MoviesApplication.onCreate()` by loading a single, aggre
 |---|---|---|
 | `AppModule` | `:app/di` | Main module, includes all other modules. |
 | `DataModule` | `:data/di` | Provides repository implementations. |
+| `DataStoreModule`| `:datastore/di`| Provides `DataStoreStorageImpl` as `DataStoreStorage`. |
 | `DatabaseModule`| `:database/di`| Provides Room DB, DAOs, and the local datastore. |
 | `RemoteModule` | `:remote/di` | Provides the remote datastore (`MoviesService`) and `FirebaseRemoteConfig`. |
 | `NetworkModule`| `:remote/di` | Provides Retrofit and OkHttp dependencies. |
@@ -347,15 +389,16 @@ implementation(libs.firebase.config)
 
 ```kotlin
 interface MovieTracker {
-    fun trackHomeShown()
-    fun trackDetailsShown(movieId: Int)
-    fun trackMovieClicked(movieId: Int, movieTitle: String)
-    fun trackErrorShown(screen: String, error: String)
-    fun trackPageLoaded(page: Int)
-    fun trackSplashShown()
-    fun trackForceUpdateShown(currentVersion: String)
-    fun trackRemoteConfigError()
-    fun trackSearchPerformed(query: String, resultsCount: Int)
+  fun trackHomeShown()
+  fun trackDetailsShown(movieId: Int)
+  fun trackMovieClicked(movieId: Int, movieTitle: String)
+  fun trackErrorShown(screen: String, error: String)
+  fun trackPageLoaded(page: Int)
+  fun trackSplashShown()
+  fun trackForceUpdateShown(currentVersion: String)
+  fun trackRemoteConfigError()
+  fun trackSearchPerformed(query: String, resultsCount: Int)
+  fun trackLayoutModeChanged(mode: String)
 }
 ```
 
@@ -369,7 +412,6 @@ Located in `:app/tracking/FirebaseTracker.kt`. Single source of truth for all an
 fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
   FirebaseTracker(
     analytics = FirebaseAnalytics.getInstance(androidContext),
-    crashlytics = FirebaseCrashlytics.getInstance(),
   )
 ```
 
@@ -386,6 +428,7 @@ fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
 | `trackForceUpdateShown(currentVersion)` | `force_update_shown` | `current_version` |
 | `trackRemoteConfigError()` | `remote_config_error` | — |
 | `trackSearchPerformed(query, resultsCount)` | `search_performed` | `query`, `results_count` |
+| `trackLayoutModeChanged(mode)` | `layout_mode_changed` | `mode` |
 
 ### Where events are triggered
 - `trackHomeShown()` — `HomeViewModel.trackScreenView()` called from `HomeScreen` `LaunchedEffect`
@@ -397,6 +440,7 @@ fun provideFirebaseTracker(androidContext: Application): FirebaseTracker =
 - `trackForceUpdateShown()` — `SplashViewModel.mustUpdate()` when `mustUpdate = true`
 - `trackRemoteConfigError()` — `SplashViewModel.mustUpdate()` on error
 - `trackSearchPerformed()` — `HomeViewModel.searchMovies()` on success, with query and results count
+- `trackLayoutModeChanged()` — `HomeViewModel.saveLayoutMode()` called directly (not in a coroutine) before persisting via `SaveLayoutModeUseCase`
 
 ### Pending Firebase functions (not yet implemented)
 - `setUserId(userId)` — for when user login is added
@@ -432,11 +476,11 @@ SplashViewModel.mustUpdate(currentVersion)
 ```kotlin
 @Single
 fun firebaseRemoteConfig(): FirebaseRemoteConfig {
-    val remoteConfig = FirebaseRemoteConfig.getInstance()
-    remoteConfig.setConfigSettingsAsync(remoteConfigSettings {
-        minimumFetchIntervalInSeconds = 0
-    })
-    return remoteConfig
+  val remoteConfig = FirebaseRemoteConfig.getInstance()
+  remoteConfig.setConfigSettingsAsync(remoteConfigSettings {
+    minimumFetchIntervalInSeconds = 0
+  })
+  return remoteConfig
 }
 ```
 
@@ -499,17 +543,17 @@ data object UpToDate : SplashViewState()
 ```kotlin
 @Composable
 fun SplashScreen(
-    onNavigateToHome: () -> Unit,
-    onNavigateToForceUpdate: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: SplashViewModel = koinViewModel(),
+  onNavigateToHome: () -> Unit,
+  onNavigateToForceUpdate: () -> Unit,
+  modifier: Modifier = Modifier,
+  viewModel: SplashViewModel = koinViewModel(),
 )
 
 @Composable
 private fun SplashContent(
-    composition: LottieComposition?,
-    progress: () -> Float,
-    modifier: Modifier = Modifier,
+  composition: LottieComposition?,
+  progress: () -> Float,
+  modifier: Modifier = Modifier,
 )
 ```
 
@@ -544,11 +588,11 @@ Screen shown when the app version is below `minVersion` from Remote Config. The 
 ```kotlin
 @Composable
 fun ForceUpdateScreen(modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
-    ForceUpdateContent(
-        onUpdateClick = { runCatching { uriHandler.openUri(PLAY_STORE_URL) } },
-        modifier = modifier,
-    )
+  val uriHandler = LocalUriHandler.current
+  ForceUpdateContent(
+    onUpdateClick = { runCatching { uriHandler.openUri(PLAY_STORE_URL) } },
+    modifier = modifier,
+  )
 }
 ```
 
@@ -570,7 +614,7 @@ sealed class HomeViewState
 data object Loading : HomeViewState()
 
 @Immutable
-data class MoviesSuccess(val movies: List<DomainMovieResult>) : HomeViewState()
+data class MoviesSuccess(val movies: ImmutableList<MovieUi>) : HomeViewState()
 
 @Immutable
 data class MoviesError(val message: String) : HomeViewState()
@@ -578,21 +622,48 @@ data class MoviesError(val message: String) : HomeViewState()
 
 Navigation to details is handled as a side effect via `SharedFlow<Int>` instead of a ViewState.
 
+### UI Models — `MovieUi` / `MovieDetailsUi`
+
+`MovieUi` is an `@Immutable data class` with `ImmutableList<Int>` for `genreIds` (from `kotlinx-collections-immutable`). `MovieDetailsUi` is an `@Immutable data class` with genre and production company lists flattened to comma-separated `String` values. Both are mapped from domain entities via extension functions in `MovieUiMapper.kt` / `MovieDetailsUiMapper.kt`.
+
+### Layout Mode
+
+The home screen supports multiple grid layouts (`Grid2`, `Grid3`, `Grid4`). The active layout is persisted in DataStore and exposed as `StateFlow<LayoutModeUi>` from `HomeViewModel`.
+
+```kotlin
+// HomeViewModel
+val layoutMode: StateFlow<LayoutModeUi> = getLayoutModeUseCase()
+  .map { it.toUi() }
+  .stateIn(viewModelScope, WhileSubscribed(5000), LayoutModeUi.Grid2)
+
+internal fun saveLayoutMode(mode: LayoutModeUi) {
+  firebaseTracker.trackLayoutModeChanged(mode.name)  // called directly, not in coroutine
+  viewModelScope.launch { saveLayoutModeUseCase(mode.toDomainLayoutModePreference()) }
+}
+```
+
+The UI uses `AnimatedContent` to animate transitions between layouts.
+
 ### Search
-The `SearchBar` calls `viewModel.onSearchQueryChange(query)` on every keystroke. The ViewModel holds a private `MutableStateFlow<String>` observed in `init` with `debounce(500ms)` + `distinctUntilChanged`. When the debounce fires:
-- **Query blank and `moviesRetrieved` not empty** → restores `moviesRetrieved` in state without any API call
-- **Query not blank** → calls `SearchMoviesUseCase`, cancelling any in-flight search via `loadingJob?.cancel()`
+The `SearchBar` calls `viewModel.onSearchQueryChange(query)` on every keystroke. The ViewModel holds a private `MutableSharedFlow<String>` observed in `init` with `debounce(500ms)` + `distinctUntilChanged`. When the debounce fires:
+- **Query blank** → restores `moviesRetrieved` in state as `MovieListComplete` without any API call
+- **Query not blank** → calls `SearchMoviesUseCase`
 
 The search result is not cached — every query hits the API fresh. On network failure the local fallback searches by title in the Room database (`LIKE '%query%'`) over the movies the user has previously visited in details.
 
 ### ViewModel key decisions
-- `currentJob` pattern to prevent duplicate page requests during fast scroll:
+- `isLoadingPage` flag to prevent duplicate page requests during fast scroll:
 ```kotlin
-private var currentJob: Job? = null
+private var isLoadingPage = false
 
 fun getMovies(page: Int = nextPageToRetrieve) {
-  if (currentJob?.isActive == true) return
-  currentJob = viewModelScope.launch { ... }
+  if (!isLoadingPage) {
+    viewModelScope.launch {
+      isLoadingPage = true
+      // ...
+      isLoadingPage = false
+    }
+  }
 }
 ```
 - Deduplication using `Set` of IDs: `moviesRetrieved.map { it.id }.toSet()`
@@ -603,10 +674,9 @@ fun getMovies(page: Int = nextPageToRetrieve) {
 ### Pagination logic
 ```kotlin
 private fun checkNeedNewPage() {
-    if (searchQuery.value.isNotBlank()) return
-    if (lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
-        getMovies()
-    }
+  if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
+    getMovies()
+  }
 }
 ```
 
@@ -722,12 +792,15 @@ module/src/androidTest/kotlin/ → Instrumented tests
 
 ### Current Setup
 
-| Library | Usage |
-|---|---|
-| JUnit 5 (Jupiter) | Test runner via `android-junit5` plugin |
-| MockK | Mocking (`mockk()`, `coEvery`, `coVerify`) |
-| Kotest | Assertions (`shouldBe`, `shouldBeInstanceOf`) |
-| Coroutines Test | `runTest`, `UnconfinedTestDispatcher` |
+| Library | Version | Usage |
+|---|---|---|
+| JUnit 5 (Jupiter) | — | Test runner via `android-junit5` plugin |
+| MockK | — | Mocking (`mockk()`, `coEvery`, `coVerify`, `confirmVerified`) |
+| Kotest | — | Assertions (`shouldBe`, `shouldBeInstanceOf`) |
+| Coroutines Test | — | `runTest`, `StandardTestDispatcher` |
+| Turbine | 1.2.0 | `StateFlow` / `Flow` assertions (`awaitItem`) |
+
+Turbine is declared in `libs.versions.toml` and added to `:app` as `testImplementation(libs.turbine)`.
 
 ### Dispatcher setup
 ```kotlin
@@ -736,17 +809,216 @@ private val testDispatcher = StandardTestDispatcher()
 @BeforeEach fun setUp() { Dispatchers.setMain(testDispatcher) }
 @AfterEach fun tearDown() { Dispatchers.resetMain() }
 
-// In tests that use viewModelScope.launch:
+// Advance coroutines in tests that use viewModelScope.launch:
 testDispatcher.scheduler.advanceUntilIdle()
+// Advance only queued coroutines without running time-based delays:
+testDispatcher.scheduler.runCurrent()
+```
+
+`StandardTestDispatcher` is used (not `UnconfinedTestDispatcher`) so coroutine execution is explicit and deterministic.
+
+### ViewModel test structure
+
+All ViewModel tests follow these conventions:
+
+**Naming — Given/When/Then**
+```kotlin
+@Test
+fun `Given X, When Y, Then Z`() { ... }
+```
+
+**setUp scope**
+`@BeforeEach setUp()` initialises only the mocks that the ViewModel constructor requires. Mocks for use-case calls are set up inside each individual test, not in `setUp`.
+
+**Turbine usage**
+```kotlin
+viewModel.state.test {
+  val initial = awaitItem()   // initial state emitted on subscription
+  // trigger action
+  advanceUntilIdle()
+  val next = awaitItem()      // next state after coroutine completes
+}
+```
+
+`cancelAndIgnoreRemainingEvents()` is used only when:
+- Testing only the initial state (no further emissions expected in the assertion)
+- Testing tracker-only behaviour where the state does not change
+
+For tests that verify a full state transition, prefer `cancelAndConsumeRemainingEvents()` or explicit `awaitItem()` calls.
+
+### Turbine + advanceUntilIdle ordering
+
+When a coroutine inside the ViewModel emits to a StateFlow, the sequence inside `test { }` must be:
+
+```kotlin
+viewModel.state.test {
+  awaitItem()                              // consume initial state first
+  viewModel.someAction()                   // trigger the coroutine
+  advanceUntilIdle()                       // let the coroutine run to completion
+  val result = awaitItem()                 // now the new emission is available
+  result shouldBe expectedState
+}
+```
+
+Calling `awaitItem()` before `advanceUntilIdle()` will suspend the test indefinitely because the coroutine hasn't run yet.
+
+### Concurrent guard test pattern
+
+To verify the `isLoadingPage` guard (prevents duplicate in-flight requests), the use case must be kept suspended while the second call arrives. Use `coAnswers` with a virtual `delay`:
+
+```kotlin
+@Test
+fun `Given loading in progress, When getMovies is called again, Then use case is called only once`() = runTest {
+    coEvery { mockedGetMoviesUseCase(validPage) } coAnswers {
+      kotlinx.coroutines.delay(1_000)
+      domainMovie.right()
+    }
+
+    homeViewModel.state.test {
+      awaitItem() // estado inicial — StateFlow no re-emite Loading porque ya lo tiene
+
+      homeViewModel.getMovies(validPage)          // lanza coroutine, queda suspendida en delay
+      testDispatcher.scheduler.runCurrent()       // ejecuta hasta el suspend point, isLoadingPage = true
+      homeViewModel.getMovies(validPage)          // ignorada — isLoadingPage == true
+      testDispatcher.scheduler.advanceUntilIdle() // completa el delay
+
+      awaitItem() shouldBe MovieListComplete(domainMovie.results.toMovieUi())
+    }
+  }
+```
+
+> **Nota**: `StateFlow` no re-emite `Loading` en page 1 si ya tiene ese valor — no añadir un `awaitItem() shouldBe Loading` extra antes de `MovieListComplete`.
+
+`runCurrent()` advances only the coroutines already queued, without advancing virtual time — this ensures the guard check happens while `isLoadingPage` is still `true`.
+
+### WhileSubscribed + Turbine
+
+`StateFlow` built with `SharingStarted.WhileSubscribed` requires an active collector to start the upstream. The Turbine `.test {}` block acts as that collector automatically — no manual `collect {}` job is needed. Subscribing inside `.test {}` is sufficient:
+
+```kotlin
+homeViewModel.layoutMode.test {
+  awaitItem() shouldBe LayoutModeUi.Grid2
+  cancelAndIgnoreRemainingEvents()
+}
 ```
 
 ### Debounce testing pattern
-Tests that exercise the search debounce use `advanceTimeBy(301)` before `advanceUntilIdle()` to advance the virtual clock past the 300ms debounce window:
+
+Tests that exercise the search debounce advance the virtual clock past the 500ms debounce window:
 ```kotlin
-homeViewModel.onSearchQueryChange(query)
-testDispatcher.scheduler.advanceTimeBy(301)
+viewModel.onSearchQueryChange(query)
+testDispatcher.scheduler.advanceTimeBy(501)
 testDispatcher.scheduler.advanceUntilIdle()
 ```
+
+### StateFlow deduplication
+
+`StateFlow` drops emissions that are equal to the current value. When testing paginated data, each page fixture must use **different IDs** to guarantee the new emission is not dropped:
+```kotlin
+// Page 1: ids 1..20
+val domainMovie = DomainMovie(page = 1, results = (1..20).map { ... })
+// Page 2: ids 21..40 — NOT 1..20 again
+val domainMovie2 = DomainMovie(page = 2, results = (21..40).map { ... })
+```
+
+### confirmVerified after getMovies
+
+Any test calling `getMovies()` must verify `trackPageLoaded` in its `confirmVerified` block, because `getMovies` always calls `tracker.trackPageLoaded(page)` on success:
+```kotlin
+coVerify { tracker.trackPageLoaded(1) }
+confirmVerified(getMoviesUseCase, saveMovieUseCase, tracker)
+```
+
+### Pure delegator UseCases — 2 tests only
+
+UseCases that do nothing except delegate to a repository (no branching, no transformation) need exactly **2 tests**: success and one error. Testing every error type is redundant because the UseCase has no `when` over the error type — all errors follow the exact same path.
+
+```kotlin
+// ✅ Correct — 2 tests for a pure delegator
+@Test
+fun `Given a valid page, When invoke is called, Then movies are returned`() = runTest { ... }
+
+@Test
+fun `Given a repository error, When invoke is called, Then error is returned`() = runTest { ... }
+```
+
+UseCases with real logic (e.g. `MustUpdateUseCase`) are tested exhaustively per branch.
+
+### DAOs — instrumentation tests only
+
+`MoviesDao` and all other Room DAOs are excluded from JaCoCo (`**/dao/**`) and have no unit test file. Room needs the Android runtime to operate — even an in-memory database cannot be created in a JVM unit test without Robolectric (removed from the project). If DAO behaviour needs to be verified, use instrumentation tests in `androidTest/` with `Room.inMemoryDatabaseBuilder`.
+
+### NetworkHandler — `when` instead of `?.right() ?:` for JaCoCo
+
+JaCoCo generates 4 branches for a `?.right() ?:` expression because it treats the safe call and the elvis as independent null checks. One of those branches (`right()` returning null) is unreachable in practice, leaving a permanent `pc bpc`. The fix is to use `when` so each branch is explicit and reachable:
+
+```kotlin
+// ❌ JaCoCo sees 4 branches, one unreachable
+response.body()?.right() ?: UnrecognizedRemoteError().left()
+
+// ✅ JaCoCo sees 2 branches, both reachable
+when (val body = response.body()) {
+    null -> UnrecognizedRemoteError().left()
+    else -> body.right()
+}
+```
+
+Same pattern applies to `body?.string() ?: ""` in `checkErrorResponse`:
+```kotlin
+// ❌
+json.decodeFromString<ErrorResponse>(body?.string() ?: "")
+
+// ✅
+private fun checkErrorResponse(body: ResponseBody?): Option<ErrorResponse> = when (body) {
+    null -> None
+    else -> Either.catch { json.decodeFromString<ErrorResponse>(body.string()) }.getOrNone()
+}
+```
+
+### MovieTrackerTest — Bundle limitation
+
+`Bundle` is an Android SDK class — its methods (`getString`, `getLong`) return `null`/`0` in JVM unit tests without Robolectric (removed from the project). `MovieTrackerTest` therefore verifies only the event name, using `any()` for the Bundle parameter. To verify individual Bundle parameters, Robolectric would need to be reintroduced or a custom analytics wrapper created that avoids `Bundle` directly.
+
+### Completed test suites
+
+| Test class | Module | Status |
+|---|---|---|
+| `HomeViewModelTest` | `:app/presentation` | ✅ Complete |
+| `DetailsViewModelTest` | `:app/presentation` | ✅ Complete |
+| `SplashViewModelTest` | `:app/presentation` | ✅ Complete |
+| `MovieTrackerTest` | `:app/tracking` | ✅ Complete |
+| `MoviesDataRepositoryTest` | `:data` | ✅ Complete |
+| `RemoteConfigDataRepositoryTest` | `:data` | ✅ Complete |
+| `DataStoreDataRepositoryTest` | `:data` | ✅ Complete |
+| `MoviesStorageTest` | `:database` | ✅ Complete |
+| `GetLayoutModeUseCaseTest` | `:domain` | ✅ Complete |
+| `GetMovieDetailsUseCaseTest` | `:domain` | ✅ Complete |
+| `GetMoviesUseCaseTest` | `:domain` | ✅ Complete |
+| `MustUpdateUseCaseTest` | `:domain` | ✅ Complete |
+| `SaveLayoutModeUseCaseTest` | `:domain` | ✅ Complete |
+| `SaveMovieUseCaseTest` | `:domain` | ✅ Complete |
+| `SearchMoviesUseCaseTest` | `:domain` | ✅ Complete |
+| `RemoteConfigServiceTest` | `:remote` | ✅ Complete |
+| `MoviesServiceTest` | `:remote` | ✅ Complete |
+| `NetworkHandlerTest` | `:remote` | ✅ Complete |
+
+### Test fixtures (package `jsanzo.movies.ui.model`)
+
+| Fixture | Description |
+|---|---|
+| `movieUi` | `MovieUi` with `backdropPath = null` |
+| `domainMovieResult` | `DomainMovieResult` with `backdropPath = null`, `id = 1` |
+| `domainMovie` | `DomainMovie` page 1, results ids 1..20 |
+| `domainMovie2` | `DomainMovie` page 2, results ids 21..40 (different ids to avoid StateFlow dedup) |
+| `domainMovieDetails` | `DomainMovieDetails` fixture for `DetailsViewModelTest` |
+
+### Key decisions recorded during ViewModel migration
+
+- **`onStart { getMovies() }` removed from `HomeViewModel`**: the initial load is now triggered by `LaunchedEffect` in `HomeScreen.kt`. This makes the ViewModel easier to test (no auto-trigger on construction) and avoids double-loading when the screen re-enters composition.
+- **`DetailsViewModel.getDetails` does not emit `Loading` before the use-case call**: the ViewModel is always recreated on navigation, so it already starts in the `Loading` state. Emitting it again would cause a redundant, testable-but-meaningless emission.
+- **`saveMovie` requires `advanceUntilIdle()`**: it launches a coroutine internally; without advancing the scheduler the use-case mock is never called.
+- **`notifyLastElementVisible` requires `advanceUntilIdle()`**: it delegates to `checkNeedNewPage` which may call `getMovies`, which is a coroutine.
+- **ViewModels moved to `presentation/`**: separated from UI screens to make the package structure reflect the MVVM separation more clearly. ViewState sealed classes remain in `ui/screens/` alongside their screens.
 
 ### Run Tests
 ```bash
@@ -778,7 +1050,9 @@ The excludes list is defined once in `setupJacocoReport()` and exposed via `proj
 - DI modules (`**/di/**`, `**/*Module*.*`, `**/*Component*.*`)
 - Android boilerplate (`**/R.class`, `**/BuildConfig.*`, `**/Manifest*.*`)
 - Koin generated classes (`**/*_Factory*.*`)
-- DAOs (`**/dao/**`)
+- DAOs (`**/dao/**`) — requires instrumentation tests, not unit tests
+- Room TypeConverters (`**/Converters*.*`) — infrastructure boilerplate
+- Android DataStore (`**/DataStore*.*`) — requires instrumentation tests, not unit tests
 - Kotlin internal classes (lambdas, anonymous classes, `WhenMappings`, `DefaultImpls`)
 - UI boilerplate (`**/ui/theme/**`, `**/ui/navigation/**`, `**/ui/screens/**/*Screen*`, etc.)
 
@@ -791,7 +1065,7 @@ Coverage reports are uploaded to [Codecov](https://app.codecov.io/github/jsanzo9
 - `CODECOV_TOKEN` stored as GitHub Actions Secret
 - Codecov PR comments disabled via `comment: false`
 
-**Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `FirebaseTrackerTest`.
+**Important:** `isReturnDefaultValues = true` is set in `app/build.gradle.kts` `testOptions` to allow Android SDK classes (like `Bundle`) to return default values instead of throwing in unit tests. This is required for `MovieTrackerTest`.
 
 ---
 
@@ -943,7 +1217,7 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 | OkHttp | 5.3.2 |
 | Room | 2.8.4 |
 | Navigation3 | 1.0.1 |
-| Compose BOM | 2026.02.00 |
+| Compose BOM | 2026.03.00 |
 | Coil | 2.7.0 |
 | Accompanist | 0.37.3 |
 | Arrow | 2.2.1.1 |
@@ -955,6 +1229,7 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 | Lifecycle | 2.10.0 |
 | KSP | 2.3.5 |
 | Lottie | 6.6.6 |
+| Turbine | 1.2.0 |
 
 ---
 
@@ -998,6 +1273,7 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - **Compose compiler plugin classpath conflict**: With AGP 9.0.1 + Kotlin 2.x, applying `org.jetbrains.kotlin.plugin.compose` via `pluginManager.apply()` from a convention plugin in an included build causes `org.jetbrains:annotations` version conflicts. Workaround: declare it with `apply false` in the root `build.gradle.kts` and apply it explicitly in `app/build.gradle.kts`.
 - **detekt-rules-compose version cap**: Versions `0.5.x+` depend on `dev.detekt 2.0.0-alpha.2` which is not yet published in public repos. Max compatible version with Detekt 1.23.8 is `0.4.27`.
 - **KSP NullPointerException in CI**: KSP throws a harmless `NullPointerException` in `AWT-EventQueue-0` on headless environments. Does not fail the build. Suppressed via `JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"` in CI.
+- **Bundle not readable in JVM unit tests**: `Bundle` methods return `null`/`0` without Robolectric. `MovieTrackerTest` verifies only event names as a result — see testing section for details.
 
 ---
 
@@ -1021,6 +1297,12 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Implement Force Update screen (Lottie animation, themed colors, Play Store deep link)
 - [x] Add accessibility semantics (paneTitle, heading, mergeDescendants, contentDescription, Role) across all screens
 - [x] Add RTL support in navigation animations
-- [x] Implement search against TMDB API (`/search/movie` endpoint) with debounce (300ms) and local DB fallback
+- [x] Implement search against TMDB API (`/search/movie` endpoint) with debounce (500ms) and local DB fallback
 - [x] Add empty search state (icon + text) with accessibility semantics
 - [x] Add `trackSearchPerformed` event to `MovieTracker` and `FirebaseTracker`
+- [x] Add `@Immutable`/`@Stable` annotations to `HomeViewState`, `DetailsViewState`, `MovieUi`, `MovieDetailsUi`
+- [x] Migrate `MoviesSuccess.movies` from `List<DomainMovieResult>` to `ImmutableList<MovieUi>` (kotlinx-collections-immutable)
+- [x] Introduce `:datastore` module with `DataStoreStorageImpl`, `DataStoreRepositoryImpl`, `GetLayoutModeUseCase`, `SaveLayoutModeUseCase`
+- [x] Persist layout mode preference via DataStore, expose as `StateFlow<LayoutModeUi>` in `HomeViewModel`
+- [x] Add `trackLayoutModeChanged` event to `MovieTracker` and `FirebaseTracker`
+- [x] Move ViewModels from `ui/screens/` to `presentation/` package

@@ -40,7 +40,7 @@ data class GetMoviesDetailsResponse(
     val productionCountries: List<GetMoviesProductionCountry>,
     @SerialName("release_date")
     val releaseDate: String,
-    val revenue: Int,
+    val revenue: Long,
     val runtime: Int?,
     @SerialName("spoken_languages")
     val spokenLanguages: List<GetMoviesSpokenLanguage>,

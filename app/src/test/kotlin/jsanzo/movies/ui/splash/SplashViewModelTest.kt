@@ -1,17 +1,19 @@
 package jsanzo.movies.ui.splash
 
+import app.cash.turbine.test
 import arrow.core.left
 import arrow.core.right
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.mockk
-import io.mockk.verify
 import jsanzo.movies.domain.error.MovieError
 import jsanzo.movies.domain.usecase.MustUpdateUseCase
+import jsanzo.movies.presentation.SplashViewModel
 import jsanzo.movies.tracking.MovieTracker
 import jsanzo.movies.ui.screens.splash.MustUpdate
 import jsanzo.movies.ui.screens.splash.SplashLoading
-import jsanzo.movies.ui.screens.splash.SplashViewModel
 import jsanzo.movies.ui.screens.splash.UpToDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,14 +29,16 @@ import org.junit.jupiter.api.Test
 class SplashViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val mustUpdateUseCase: MustUpdateUseCase = mockk()
-    private val tracker: MovieTracker = mockk(relaxed = true)
-    private lateinit var viewModel: SplashViewModel
+    private val mockedMustUpdateUseCase: MustUpdateUseCase = mockk()
+    private val mockedTracker: MovieTracker = mockk(relaxed = true)
+    private lateinit var splashViewModel: SplashViewModel
+
+    private val actualVersion = "1.0.0"
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = SplashViewModel(mustUpdateUseCase, tracker)
+        splashViewModel = SplashViewModel(mockedMustUpdateUseCase, mockedTracker)
     }
 
     @AfterEach
@@ -43,72 +47,103 @@ class SplashViewModelTest {
     }
 
     @Test
-    fun `initial state is SplashLoading`() {
-        viewModel.state.value shouldBe SplashLoading
+    fun `Given no action, When state is observed, Then initial state is SplashLoading`() = runTest {
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
+        }
     }
 
     @Test
-    fun `trackScreenView calls tracker trackSplashShown`() {
-        viewModel.trackScreenView()
-        verify { tracker.trackSplashShown() }
+    fun `Given any state, When trackScreenView is called, Then trackSplashShown is called`() = runTest {
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
+
+            splashViewModel.trackScreenView()
+
+            coVerify(exactly = 1) { mockedTracker.trackSplashShown() }
+            confirmVerified(mockedTracker)
+        }
     }
 
     @Test
-    fun `mustUpdate transitions to MustUpdate when use case returns true`() = runTest {
-        coEvery { mustUpdateUseCase("1.0.0") } returns true.right()
+    fun `Given use case returns true, When mustUpdate is called, Then state is MustUpdate`() = runTest {
+        coEvery { mockedMustUpdateUseCase(actualVersion) } returns true.right()
 
-        viewModel.mustUpdate("1.0.0")
-        testDispatcher.scheduler.advanceUntilIdle()
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
 
-        viewModel.state.value shouldBe MustUpdate
+            splashViewModel.mustUpdate(actualVersion)
+
+            awaitItem() shouldBe MustUpdate
+
+            coVerify(exactly = 1) { mockedMustUpdateUseCase(actualVersion) }
+            confirmVerified(mockedMustUpdateUseCase)
+        }
     }
 
     @Test
-    fun `mustUpdate calls trackForceUpdateShown when use case returns true`() = runTest {
-        coEvery { mustUpdateUseCase("1.0.0") } returns true.right()
+    fun `Given use case returns true, When mustUpdate is called, Then trackForceUpdateShown is called`() = runTest {
+        coEvery { mockedMustUpdateUseCase(actualVersion) } returns true.right()
 
-        viewModel.mustUpdate("1.0.0")
-        testDispatcher.scheduler.advanceUntilIdle()
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
 
-        verify { tracker.trackForceUpdateShown("1.0.0") }
+            splashViewModel.mustUpdate(actualVersion)
+
+            awaitItem() shouldBe MustUpdate
+
+            coVerify(exactly = 1) { mockedMustUpdateUseCase(actualVersion) }
+            coVerify(exactly = 1) { mockedTracker.trackForceUpdateShown(actualVersion) }
+            confirmVerified(mockedMustUpdateUseCase, mockedTracker)
+        }
     }
 
     @Test
-    fun `mustUpdate transitions to UpToDate when use case returns false`() = runTest {
-        coEvery { mustUpdateUseCase("2.0.0") } returns false.right()
+    fun `Given use case returns false, When mustUpdate is called, Then state is UpToDate`() = runTest {
+        coEvery { mockedMustUpdateUseCase(actualVersion) } returns false.right()
 
-        viewModel.mustUpdate("2.0.0")
-        testDispatcher.scheduler.advanceUntilIdle()
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
 
-        viewModel.state.value shouldBe UpToDate
+            splashViewModel.mustUpdate(actualVersion)
+
+            awaitItem() shouldBe UpToDate
+
+            coVerify(exactly = 1) { mockedMustUpdateUseCase(actualVersion) }
+            confirmVerified(mockedMustUpdateUseCase)
+        }
     }
 
     @Test
-    fun `mustUpdate transitions to UpToDate when use case returns error`() = runTest {
-        val error = mockk<MovieError>()
-        coEvery { mustUpdateUseCase("1.0.0") } returns error.left()
+    fun `Given use case returns error, When mustUpdate is called, Then state is UpToDate`() = runTest {
+        coEvery { mockedMustUpdateUseCase(actualVersion) } returns mockk<MovieError>().left()
 
-        viewModel.mustUpdate("1.0.0")
-        testDispatcher.scheduler.advanceUntilIdle()
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
 
-        viewModel.state.value shouldBe UpToDate
+            splashViewModel.mustUpdate(actualVersion)
+
+            awaitItem() shouldBe UpToDate
+
+            coVerify(exactly = 1) { mockedMustUpdateUseCase(actualVersion) }
+            confirmVerified(mockedMustUpdateUseCase)
+        }
     }
 
     @Test
-    fun `mustUpdate calls trackRemoteConfigError when use case returns error`() = runTest {
-        val error = mockk<MovieError>()
-        coEvery { mustUpdateUseCase("1.0.0") } returns error.left()
+    fun `Given use case returns error, When mustUpdate is called, Then trackRemoteConfigError is called`() = runTest {
+        coEvery { mockedMustUpdateUseCase(actualVersion) } returns mockk<MovieError>().left()
 
-        viewModel.mustUpdate("1.0.0")
-        testDispatcher.scheduler.advanceUntilIdle()
+        splashViewModel.state.test {
+            awaitItem() shouldBe SplashLoading
 
-        verify { tracker.trackRemoteConfigError() }
-    }
+            splashViewModel.mustUpdate(actualVersion)
 
-    @Test
-    fun `mustUpdate error message is accessible`() {
-        SplashLoading.toString() shouldBe "SplashLoading"
-        MustUpdate.toString() shouldBe "MustUpdate"
-        UpToDate.toString() shouldBe "UpToDate"
+            awaitItem() shouldBe UpToDate
+
+            coVerify(exactly = 1) { mockedMustUpdateUseCase(actualVersion) }
+            coVerify(exactly = 1) { mockedTracker.trackRemoteConfigError() }
+            confirmVerified(mockedMustUpdateUseCase, mockedTracker)
+        }
     }
 }
