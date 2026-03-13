@@ -1,8 +1,8 @@
 package jsanzo.movies.data.model
 
-import jsanzo.movies.domain.model.DomainMovieResult
+import jsanzo.movies.domain.model.DomainMovie
 
-internal val dataMovieResult = DataMovieResult(
+internal val dataMovie = DataMovie(
     posterPath = null,
     adult = false,
     overview = "",
@@ -17,13 +17,6 @@ internal val dataMovieResult = DataMovieResult(
     voteCount = 0,
     video = false,
     voteAverage = 0.0,
-)
-
-internal val dataMovie = DataMovie(
-    page = 1,
-    results = listOf(dataMovieResult),
-    totalResults = 1,
-    totalPages = 1,
 )
 
 internal val dataMovieDetails = DataMovieDetails(
@@ -60,7 +53,7 @@ internal val dataMovieDetails = DataMovieDetails(
     voteCount = 0,
 )
 
-internal val domainMovieResult = DomainMovieResult(
+internal val domainMovie = DomainMovie(
     posterPath = null,
     adult = false,
     overview = "",

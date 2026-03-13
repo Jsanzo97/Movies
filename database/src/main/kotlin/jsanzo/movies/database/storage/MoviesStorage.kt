@@ -12,10 +12,9 @@ import jsanzo.movies.data.error.ReadingError
 import jsanzo.movies.data.error.WritingError
 import jsanzo.movies.data.model.DataMovie
 import jsanzo.movies.data.model.DataMovieDetails
-import jsanzo.movies.data.model.DataMovieResult
 import jsanzo.movies.database.dao.MoviesDao
+import jsanzo.movies.database.entity.toDataMovie
 import jsanzo.movies.database.entity.toDataMovieDetails
-import jsanzo.movies.database.entity.toDataMovieResult
 import jsanzo.movies.database.entity.toMovieDetailsEntity
 import jsanzo.movies.database.entity.toMovieEntity
 
@@ -23,14 +22,9 @@ class MoviesStorage(
     private val moviesDao: MoviesDao,
 ) : LocalMoviesDatastore {
 
-    override suspend fun getMovies(): Either<DataError, DataMovie> {
+    override suspend fun getMovies(): Either<DataError, List<DataMovie>> {
         return try {
-            DataMovie(
-                0,
-                moviesDao.getMovies().map { it.toDataMovieResult() },
-                0,
-                0,
-            ).right()
+            moviesDao.getMovies().toDataMovie().right()
         } catch (_: Exception) {
             ReadingError.left()
         }
@@ -44,7 +38,7 @@ class MoviesStorage(
         }
     }
 
-    override suspend fun saveMovie(dataMovie: DataMovieResult): Option<DataError> {
+    override suspend fun saveMovie(dataMovie: DataMovie): Option<DataError> {
         return try {
             moviesDao.saveMovie(dataMovie.toMovieEntity())
             None
@@ -62,14 +56,9 @@ class MoviesStorage(
         }
     }
 
-    override suspend fun searchMovies(query: String): Either<DataError, DataMovie> {
+    override suspend fun searchMovies(query: String): Either<DataError, List<DataMovie>> {
         return try {
-            DataMovie(
-                0,
-                moviesDao.searchMovies(query).map { it.toDataMovieResult() },
-                0,
-                0,
-            ).right()
+            moviesDao.searchMovies(query).toDataMovie().right()
         } catch (_: Exception) {
             ReadingError.left()
         }

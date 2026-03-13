@@ -5,13 +5,12 @@ import arrow.core.Option
 import jsanzo.movies.data.error.DataError
 import jsanzo.movies.data.model.DataMovie
 import jsanzo.movies.data.model.DataMovieDetails
-import jsanzo.movies.data.model.DataMovieResult
 
 interface LocalMoviesDatastore {
 
-    suspend fun saveMovie(dataMovie: DataMovieResult): Option<DataError>
+    suspend fun saveMovie(dataMovie: DataMovie): Option<DataError>
     suspend fun saveMovieDetails(dataMovieDetails: DataMovieDetails): Option<DataError>
-    suspend fun getMovies(): Either<DataError, DataMovie>
+    suspend fun getMovies(): Either<DataError, List<DataMovie>>
     suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails>
-    suspend fun searchMovies(query: String): Either<DataError, DataMovie>
+    suspend fun searchMovies(query: String): Either<DataError, List<DataMovie>>
 }

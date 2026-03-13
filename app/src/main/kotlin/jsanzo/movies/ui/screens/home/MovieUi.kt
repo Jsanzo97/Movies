@@ -1,7 +1,7 @@
 package jsanzo.movies.ui.screens.home
 
 import androidx.compose.runtime.Immutable
-import jsanzo.movies.domain.model.DomainMovieResult
+import jsanzo.movies.domain.model.DomainMovie
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -23,9 +23,9 @@ data class MovieUi(
     val genreIds: ImmutableList<Int>,
 )
 
-fun List<DomainMovieResult>.toMovieUi() = map { it.toMovieUi() }.toImmutableList()
+fun List<DomainMovie>.toMovieUi() = map { it.toMovieUi() }.toImmutableList()
 
-private fun DomainMovieResult.toMovieUi() = MovieUi(
+private fun DomainMovie.toMovieUi() = MovieUi(
     id = id,
     title = title,
     originalTitle = originalTitle,
@@ -42,7 +42,7 @@ private fun DomainMovieResult.toMovieUi() = MovieUi(
     genreIds = genreIds.toImmutableList(),
 )
 
-fun MovieUi.toDomainMovieResult() = DomainMovieResult(
+fun MovieUi.toDomainMovieResult() = DomainMovie(
     id = id,
     title = title,
     originalTitle = originalTitle,

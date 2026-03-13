@@ -38,7 +38,7 @@ class MoviesServiceTest {
 
         val result = moviesService.getMovies(page)
 
-        result shouldBe getMovieResponse.toDataMovie().right()
+        result shouldBe getMovieResponse.results.toDataMovie().right()
         coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
         confirmVerified(networkHandler)
     }
@@ -94,7 +94,7 @@ class MoviesServiceTest {
 
         val result = moviesService.searchMovies("harry potter")
 
-        result shouldBe getMovieResponse.toDataMovie().right()
+        result shouldBe getMovieResponse.results.toDataMovie().right()
         coVerify(exactly = 1) { networkHandler.executeNetworkRequest(any<suspend () -> Response<GetMoviesResponse>>()) }
         confirmVerified(networkHandler)
     }

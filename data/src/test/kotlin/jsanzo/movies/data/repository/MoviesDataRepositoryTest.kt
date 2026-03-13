@@ -17,9 +17,8 @@ import jsanzo.movies.data.error.WritingError
 import jsanzo.movies.data.error.toMovieError
 import jsanzo.movies.data.model.dataMovie
 import jsanzo.movies.data.model.dataMovieDetails
-import jsanzo.movies.data.model.domainMovieResult
-import jsanzo.movies.data.model.toDataMovieResult
-import jsanzo.movies.data.model.toMovie
+import jsanzo.movies.data.model.domainMovie
+import jsanzo.movies.data.model.toDomainMovie
 import jsanzo.movies.data.model.toMovieDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,11 +57,11 @@ class MoviesDataRepositoryTest {
 
     @Test
     fun `Given valid page, When remote call succeeds, Then remote data is returned`() = runTest {
-        coEvery { remoteMoviesDatastore.getMovies(validPage) } returns dataMovie.right()
+        coEvery { remoteMoviesDatastore.getMovies(validPage) } returns listOf(dataMovie).right()
 
         val result = repository.getMovies(validPage)
 
-        result shouldBe dataMovie.toMovie().right()
+        result shouldBe listOf(dataMovie).toDomainMovie().right()
         coVerify(exactly = 1) { remoteMoviesDatastore.getMovies(validPage) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
@@ -70,11 +69,11 @@ class MoviesDataRepositoryTest {
     @Test
     fun `Given valid page, When remote call fails, Then local data is returned`() = runTest {
         coEvery { remoteMoviesDatastore.getMovies(validPage) } returns NotFound.left()
-        coEvery { localMoviesDatastore.getMovies() } returns dataMovie.right()
+        coEvery { localMoviesDatastore.getMovies() } returns listOf(dataMovie).right()
 
         val result = repository.getMovies(validPage)
 
-        result shouldBe dataMovie.toMovie().right()
+        result shouldBe listOf(dataMovie).toDomainMovie().right()
         coVerify(exactly = 1) { remoteMoviesDatastore.getMovies(validPage) }
         coVerify(exactly = 1) { localMoviesDatastore.getMovies() }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
@@ -162,34 +161,34 @@ class MoviesDataRepositoryTest {
 
     @Test
     fun `Given a movie, When local save succeeds, Then None is returned`() = runTest {
-        coEvery { localMoviesDatastore.saveMovie(domainMovieResult.toDataMovieResult()) } returns None
+        coEvery { localMoviesDatastore.saveMovie(dataMovie) } returns None
 
-        val result = repository.saveMovie(domainMovieResult)
+        val result = repository.saveMovie(domainMovie)
 
         result shouldBe None
-        coVerify(exactly = 1) { localMoviesDatastore.saveMovie(domainMovieResult.toDataMovieResult()) }
+        coVerify(exactly = 1) { localMoviesDatastore.saveMovie(dataMovie) }
         confirmVerified(localMoviesDatastore)
     }
 
     @Test
     fun `Given a movie, When local save fails, Then error is returned`() = runTest {
-        coEvery { localMoviesDatastore.saveMovie(domainMovieResult.toDataMovieResult()) } returns WritingError.some()
+        coEvery { localMoviesDatastore.saveMovie(dataMovie) } returns WritingError.some()
 
-        val result = repository.saveMovie(domainMovieResult)
+        val result = repository.saveMovie(domainMovie)
 
         result shouldBe WritingError.toMovieError().some()
-        coVerify(exactly = 1) { localMoviesDatastore.saveMovie(domainMovieResult.toDataMovieResult()) }
+        coVerify(exactly = 1) { localMoviesDatastore.saveMovie(dataMovie) }
         confirmVerified(localMoviesDatastore)
     }
 
     @Test
     fun `Given a query, When remote call succeeds, Then remote data is returned`() = runTest {
         val query = "harry potter"
-        coEvery { remoteMoviesDatastore.searchMovies(query) } returns dataMovie.right()
+        coEvery { remoteMoviesDatastore.searchMovies(query) } returns listOf(dataMovie).right()
 
         val result = repository.searchMovies(query)
 
-        result shouldBe dataMovie.toMovie().right()
+        result shouldBe listOf(dataMovie).toDomainMovie().right()
         coVerify(exactly = 1) { remoteMoviesDatastore.searchMovies(query) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
@@ -198,11 +197,11 @@ class MoviesDataRepositoryTest {
     fun `Given a query, When remote call fails, Then local data is returned`() = runTest {
         val query = "harry potter"
         coEvery { remoteMoviesDatastore.searchMovies(query) } returns NotFound.left()
-        coEvery { localMoviesDatastore.searchMovies(query) } returns dataMovie.right()
+        coEvery { localMoviesDatastore.searchMovies(query) } returns listOf(dataMovie).right()
 
         val result = repository.searchMovies(query)
 
-        result shouldBe dataMovie.toMovie().right()
+        result shouldBe listOf(dataMovie).toDomainMovie().right()
         coVerify(exactly = 1) { remoteMoviesDatastore.searchMovies(query) }
         coVerify(exactly = 1) { localMoviesDatastore.searchMovies(query) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)

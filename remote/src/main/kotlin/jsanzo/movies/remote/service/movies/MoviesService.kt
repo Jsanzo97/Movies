@@ -17,10 +17,10 @@ class MoviesService(
     private val apiKey: String,
 ) : RemoteMoviesDatastore {
 
-    override suspend fun getMovies(page: Int): Either<DataError, DataMovie> = networkHandler.executeNetworkRequest {
+    override suspend fun getMovies(page: Int): Either<DataError, List<DataMovie>> = networkHandler.executeNetworkRequest {
         moviesRemoteWebService.getMovies(page, apiKey)
     }.map { response ->
-        response.toDataMovie()
+        response.results.toDataMovie()
     }
 
     override suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails> = networkHandler.executeNetworkRequest {
@@ -29,9 +29,9 @@ class MoviesService(
         response.toDataMovieDetails()
     }
 
-    override suspend fun searchMovies(query: String): Either<DataError, DataMovie> = networkHandler.executeNetworkRequest {
+    override suspend fun searchMovies(query: String): Either<DataError, List<DataMovie>> = networkHandler.executeNetworkRequest {
         moviesRemoteWebService.searchMovies(query, apiKey)
     }.map { response ->
-        response.toDataMovie()
+        response.results.toDataMovie()
     }
 }

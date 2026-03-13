@@ -11,13 +11,12 @@ import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
 import jsanzo.movies.data.error.toMovieError
-import jsanzo.movies.data.model.toDataMovieResult
-import jsanzo.movies.data.model.toMovie
+import jsanzo.movies.data.model.toDataMovie
+import jsanzo.movies.data.model.toDomainMovie
 import jsanzo.movies.data.model.toMovieDetails
 import jsanzo.movies.domain.error.MovieError
 import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieDetails
-import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -28,13 +27,13 @@ class MoviesDataRepository(
     private val dispatcher: CoroutineDispatcher,
 ) : MoviesRepository {
 
-    override suspend fun getMovies(page: Int): Either<MovieError, DomainMovie> = withContext(dispatcher) {
+    override suspend fun getMovies(page: Int): Either<MovieError, List<DomainMovie>> = withContext(dispatcher) {
         remoteMoviesDatastore.getMovies(page)
-            .map { it.toMovie() }
+            .map { it.toDomainMovie() }
             .recover {
                 localMoviesDatastore.getMovies()
                     .mapLeft { it.toMovieError() }
-                    .map { it.toMovie() }
+                    .map { it.toDomainMovie() }
                     .bind()
             }
     }
@@ -54,19 +53,19 @@ class MoviesDataRepository(
             }
     }
 
-    override suspend fun saveMovie(movie: DomainMovieResult) = withContext(dispatcher) {
-        localMoviesDatastore.saveMovie(movie.toDataMovieResult())
+    override suspend fun saveMovie(movie: DomainMovie) = withContext(dispatcher) {
+        localMoviesDatastore.saveMovie(movie.toDataMovie())
             .map { error -> error.toMovieError().some() }
             .getOrElse { None }
     }
 
-    override suspend fun searchMovies(query: String): Either<MovieError, DomainMovie> = withContext(dispatcher) {
+    override suspend fun searchMovies(query: String): Either<MovieError, List<DomainMovie>> = withContext(dispatcher) {
         remoteMoviesDatastore.searchMovies(query)
-            .map { it.toMovie() }
+            .map { it.toDomainMovie() }
             .recover {
                 localMoviesDatastore.searchMovies(query)
                     .mapLeft { it.toMovieError() }
-                    .map { it.toMovie() }
+                    .map { it.toDomainMovie() }
                     .bind()
             }
     }

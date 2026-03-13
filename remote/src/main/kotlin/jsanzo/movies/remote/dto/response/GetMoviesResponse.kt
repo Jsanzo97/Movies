@@ -3,7 +3,6 @@
 package jsanzo.movies.remote.dto.response
 
 import jsanzo.movies.data.model.DataMovie
-import jsanzo.movies.data.model.DataMovieResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -43,15 +42,10 @@ data class MoviesResponseResult(
     val voteAverage: Double,
 )
 
-fun GetMoviesResponse.toDataMovie() = DataMovie(
-    page,
-    results.map { it.toDataMovie() },
-    totalResults,
-    totalPages,
-)
+fun List<MoviesResponseResult>.toDataMovie() = map { it.toDataMovie() }
 
-fun MoviesResponseResult.toDataMovie() = DataMovieResult(
-    posterPath,
+private fun MoviesResponseResult.toDataMovie() = DataMovie(
+    "https://image.tmdb.org/t/p/original/$posterPath",
     adult,
     overview,
     releaseDate,
@@ -60,7 +54,7 @@ fun MoviesResponseResult.toDataMovie() = DataMovieResult(
     originalTitle,
     originalLanguage,
     title,
-    backdropPath,
+    "https://image.tmdb.org/t/p/original/$backdropPath",
     popularity,
     voteCount,
     video,

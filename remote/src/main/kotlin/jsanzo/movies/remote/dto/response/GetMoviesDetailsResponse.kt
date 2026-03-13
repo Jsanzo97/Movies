@@ -98,7 +98,7 @@ data class GetMoviesSpokenLanguage(
 
 fun GetMoviesDetailsResponse.toDataMovieDetails() = DataMovieDetails(
     adult,
-    backdropPath,
+    "https://image.tmdb.org/t/p/original/$backdropPath",
     belongsToCollection?.toDataMovieCollection(),
     budget,
     genres.map { it.toDataMovieGenre() },
@@ -110,7 +110,7 @@ fun GetMoviesDetailsResponse.toDataMovieDetails() = DataMovieDetails(
     originalTitle,
     overview,
     popularity,
-    posterPath,
+    "https://image.tmdb.org/t/p/original/$posterPath",
     productionCompanies.map { it.toDataMovieProductionCompany() },
     productionCountries.map { it.toDataMovieProductionCountry() },
     releaseDate,

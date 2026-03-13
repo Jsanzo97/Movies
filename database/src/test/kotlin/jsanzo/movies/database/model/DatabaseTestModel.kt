@@ -6,10 +6,9 @@ import jsanzo.movies.data.model.DataMovieDetails
 import jsanzo.movies.data.model.DataMovieGenre
 import jsanzo.movies.data.model.DataMovieProductionCompany
 import jsanzo.movies.data.model.DataMovieProductionCountry
-import jsanzo.movies.data.model.DataMovieResult
 import jsanzo.movies.data.model.DataMovieSpokenLanguage
 
-internal val dataMovieResult = DataMovieResult(
+internal val dataMovie = DataMovie(
     posterPath = "/path.jpg",
     adult = false,
     overview = "overview",
@@ -24,13 +23,6 @@ internal val dataMovieResult = DataMovieResult(
     voteCount = 1000,
     video = false,
     voteAverage = 7.8,
-)
-
-internal val dataMovie = DataMovie(
-    page = 0,
-    results = listOf(dataMovieResult),
-    totalResults = 0,
-    totalPages = 0,
 )
 
 internal val dataMovieDetails = DataMovieDetails(
