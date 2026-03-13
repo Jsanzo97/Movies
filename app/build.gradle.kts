@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.setup.android.application)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.stability.analyzer)
 }
 
 val localProps = Properties()
@@ -43,6 +44,20 @@ tasks.register("disableFirebaseDebug") {
             .waitFor()
         println("✅ Firebase Analytics DebugView disabled")
     }
+}
+
+composeStabilityAnalyzer {
+    stabilityValidation {
+        enabled.set(true)
+        outputDir.set(layout.projectDirectory.dir("stability"))
+        includeTests.set(false)
+        ignoreNonRegressiveChanges.set(true)
+        failOnStabilityChange.set(System.getenv("CI") == "true")
+    }
+}
+
+tasks.matching { it.name.contains("StabilityCheck") }.configureEach {
+    mustRunAfter(tasks.named("compileDebugUnitTestKotlin"))
 }
 
 dependencies {

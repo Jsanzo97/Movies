@@ -137,21 +137,21 @@ The home screen supports three grid densities: **Grid2**, **Grid3**, and **Grid4
 Two GitHub Actions workflows:
 
 ```
-PR:      check (Detekt + Spotless) → build-and-test (assembleDebug + jacocoMergedCoverageVerification + Codecov)
+PR:      check (Detekt + Spotless) → stability-check (stabilityCheck) + build-and-test (assembleDebug + jacocoMergedCoverageVerification + Codecov)
 develop: coverage (jacocoMergedReport + Codecov)
 ```
-**Quality Gate**: Code coverage from merged report must be over 95%
+**Quality Gate**: Code coverage from merged report must be over 95%. Compose stability baseline must not regress.
 
 | Optimization | Detail |
 |---|---|
 | Gradle cache | `gradle/actions/setup-gradle@v4` + `cache: 'gradle'` on `setup-java` |
 | Headless JVM | `JAVA_TOOL_OPTIONS: -Djava.awt.headless=true` suppresses KSP AWT errors |
 | Configuration cache | Enabled globally, persisted between runs |
-| Single build+test job | Avoids spinning up two runners for tasks that share the same cache |
+| Parallel jobs | `stability-check` and `build-and-test` run in parallel after `check` |
 | Separate coverage workflow | Avoids re-running full pipeline on develop after merge |
 | Codecov PR comments | Disabled via `comment: false` |
 
-**Approximate times (after Gradle cache is written):** `check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
+**Approximate times (after Gradle cache is written):** `check` ~1 min · `stability-check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
 
 ### Secrets
 All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
@@ -238,11 +238,14 @@ Screens use a custom `@PreviewOnDevices` multipreview annotation to provide smal
 
 - **Detekt** with `detekt-rules-compose` for Compose-specific linting
 - **Spotless** with KtLint for code formatting
-- Both wired to the `check` task and enforced on every PR
+- **Compose Stability Analyzer** — Gradle plugin that generates a composable stability report and compares it against a committed baseline on every PR. Any new UNSTABLE composable that is not in the baseline fails the CI build. Locally it only warns. Baseline in `app/stability/`.
+- Both Detekt and Spotless wired to the `check` task and enforced on every PR
 
 ```bash
 ./gradlew detektAll       # run Detekt on all modules
 ./gradlew check           # Detekt + Spotless + tests
+./gradlew stabilityDump   # regenerate Compose stability baseline (commit the result)
+./gradlew stabilityCheck  # verify no stability regressions against baseline
 ```
 
 ---

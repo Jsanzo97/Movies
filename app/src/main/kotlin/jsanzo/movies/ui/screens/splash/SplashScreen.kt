@@ -23,12 +23,14 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.skydoves.compose.stability.runtime.IgnoreStabilityReport
 import jsanzo.movies.R
 import jsanzo.movies.presentation.SplashViewModel
 import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.compose.viewmodel.koinViewModel
 
+@IgnoreStabilityReport
 @Composable
 fun SplashScreen(
     onNavigateToHome: () -> Unit,
