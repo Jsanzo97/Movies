@@ -22,11 +22,11 @@ class GetMoviesUseCaseTest {
 
     @Test
     fun `Given a valid page, When invoke is called, Then movies are returned`() = runTest {
-        coEvery { repository.getMovies(page) } returns domainMovie.right()
+        coEvery { repository.getMovies(page) } returns listOf(domainMovie).right()
 
         val result = useCase(page)
 
-        result shouldBe domainMovie.right()
+        result shouldBe listOf(domainMovie).right()
         coVerify(exactly = 1) { repository.getMovies(page) }
         confirmVerified(repository)
     }

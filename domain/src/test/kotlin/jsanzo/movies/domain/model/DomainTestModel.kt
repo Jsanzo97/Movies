@@ -34,7 +34,7 @@ internal val domainMovieDetails = DomainMovieDetails(
     voteCount = 0,
 )
 
-internal val domainMovieResult = DomainMovieResult(
+internal val domainMovie = DomainMovie(
     posterPath = null,
     adult = false,
     overview = "",
@@ -49,11 +49,4 @@ internal val domainMovieResult = DomainMovieResult(
     voteCount = 100,
     video = false,
     voteAverage = 7.5,
-)
-
-internal val domainMovie = DomainMovie(
-    page = 1,
-    results = listOf(domainMovieResult),
-    totalResults = 1,
-    totalPages = 1,
 )

@@ -22,11 +22,11 @@ class SearchMoviesUseCaseTest {
 
     @Test
     fun `Given a query, When invoke is called, Then movies are returned`() = runTest {
-        coEvery { repository.searchMovies(query) } returns domainMovie.right()
+        coEvery { repository.searchMovies(query) } returns listOf(domainMovie).right()
 
         val result = useCase(query)
 
-        result shouldBe domainMovie.right()
+        result shouldBe listOf(domainMovie).right()
         coVerify(exactly = 1) { repository.searchMovies(query) }
         confirmVerified(repository)
     }

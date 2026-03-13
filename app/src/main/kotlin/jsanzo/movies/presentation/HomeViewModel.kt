@@ -2,7 +2,7 @@ package jsanzo.movies.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jsanzo.movies.domain.model.DomainMovieResult
+import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.usecase.GetLayoutModeUseCase
 import jsanzo.movies.domain.usecase.GetMoviesUseCase
 import jsanzo.movies.domain.usecase.SaveLayoutModeUseCase
@@ -67,7 +67,7 @@ class HomeViewModel(
     private var nextPageToRetrieve = 1
     private var lastVisible = 0
     private var isLoadingPage = false
-    private val moviesRetrieved = mutableListOf<DomainMovieResult>()
+    private val moviesRetrieved = mutableListOf<DomainMovie>()
 
     init {
         _searchQuery
@@ -97,7 +97,7 @@ class HomeViewModel(
                 getMoviesUseCase(page)
                     .onSuccess { movies ->
                         val existingIds = moviesRetrieved.map { it.id }.toSet()
-                        moviesRetrieved.addAll(movies.results.filter { it.id !in existingIds })
+                        moviesRetrieved.addAll(movies.filter { it.id !in existingIds })
                         nextPageToRetrieve++
                         firebaseTracker.trackPageLoaded(page)
                         _state.update { MovieListComplete(moviesRetrieved.toMovieUi()) }
@@ -116,8 +116,8 @@ class HomeViewModel(
             _state.update { Loading }
             searchMoviesUseCase(query)
                 .onSuccess { movies ->
-                    firebaseTracker.trackSearchPerformed(query, movies.results.size)
-                    _state.update { MoviesSearch(movies.results.toMovieUi()) }
+                    firebaseTracker.trackSearchPerformed(query, movies.size)
+                    _state.update { MoviesSearch(movies.toMovieUi()) }
                 }
                 .onError { error ->
                     firebaseTracker.trackErrorShown("home_search", error.toString())

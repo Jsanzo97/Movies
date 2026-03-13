@@ -16,7 +16,6 @@ import jsanzo.movies.database.entity.toMovieDetailsEntity
 import jsanzo.movies.database.entity.toMovieEntity
 import jsanzo.movies.database.model.dataMovie
 import jsanzo.movies.database.model.dataMovieDetails
-import jsanzo.movies.database.model.dataMovieResult
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -29,11 +28,11 @@ class MoviesStorageTest {
 
     @Test
     fun `Given movies in database, When getMovies is called, Then data movie is returned`() = runTest {
-        coEvery { moviesDao.getMovies() } returns listOf(dataMovieResult.toMovieEntity())
+        coEvery { moviesDao.getMovies() } returns listOf(dataMovie.toMovieEntity())
 
         val result = moviesStorage.getMovies()
 
-        result shouldBe dataMovie.right()
+        result shouldBe listOf(dataMovie).right()
         coVerify(exactly = 1) { moviesDao.getMovies() }
         confirmVerified(moviesDao)
     }
@@ -73,12 +72,12 @@ class MoviesStorageTest {
 
     @Test
     fun `Given a movie, When saveMovie is called, Then None is returned`() = runTest {
-        coEvery { moviesDao.saveMovie(dataMovieResult.toMovieEntity()) } returns Unit
+        coEvery { moviesDao.saveMovie(dataMovie.toMovieEntity()) } returns Unit
 
-        val result = moviesStorage.saveMovie(dataMovieResult)
+        val result = moviesStorage.saveMovie(dataMovie)
 
         result shouldBe None
-        coVerify(exactly = 1) { moviesDao.saveMovie(dataMovieResult.toMovieEntity()) }
+        coVerify(exactly = 1) { moviesDao.saveMovie(dataMovie.toMovieEntity()) }
         confirmVerified(moviesDao)
     }
 
@@ -86,10 +85,10 @@ class MoviesStorageTest {
     fun `Given a database error, When saveMovie is called, Then WritingError is returned`() = runTest {
         coEvery { moviesDao.saveMovie(any()) } throws Exception()
 
-        val result = moviesStorage.saveMovie(dataMovieResult)
+        val result = moviesStorage.saveMovie(dataMovie)
 
         result shouldBe WritingError.some()
-        coVerify(exactly = 1) { moviesDao.saveMovie(dataMovieResult.toMovieEntity()) }
+        coVerify(exactly = 1) { moviesDao.saveMovie(dataMovie.toMovieEntity()) }
         confirmVerified(moviesDao)
     }
 
@@ -118,11 +117,11 @@ class MoviesStorageTest {
     @Test
     fun `Given a query, When searchMovies is called, Then filtered data movie is returned`() = runTest {
         val query = "harry"
-        coEvery { moviesDao.searchMovies(query) } returns listOf(dataMovieResult.toMovieEntity())
+        coEvery { moviesDao.searchMovies(query) } returns listOf(dataMovie.toMovieEntity())
 
         val result = moviesStorage.searchMovies(query)
 
-        result shouldBe dataMovie.right()
+        result shouldBe listOf(dataMovie).right()
         coVerify(exactly = 1) { moviesDao.searchMovies(query) }
         confirmVerified(moviesDao)
     }

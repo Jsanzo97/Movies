@@ -2,7 +2,6 @@ package jsanzo.movies.ui.model
 
 import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieDetails
-import jsanzo.movies.domain.model.DomainMovieResult
 import jsanzo.movies.ui.screens.home.MovieUi
 import kotlinx.collections.immutable.persistentListOf
 
@@ -52,7 +51,7 @@ internal val domainMovieDetails = DomainMovieDetails(
     voteCount = 0,
 )
 
-internal val domainMovieResult = DomainMovieResult(
+internal val domainMovie = DomainMovie(
     posterPath = null,
     adult = false,
     overview = "",
@@ -69,20 +68,12 @@ internal val domainMovieResult = DomainMovieResult(
     voteAverage = 0.0,
 )
 
-internal val domainMovie = DomainMovie(
-    page = 0,
-    results = (1..20).map { id ->
-        domainMovieResult.copy(id = id)
-    },
-    totalResults = 0,
-    totalPages = 0,
-)
+internal val listOfDomainMovie =
+    (1..20).map { id ->
+        domainMovie.copy(id = id)
+    }.toList()
 
-internal val domainMovie2 = DomainMovie(
-    page = 2,
-    results = (21..40).map { id ->
-        domainMovieResult.copy(id = id)
-    },
-    totalResults = 0,
-    totalPages = 0,
-)
+internal val listOfDomainMovie2 =
+    (21..40).map { id ->
+        domainMovie.copy(id = id)
+    }.toList()

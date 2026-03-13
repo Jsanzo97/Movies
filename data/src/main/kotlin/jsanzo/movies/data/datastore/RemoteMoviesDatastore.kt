@@ -7,7 +7,7 @@ import jsanzo.movies.data.model.DataMovieDetails
 
 interface RemoteMoviesDatastore {
 
-    suspend fun getMovies(page: Int): Either<DataError, DataMovie>
+    suspend fun getMovies(page: Int): Either<DataError, List<DataMovie>>
     suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails>
-    suspend fun searchMovies(query: String): Either<DataError, DataMovie>
+    suspend fun searchMovies(query: String): Either<DataError, List<DataMovie>>
 }

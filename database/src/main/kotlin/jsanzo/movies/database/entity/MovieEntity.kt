@@ -3,7 +3,7 @@
 package jsanzo.movies.database.entity
 
 import androidx.room.Entity
-import jsanzo.movies.data.model.DataMovieResult
+import jsanzo.movies.data.model.DataMovie
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,7 +28,7 @@ data class MovieEntity(
     val voteAverage: Double,
 )
 
-fun DataMovieResult.toMovieEntity() = MovieEntity(
+fun DataMovie.toMovieEntity() = MovieEntity(
     posterPath,
     adult,
     overview,
@@ -45,7 +45,9 @@ fun DataMovieResult.toMovieEntity() = MovieEntity(
     voteAverage,
 )
 
-fun MovieEntity.toDataMovieResult() = DataMovieResult(
+fun List<MovieEntity>.toDataMovie() = map { it.toDataMovie() }
+
+private fun MovieEntity.toDataMovie() = DataMovie(
     posterPath,
     adult,
     overview,
