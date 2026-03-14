@@ -28,6 +28,8 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Analytics & Crashlytics | Firebase BOM 34.9.0 | Crashlytics + Analytics + Remote Config with DebugView |
 | Splash + ForceUpdate | Lottie 6.6.6 | Animated splash screen + force update screen with JSON animations |
 | HTTP inspector | Chucker | debugImplementation only, no-op in release |
+| Performance | Develocity 4.3.2 | Build scans, build cache and performance insights |
+| Memory Leaks | LeakCanary 2.14 | Automated detection in debug builds |
 | Compose stability | compose-stability-analyzer 0.7.0 | Gradle plugin + IDE plugin. Gradle task: `stabilityCheck`. Baseline commited in `app/stability/` |
 | Static analysis | Detekt 1.23.8 | |
 | Build system | Gradle 9.3.1 (Kotlin DSL) | |

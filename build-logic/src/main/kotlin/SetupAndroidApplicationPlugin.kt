@@ -107,6 +107,7 @@ private fun Project.apply() {
         "implementation"(libs().getLibrary("kotlinx-collections-immutable"))
 
         "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
+        "debugImplementation"(libs().getLibrary("leakcanary"))
     }
 }
 
