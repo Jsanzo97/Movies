@@ -8,6 +8,8 @@
 ![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics%20%2B%20RemoteConfig-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
 ![JUnit5](https://img.shields.io/badge/JUnit5-1.3.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
+![Develocity](https://img.shields.io/badge/Develocity-4.3.2-grey?style=flat&logo=gradle&logoColor=white&labelColor=blue)
+![LeakCanary](https://img.shields.io/badge/LeakCanary-2.14-grey?style=flat&logo=square&logoColor=white&labelColor=yellow)
 [![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
 ![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=yellow)
 
@@ -78,6 +80,10 @@ Dao and database implementations to persist the data locally. Only movies clicke
 ### Error handling
 - **Arrow** (`Either`, `Option`) — functional error handling in repository and data layers.
 
+### Performance & Debugging
+- **Develocity** — deep build insights, build scans, and caching optimization for both local and CI environments.
+- **LeakCanary** — automated memory leak detection in debug builds.
+
 ---
 
 ## ⚙️ Build System
@@ -96,6 +102,7 @@ This avoids duplicating Gradle configuration across modules. Adding a new module
 - **Compose compiler plugin** applied via `apply false` in root + explicit apply in `:app` to avoid `org.jetbrains:annotations` classpath conflicts with AGP 9.0.1 + Kotlin 2.x in included builds
 - **KSP** used for Room and Koin Annotations code generation
 - **Configuration cache** and **build cache** enabled globally via `gradle.properties`
+- **Develocity Build Scans** enabled for all CI runs and optional for local builds to analyze performance bottlenecks.
 
 ---
 
@@ -145,6 +152,7 @@ develop: coverage (jacocoMergedReport + Codecov)
 | Optimization | Detail |
 |---|---|
 | Gradle cache | `gradle/actions/setup-gradle@v4` + `cache: 'gradle'` on `setup-java` |
+| Develocity | Automatic build scans for CI runs provided by `setup-gradle@v4` |
 | Headless JVM | `JAVA_TOOL_OPTIONS: -Djava.awt.headless=true` suppresses KSP AWT errors |
 | Configuration cache | Enabled globally, persisted between runs |
 | Parallel jobs | `stability-check` and `build-and-test` run in parallel after `check` |
