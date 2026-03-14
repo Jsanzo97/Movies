@@ -2,11 +2,8 @@ package jsanzo.movies.data.repository
 
 import arrow.core.Either
 import arrow.core.None
-import arrow.core.flatMap
 import arrow.core.getOrElse
-import arrow.core.left
 import arrow.core.recover
-import arrow.core.right
 import arrow.core.some
 import jsanzo.movies.data.datastore.LocalMoviesDatastore
 import jsanzo.movies.data.datastore.RemoteMoviesDatastore
@@ -18,6 +15,7 @@ import jsanzo.movies.domain.error.MovieError
 import jsanzo.movies.domain.model.DomainMovie
 import jsanzo.movies.domain.model.DomainMovieDetails
 import jsanzo.movies.domain.repository.MoviesRepository
+import jsanzo.movies.domain.utils.onSuccess
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -29,28 +27,23 @@ class MoviesDataRepository(
 
     override suspend fun getMovies(page: Int): Either<MovieError, List<DomainMovie>> = withContext(dispatcher) {
         remoteMoviesDatastore.getMovies(page)
-            .map { it.toDomainMovie() }
-            .recover {
+            .recover { remoteError ->
                 localMoviesDatastore.getMovies()
-                    .mapLeft { it.toMovieError() }
-                    .map { it.toDomainMovie() }
+                    .mapLeft { remoteError.toMovieError() }
                     .bind()
             }
+            .map { it.toDomainMovie() }
     }
 
     override suspend fun getMovieDetails(movieId: Int): Either<MovieError, DomainMovieDetails> = withContext(dispatcher) {
-        remoteMoviesDatastore.getMovieDetails(movieId)
-            .flatMap { dataMovieDetails ->
-                localMoviesDatastore.saveMovieDetails(dataMovieDetails)
-                    .map { error -> error.toMovieError().left() }
-                    .getOrElse { dataMovieDetails.toMovieDetails().right() }
-            }
+        localMoviesDatastore.getMovieDetails(movieId)
             .recover {
-                localMoviesDatastore.getMovieDetails(movieId)
-                    .mapLeft { it.toMovieError() }
-                    .map { it.toMovieDetails() }
+                remoteMoviesDatastore.getMovieDetails(movieId)
+                    .onSuccess { localMoviesDatastore.saveMovieDetails(it) }
+                    .mapLeft { remoteError -> remoteError.toMovieError() }
                     .bind()
             }
+            .map { it.toMovieDetails() }
     }
 
     override suspend fun saveMovie(movie: DomainMovie) = withContext(dispatcher) {
@@ -61,12 +54,11 @@ class MoviesDataRepository(
 
     override suspend fun searchMovies(query: String): Either<MovieError, List<DomainMovie>> = withContext(dispatcher) {
         remoteMoviesDatastore.searchMovies(query)
-            .map { it.toDomainMovie() }
-            .recover {
+            .recover { remoteError ->
                 localMoviesDatastore.searchMovies(query)
-                    .mapLeft { it.toMovieError() }
-                    .map { it.toDomainMovie() }
+                    .mapLeft { remoteError.toMovieError() }
                     .bind()
             }
+            .map { it.toDomainMovie() }
     }
 }

@@ -80,82 +80,82 @@ class MoviesDataRepositoryTest {
     }
 
     @Test
-    fun `Given valid page, When both remote and local fail, Then error is returned`() = runTest {
+    fun `Given valid page, When both remote and local fail, Then remote error is returned`() = runTest {
         coEvery { remoteMoviesDatastore.getMovies(validPage) } returns NotFound.left()
         coEvery { localMoviesDatastore.getMovies() } returns ReadingError.left()
 
         val result = repository.getMovies(validPage)
 
-        result shouldBe ReadingError.toMovieError().left()
+        result shouldBe NotFound.toMovieError().left()
         coVerify(exactly = 1) { remoteMoviesDatastore.getMovies(validPage) }
         coVerify(exactly = 1) { localMoviesDatastore.getMovies() }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
 
     @Test
-    fun `Given invalid page, When both remote and local fail, Then error is returned`() = runTest {
+    fun `Given invalid page, When both remote and local fail, Then remote error is returned`() = runTest {
         coEvery { remoteMoviesDatastore.getMovies(invalidPage) } returns NotFound.left()
         coEvery { localMoviesDatastore.getMovies() } returns ReadingError.left()
 
         val result = repository.getMovies(invalidPage)
 
-        result shouldBe ReadingError.toMovieError().left()
+        result shouldBe NotFound.toMovieError().left()
         coVerify(exactly = 1) { remoteMoviesDatastore.getMovies(invalidPage) }
         coVerify(exactly = 1) { localMoviesDatastore.getMovies() }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
 
     @Test
-    fun `Given a movie id, When remote call succeeds and local save succeeds, Then remote data is returned`() = runTest {
+    fun `Given a movie id, When local call succeeds, Then local data is returned`() = runTest {
+        coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns dataMovieDetails.right()
+
+        val result = repository.getMovieDetails(movieId)
+
+        result shouldBe dataMovieDetails.toMovieDetails().right()
+        coVerify(exactly = 1) { localMoviesDatastore.getMovieDetails(movieId) }
+        confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
+    }
+
+    @Test
+    fun `Given a movie id, When local fails and remote succeeds, Then remote data is returned and saved`() = runTest {
+        coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns ReadingError.left()
         coEvery { remoteMoviesDatastore.getMovieDetails(movieId) } returns dataMovieDetails.right()
         coEvery { localMoviesDatastore.saveMovieDetails(dataMovieDetails) } returns None
 
         val result = repository.getMovieDetails(movieId)
 
         result shouldBe dataMovieDetails.toMovieDetails().right()
+        coVerify(exactly = 1) { localMoviesDatastore.getMovieDetails(movieId) }
         coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
         coVerify(exactly = 1) { localMoviesDatastore.saveMovieDetails(dataMovieDetails) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
 
     @Test
-    fun `Given a movie id, When remote succeeds but local save fails, Then error is returned`() = runTest {
+    fun `Given a movie id, When local fails and remote succeeds but save fails, Then remote data is still returned`() = runTest {
+        coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns ReadingError.left()
         coEvery { remoteMoviesDatastore.getMovieDetails(movieId) } returns dataMovieDetails.right()
         coEvery { localMoviesDatastore.saveMovieDetails(dataMovieDetails) } returns WritingError.some()
-        coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns ReadingError.left()
-
-        val result = repository.getMovieDetails(movieId)
-
-        result shouldBe ReadingError.toMovieError().left()
-        coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
-        coVerify(exactly = 1) { localMoviesDatastore.saveMovieDetails(dataMovieDetails) }
-        coVerify(exactly = 1) { localMoviesDatastore.getMovieDetails(movieId) }
-        confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
-    }
-
-    @Test
-    fun `Given a movie id, When remote call fails, Then local data is returned`() = runTest {
-        coEvery { remoteMoviesDatastore.getMovieDetails(movieId) } returns NotFound.left()
-        coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns dataMovieDetails.right()
 
         val result = repository.getMovieDetails(movieId)
 
         result shouldBe dataMovieDetails.toMovieDetails().right()
-        coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
         coVerify(exactly = 1) { localMoviesDatastore.getMovieDetails(movieId) }
+        coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
+        coVerify(exactly = 1) { localMoviesDatastore.saveMovieDetails(dataMovieDetails) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
 
     @Test
-    fun `Given a movie id, When both remote and local fail, Then error is returned`() = runTest {
-        coEvery { remoteMoviesDatastore.getMovieDetails(movieId) } returns NotFound.left()
+    fun `Given a movie id, When both local and remote fail, Then remote error is returned`() = runTest {
         coEvery { localMoviesDatastore.getMovieDetails(movieId) } returns ReadingError.left()
+        coEvery { remoteMoviesDatastore.getMovieDetails(movieId) } returns NotFound.left()
 
         val result = repository.getMovieDetails(movieId)
 
-        result shouldBe ReadingError.toMovieError().left()
-        coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
+        result shouldBe NotFound.toMovieError().left()
         coVerify(exactly = 1) { localMoviesDatastore.getMovieDetails(movieId) }
+        coVerify(exactly = 1) { remoteMoviesDatastore.getMovieDetails(movieId) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
     }
 
@@ -208,14 +208,14 @@ class MoviesDataRepositoryTest {
     }
 
     @Test
-    fun `Given a query, When both remote and local fail, Then error is returned`() = runTest {
+    fun `Given a query, When both remote and local fail, Then remote error is returned`() = runTest {
         val query = "harry potter"
         coEvery { remoteMoviesDatastore.searchMovies(query) } returns NotFound.left()
         coEvery { localMoviesDatastore.searchMovies(query) } returns ReadingError.left()
 
         val result = repository.searchMovies(query)
 
-        result shouldBe ReadingError.toMovieError().left()
+        result shouldBe NotFound.toMovieError().left()
         coVerify(exactly = 1) { remoteMoviesDatastore.searchMovies(query) }
         coVerify(exactly = 1) { localMoviesDatastore.searchMovies(query) }
         confirmVerified(remoteMoviesDatastore, localMoviesDatastore)
