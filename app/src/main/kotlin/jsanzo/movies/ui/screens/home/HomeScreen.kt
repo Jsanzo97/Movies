@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -85,6 +84,7 @@ private const val LAYOUT_TRANSITION_DURATION = 250
 @IgnoreStabilityReport
 @Composable
 fun HomeScreen(
+    windowInsets: WindowInsets,
     onNavigateToDetails: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
@@ -114,7 +114,9 @@ fun HomeScreen(
         },
         onLastVisibleIndex = { viewModel.notifyLastElementVisible(it) },
         onLayoutModeChange = { viewModel.saveLayoutMode(it) },
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(windowInsets),
     )
 }
 
@@ -133,15 +135,13 @@ private fun HomeContent(
 
     Surface(
         modifier = modifier
-            .fillMaxSize()
             .semantics { paneTitle = appName },
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .windowInsetsPadding(WindowInsets.statusBars),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             HomeSearchBar(
                 searchQuery = searchQuery,

@@ -277,7 +277,7 @@ Full M3 typography scale defined explicitly in `AppTypography` — all 15 text s
 ### Window insets
 `WindowCompat.setDecorFitsSystemWindows(window, false)` set in `MoviesTheme` so content draws edge-to-edge. Status bar and navigation bar icon colors adapt to dark/light theme via `isAppearanceLightStatusBars` and `isAppearanceLightNavigationBars`.
 
-`ComposeActivity` uses `@style/Theme.Movies.Splash` in the manifest — a translucent theme that prevents the white flash before Compose renders. After Compose is ready the theme is effectively replaced by `MoviesTheme`.
+`ComposeActivity` is the sole launcher Activity, configured with `android:theme="@style/android:Theme.Material.Light.NoActionBar"` to avoid the default action bar. Any translucent window properties were removed to ensure standard system behaviors like screen rotation are not restricted. After Compose is ready, the theme is effectively replaced by `MoviesTheme`.
 
 ---
 
@@ -559,7 +559,7 @@ fun RequestNotificationPermission() {
 ## Splash Screen
 
 ### Overview
-Animated splash screen using Lottie. No SplashScreen API — uses a translucent window theme (`Theme.Movies.Splash`) to avoid the white flash before Compose renders.
+Animated splash screen using Lottie. No SplashScreen API — used to apply a translucent window theme (`Theme.Movies.Splash`) which has been removed to avoid restrictions on screen rotation.
 
 The animation file is at `app/src/main/res/raw/splash_movies_animation.json`.
 
@@ -1435,3 +1435,4 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 - [x] Move ViewModels from `ui/screens/` to `presentation/` package
 - [x] Add StrictMode in debug builds (`MoviesApplication`)
 - [x] Add Compose Stability Analyzer plugin (Gradle + IDE), baseline committed in `app/stability/`, `stabilityCheck` enforced in CI
+- [x] Remove translucent theme properties to fix screen rotation issue
