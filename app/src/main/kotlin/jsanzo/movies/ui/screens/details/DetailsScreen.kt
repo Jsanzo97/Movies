@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -58,6 +57,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun DetailsScreen(
     movieId: Int,
+    windowInsets: WindowInsets,
     modifier: Modifier = Modifier,
     viewModel: DetailsViewModel = koinViewModel(),
 ) {
@@ -70,7 +70,9 @@ fun DetailsScreen(
 
     DetailsScreenContent(
         state = state,
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(windowInsets),
     )
 }
 
@@ -80,9 +82,9 @@ private fun DetailsScreenContent(
     modifier: Modifier = Modifier,
 ) {
     val movieDetailsTitle = stringResource(R.string.movie_details_title)
+
     Surface(
         modifier = modifier
-            .fillMaxSize()
             .semantics {
                 paneTitle = if (state is DetailsSuccess) state.movieDetails.title else movieDetailsTitle
             },
@@ -102,6 +104,7 @@ private fun DetailsScreenContent(
             }
 
             is DetailsSuccess -> DetailsContent(
+                modifier = Modifier.fillMaxSize(),
                 movieDetails = state.movieDetails,
             )
 
@@ -129,9 +132,7 @@ private fun DetailsContent(
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .windowInsetsPadding(WindowInsets.safeDrawing),
+            .verticalScroll(rememberScrollState()),
     ) {
         Row(
             modifier = Modifier

@@ -191,7 +191,7 @@ Displays a looping Lottie rocket animation themed to the app's color palette, wi
 
 ## 🎬 Splash Screen
 
-Animated splash using Lottie — no Android SplashScreen API. The manifest applies a translucent theme (`Theme.Movies.Splash`) that prevents any white flash before Compose renders.
+Animated splash using Lottie — no Android SplashScreen API. The manifest applies a standard system theme (`android:Theme.Material.Light.NoActionBar`) after removing translucent window properties to fix issues with screen rotation.
 
 `LottieComposition` is loaded once in `SplashScreen` and passed down to `SplashContent` to avoid loading it twice. `SplashContent` accepts `composition` and `progress` as parameters, making it previewable without a ViewModel by passing `composition = null`.
 

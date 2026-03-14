@@ -6,9 +6,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -88,14 +94,32 @@ fun AppNavigation() {
             }
             entry<AppDestinations.Home> {
                 HomeScreen(
+                    windowInsets = getWindowNavigationInsets(),
                     onNavigateToDetails = { movieId ->
                         backStack.add(AppDestinations.Details(movieId))
                     },
                 )
             }
             entry<AppDestinations.Details> { key ->
-                DetailsScreen(movieId = key.movieId)
+                DetailsScreen(
+                    windowInsets = getWindowNavigationInsets(),
+                    movieId = key.movieId,
+                )
             }
         },
     )
+}
+
+@Composable
+fun getWindowNavigationInsets(): WindowInsets {
+    val view = LocalView.current
+    val insets = ViewCompat.getRootWindowInsets(view) ?: return WindowInsets.safeDrawing
+
+    val gestureInsets = insets.getInsets(WindowInsetsCompat.Type.systemGestures())
+
+    return if (gestureInsets.left > 0 || gestureInsets.right > 0) {
+        WindowInsets.statusBars
+    } else {
+        WindowInsets.safeDrawing
+    }
 }

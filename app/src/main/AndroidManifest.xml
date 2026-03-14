@@ -15,7 +15,7 @@
 
         <activity
             android:name=".ui.ComposeActivity"
-            android:theme="@style/Theme.Movies.Splash"
+            android:theme="@style/Theme.Movies"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
