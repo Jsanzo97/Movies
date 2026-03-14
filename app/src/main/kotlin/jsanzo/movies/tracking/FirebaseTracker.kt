@@ -1,7 +1,9 @@
 package jsanzo.movies.tracking
 
+import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.logEvent
+import jsanzo.movies.BuildConfig
 
 interface MovieTracker {
     fun trackHomeShown()
@@ -20,65 +22,58 @@ internal class FirebaseTracker(
     private val analytics: FirebaseAnalytics,
 ) : MovieTracker {
 
-    override fun trackHomeShown() {
-        analytics.logEvent("screen_view") {
-            param("screen_name", "home")
+    private fun logEvent(event: String, params: Map<String, Any> = emptyMap()) {
+        if (BuildConfig.DEBUG) {
+            val paramsLog = if (params.isEmpty()) "" else " $params"
+            Log.d("MovieTracker", "event=$event$paramsLog")
         }
+        analytics.logEvent(event) {
+            params.forEach { (key, value) ->
+                when (value) {
+                    is String -> param(key, value)
+                    is Long -> param(key, value)
+                }
+            }
+        }
+    }
+
+    override fun trackHomeShown() {
+        logEvent("screen_view", mapOf("screen_name" to "home"))
     }
 
     override fun trackDetailsShown(movieId: Int) {
-        analytics.logEvent("screen_view") {
-            param("screen_name", "details")
-            param("movie_id", movieId.toLong())
-        }
+        logEvent("screen_view", mapOf("screen_name" to "details", "movie_id" to movieId.toLong()))
     }
 
     override fun trackMovieClicked(movieId: Int, movieTitle: String) {
-        analytics.logEvent("movie_clicked") {
-            param("movie_id", movieId.toLong())
-            param("movie_title", movieTitle)
-        }
+        logEvent("movie_clicked", mapOf("movie_id" to movieId.toLong(), "movie_title" to movieTitle))
     }
 
     override fun trackErrorShown(screen: String, error: String) {
-        analytics.logEvent("error_shown") {
-            param("screen", screen)
-            param("error", error)
-        }
+        logEvent("error_shown", mapOf("screen" to screen, "error" to error))
     }
 
     override fun trackPageLoaded(page: Int) {
-        analytics.logEvent("page_loaded") {
-            param("page", page.toLong())
-        }
+        logEvent("page_loaded", mapOf("page" to page.toLong()))
     }
 
     override fun trackSplashShown() {
-        analytics.logEvent("screen_view") {
-            param("screen_name", "splash")
-        }
+        logEvent("screen_view", mapOf("screen_name" to "splash"))
     }
 
     override fun trackForceUpdateShown(currentVersion: String) {
-        analytics.logEvent("force_update_shown") {
-            param("current_version", currentVersion)
-        }
+        logEvent("force_update_shown", mapOf("current_version" to currentVersion))
     }
 
     override fun trackRemoteConfigError() {
-        analytics.logEvent("remote_config_error") {}
+        logEvent("remote_config_error")
     }
 
     override fun trackSearchPerformed(query: String, resultsCount: Int) {
-        analytics.logEvent("search_performed") {
-            param("query", query)
-            param("results_count", resultsCount.toLong())
-        }
+        logEvent("search_performed", mapOf("query" to query, "results_count" to resultsCount.toLong()))
     }
 
     override fun trackLayoutModeChanged(mode: String) {
-        analytics.logEvent("layout_mode_changed") {
-            param("mode", mode)
-        }
+        logEvent("layout_mode_changed", mapOf("mode" to mode))
     }
 }
