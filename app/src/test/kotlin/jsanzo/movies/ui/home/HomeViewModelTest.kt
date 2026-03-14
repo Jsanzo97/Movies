@@ -484,15 +484,15 @@ class HomeViewModelTest {
 
     @Test
     fun `Given any layout mode, When saveLayoutMode is called, Then trackLayoutModeChanged is called`() = runTest {
-        coEvery { mockedSaveLayoutModeUseCase(DomainLayoutModePreference.Grid2) } just Runs
+        coEvery { mockedSaveLayoutModeUseCase(DomainLayoutModePreference.Grid3) } just Runs
 
         homeViewModel.state.test {
             awaitItem() shouldBe Loading
 
-            homeViewModel.saveLayoutMode(LayoutModeUi.Grid2)
+            homeViewModel.saveLayoutMode(LayoutModeUi.Grid3)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { mockedMovieTracker.trackLayoutModeChanged(LayoutModeUi.Grid2.name) }
+            coVerify(exactly = 1) { mockedMovieTracker.trackLayoutModeChanged(LayoutModeUi.Grid3.name) }
             confirmVerified(mockedMovieTracker)
         }
     }
@@ -509,6 +509,20 @@ class HomeViewModelTest {
 
             coVerify(exactly = 1) { mockedSaveLayoutModeUseCase(DomainLayoutModePreference.Grid3) }
             confirmVerified(mockedSaveLayoutModeUseCase)
+        }
+    }
+
+    @Test
+    fun `Given same layout mode, When saveLayoutMode is called, Then tracker and use case are not called`() = runTest {
+        homeViewModel.state.test {
+            awaitItem() shouldBe Loading
+
+            homeViewModel.saveLayoutMode(LayoutModeUi.Grid2) // Grid2 es el valor inicial
+            advanceUntilIdle()
+
+            verify(exactly = 0) { mockedMovieTracker.trackLayoutModeChanged(any()) }
+            coVerify(exactly = 0) { mockedSaveLayoutModeUseCase(any()) }
+            confirmVerified(mockedMovieTracker, mockedSaveLayoutModeUseCase)
         }
     }
 }

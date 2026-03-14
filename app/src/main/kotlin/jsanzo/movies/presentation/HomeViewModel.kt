@@ -157,7 +157,9 @@ class HomeViewModel(
     }
 
     internal fun saveLayoutMode(mode: LayoutModeUi) {
-        firebaseTracker.trackLayoutModeChanged(mode.name)
-        viewModelScope.launch { saveLayoutModeUseCase(mode.toDomainLayoutModePreference()) }
+        if (mode != layoutMode.value) {
+            firebaseTracker.trackLayoutModeChanged(mode.name)
+            viewModelScope.launch { saveLayoutModeUseCase(mode.toDomainLayoutModePreference()) }
+        }
     }
 }
