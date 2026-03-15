@@ -20,12 +20,14 @@ private fun Project.apply() {
 
         defaultConfig {
             minSdk = sdkMin
+            consumerProguardFiles("proguard-rules.pro")
         }
 
         buildTypes {
             getByName("release") {
-                isMinifyEnabled = true
-                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                // IMPORTANT: Libraries should NOT minify themselves. 
+                // The :app module will handle minification for the entire project.
+                isMinifyEnabled = false
             }
         }
 
@@ -40,4 +42,3 @@ private fun Project.apply() {
         "coreLibraryDesugaring"(libs().getLibrary("desugar-jdk"))
     }
 }
-
