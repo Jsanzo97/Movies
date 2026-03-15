@@ -1,0 +1,47 @@
+name: Deploy to Firebase
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build Variant'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  deploy:
+#    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Decode Keystore
+        if: github.event.inputs.variant == 'release'
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > release.jks
+          echo "KEYSTORE_PASSWORD=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" > keystore.properties
+          echo "KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> keystore.properties
+          echo "KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> keystore.properties
+          echo "STORE_FILE=../release.jks" >> keystore.properties
+
+      - name: Build APK
+        run: ./gradlew :app:assemble${{ github.event.inputs.variant }}
+
+      - name: Upload to Firebase App Distribution
+        uses: FirebaseExtended/action-app-distribution@v1
+        with:
+          appId: ${{ github.event.inputs.variant == 'release' && secrets.FIREBASE_APP_ID_RELEASE || secrets.FIREBASE_APP_ID_DEBUG }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          groups: testers
+          file: app/build/outputs/apk/${{ github.event.inputs.variant }}/app-${{ github.event.inputs.variant }}.apk
