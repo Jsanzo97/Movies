@@ -103,7 +103,6 @@ private fun Project.apply() {
         "implementation"(libs().getLibrary("firebase-analytics"))
         "implementation"(libs().getLibrary("firebase-crashlytics"))
         "implementation"(libs().getLibrary("lottie-compose"))
-        "implementation"(libs().getLibrary("androidx-splashscreen"))
         "implementation"(libs().getLibrary("kotlinx-collections-immutable"))
 
         "debugImplementation"(libs().getLibrary("compose-ui-tooling"))
