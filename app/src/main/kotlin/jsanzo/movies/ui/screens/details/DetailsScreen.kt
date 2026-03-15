@@ -1,6 +1,5 @@
 package jsanzo.movies.ui.screens.details
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,10 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -45,11 +40,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.SubcomposeAsyncImage
 import com.skydoves.compose.stability.runtime.IgnoreStabilityReport
 import jsanzo.movies.R
 import jsanzo.movies.presentation.DetailsViewModel
 import jsanzo.movies.ui.PreviewOnDevices
+import jsanzo.movies.ui.screens.common.HorizontalInfo
+import jsanzo.movies.ui.screens.common.LoadingIndicator
+import jsanzo.movies.ui.screens.common.MovieImage
+import jsanzo.movies.ui.screens.common.VerticalInfo
 import jsanzo.movies.ui.theme.MoviesTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -68,7 +66,7 @@ fun DetailsScreen(
         viewModel.trackScreenView(movieId)
     }
 
-    DetailsScreenContent(
+    DetailsLayout(
         state = state,
         modifier = modifier
             .fillMaxSize()
@@ -77,7 +75,7 @@ fun DetailsScreen(
 }
 
 @Composable
-private fun DetailsScreenContent(
+private fun DetailsLayout(
     state: DetailsViewState,
     modifier: Modifier = Modifier,
 ) {
@@ -90,225 +88,262 @@ private fun DetailsScreenContent(
             },
         color = MaterialTheme.colorScheme.background,
     ) {
-        when (state) {
-            is Loading -> {
-                val loadingMessage = stringResource(R.string.movie_details_loading)
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.semantics { contentDescription = loadingMessage },
-                    )
-                }
-            }
+        DetailsContent(
+            state = state,
+        )
+    }
+}
 
-            is DetailsSuccess -> DetailsContent(
+@Composable
+private fun DetailsContent(
+    state: DetailsViewState,
+) {
+    when (state) {
+        is Loading ->
+            LoadingIndicator(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentDescription = stringResource(R.string.movie_details_loading),
+            )
+
+        is DetailsSuccess ->
+            DetailsInformation(
                 modifier = Modifier.fillMaxSize(),
                 movieDetails = state.movieDetails,
             )
 
-            is DetailsError -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+        is DetailsError -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = state.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
 }
 
-@Suppress("LongMethod")
 @Composable
-private fun DetailsContent(
+private fun DetailsInformation(
     movieDetails: MovieDetailsUi,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            SubcomposeAsyncImage(
-                model = movieDetails.posterPath,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_error_load),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                        )
-                    }
-                },
+        with(movieDetails) {
+            DetailsHeader(
                 modifier = Modifier
-                    .width(120.dp)
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .fillMaxWidth(),
+                posterPath = posterPath,
+                title = title,
+                tagLine = tagline,
+                voteAverage = voteAverage,
+                releaseDate = releaseDate,
+                spokenLanguages = spokenLanguages,
+                runtime = runtime,
+                genres = genres,
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = movieDetails.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics { heading() },
-                )
-                movieDetails.tagline?.takeIf { it.isNotBlank() }?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                InfoChip(label = stringResource(R.string.movie_details_punctuation), value = movieDetails.voteAverage.toString())
-                InfoChip(label = stringResource(R.string.movie_details_release_date), value = movieDetails.releaseDate)
-                InfoChip(label = stringResource(R.string.movie_details_language), value = movieDetails.spokenLanguages)
-                movieDetails.runtime?.let {
-                    InfoChip(
-                        label = stringResource(R.string.movie_details_runtime),
-                        value = stringResource(R.string.movie_details_duration_value, it),
-                    )
-                }
-                InfoChip(label = stringResource(R.string.movie_details_genres), value = movieDetails.genres)
-            }
-        }
+            HorizontalDivider(
+                modifier = Modifier
+                    .padding(vertical = 8.dp),
+            )
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            DetailsBody(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                overview = overview,
+                productionCompanies = productionCompanies,
+                productionCountries = productionCountries,
+                status = status,
+                revenue = revenue,
+                homePage = homepage,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailsHeader(
+    posterPath: String,
+    title: String,
+    tagLine: String,
+    voteAverage: String,
+    releaseDate: String,
+    spokenLanguages: String,
+    runtime: Int,
+    genres: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.Top,
+    ) {
+        MovieImage(
+            modifier = Modifier
+                .width(120.dp)
+                .height(200.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            posterPath = posterPath,
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
 
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f),
         ) {
-            movieDetails.overview?.takeIf { it.isNotBlank() }?.let {
-                DetailSection(title = stringResource(R.string.movie_details_overview), body = it)
-            }
-
-            DetailSection(
-                title = stringResource(R.string.movie_details_production),
-                body = movieDetails.productionCompanies,
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() },
             )
 
-            DetailSection(
-                title = stringResource(R.string.movie_details_country),
-                body = movieDetails.productionCountries,
+            if (tagLine.isNotBlank()) {
+                Text(
+                    text = tagLine,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            HorizontalInfo(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.movie_details_punctuation),
+                value = voteAverage,
             )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.movie_details_status),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = movieDetails.status,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-                Column {
-                    Text(
-                        text = stringResource(R.string.movie_details_revenue),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = stringResource(R.string.movie_details_revenue_value, movieDetails.revenue),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-
-            movieDetails.homepage?.takeIf { it.isNotBlank() }?.let { homepage ->
-                val uriHandler = LocalUriHandler.current
-                val linkDescription = stringResource(R.string.movie_details_webpage_link_description)
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(R.string.movie_details_webpage),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = homepage,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier
-                            .semantics {
-                                contentDescription = "$linkDescription: $homepage"
-                                role = Role.Button
-                            }
-                            .clickable { uriHandler.openUri(homepage) },
-                    )
-                }
-            }
+            HorizontalInfo(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.movie_details_release_date),
+                value = releaseDate,
+            )
+            HorizontalInfo(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.movie_details_language),
+                value = spokenLanguages,
+            )
+            HorizontalInfo(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.movie_details_runtime),
+                value = stringResource(R.string.movie_details_duration_value, runtime),
+            )
+            HorizontalInfo(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.movie_details_genres),
+                value = genres,
+            )
         }
     }
 }
 
 @Composable
-private fun InfoChip(label: String, value: String) {
-    Row(
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier.semantics(mergeDescendants = true) {},
+private fun DetailsBody(
+    overview: String,
+    productionCompanies: String,
+    productionCountries: String,
+    status: String,
+    revenue: String,
+    homePage: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            text = "$label:",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        VerticalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = stringResource(R.string.movie_details_overview),
+            value = overview,
         )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
+
+        if (productionCompanies.isNotBlank()) {
+            VerticalInfo(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                label = stringResource(R.string.movie_details_production),
+                value = productionCompanies,
+            )
+        }
+
+        VerticalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = stringResource(R.string.movie_details_country),
+            value = productionCountries,
         )
+
+        VerticalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = stringResource(R.string.movie_details_status),
+            value = status,
+        )
+
+        VerticalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = stringResource(R.string.movie_details_revenue),
+            value = revenue,
+        )
+
+        VerticalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = stringResource(R.string.movie_details_country),
+            value = productionCountries,
+        )
+
+        if (homePage.isNotBlank()) {
+            WebInfo(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                homePage = homePage,
+            )
+        }
     }
 }
 
 @Composable
-private fun DetailSection(title: String, body: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun WebInfo(
+    homePage: String,
+    modifier: Modifier = Modifier,
+) {
+    val uriHandler = LocalUriHandler.current
+    val linkDescription = stringResource(R.string.movie_details_webpage_link_description)
+
+    Column(
+        modifier = modifier,
+    ) {
         Text(
-            text = title,
-            style = MaterialTheme.typography.labelSmall,
+            text = stringResource(R.string.movie_details_webpage),
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.semantics { heading() },
         )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         Text(
-            text = body,
+            text = homePage,
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                .semantics {
+                    contentDescription = "$linkDescription: $homePage"
+                    role = Role.Button
+                }
+                .clickable { uriHandler.openUri(homePage) },
         )
     }
 }
@@ -320,7 +355,7 @@ private fun DetailsScreenPreview(
 ) {
     MoviesTheme {
         Surface {
-            DetailsScreenContent(state = state)
+            DetailsLayout(state = state)
         }
     }
 }
@@ -331,7 +366,7 @@ private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewSta
         DetailsSuccess(
             movieDetails = MovieDetailsUi(
                 adult = false,
-                backdropPath = null,
+                backdropPath = "",
                 budget = 200_000_000,
                 genres = "Fantasy, Adventure",
                 homepage = "https://www.harrypotter.com",
@@ -340,18 +375,18 @@ private class DetailsViewStateProvider : PreviewParameterProvider<DetailsViewSta
                 originalTitle = "Harry Potter and the Deathly Hallows",
                 overview = "Harry, Ron and Hermione search for Voldemort's remaining horcruxes in their effort to destroy the Dark Lord.",
                 popularity = 150.0,
-                posterPath = null,
+                posterPath = "",
                 productionCompanies = "Warner Bros.",
                 productionCountries = "United States of America",
                 releaseDate = "2011-07-15",
-                revenue = 1_341_511_219,
+                revenue = "$ 1,341,511,219",
                 runtime = 130,
                 spokenLanguages = "English",
                 status = "Released",
                 tagline = "It all ends here.",
                 title = "Harry Potter and the Deathly Hallows: Part 2",
                 video = false,
-                voteAverage = 8.3,
+                voteAverage = "8.3",
                 voteCount = 18_000,
             ),
         ),

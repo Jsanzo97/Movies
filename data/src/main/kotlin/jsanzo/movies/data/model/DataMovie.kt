@@ -3,7 +3,7 @@ package jsanzo.movies.data.model
 import jsanzo.movies.domain.model.DomainMovie
 
 data class DataMovie(
-    val posterPath: String?,
+    val posterPath: String,
     val adult: Boolean,
     val overview: String,
     val releaseDate: String,
@@ -12,7 +12,7 @@ data class DataMovie(
     val originalTitle: String,
     val originalLanguage: String,
     val title: String,
-    val backdropPath: String?,
+    val backdropPath: String,
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,

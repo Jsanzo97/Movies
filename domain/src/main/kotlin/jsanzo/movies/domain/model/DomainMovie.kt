@@ -1,7 +1,7 @@
 package jsanzo.movies.domain.model
 
 data class DomainMovie(
-    val posterPath: String?,
+    val posterPath: String,
     val adult: Boolean,
     val overview: String,
     val releaseDate: String,
@@ -10,7 +10,7 @@ data class DomainMovie(
     val originalTitle: String,
     val originalLanguage: String,
     val title: String,
-    val backdropPath: String?,
+    val backdropPath: String,
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,

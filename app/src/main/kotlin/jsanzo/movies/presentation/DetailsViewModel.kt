@@ -26,6 +26,7 @@ class DetailsViewModel(
     val state: StateFlow<DetailsViewState> get() = _state
 
     fun getDetails(movieId: Int) {
+        _state.value = Loading
         viewModelScope.launch {
             getMovieDetailsUseCase(movieId)
                 .onSuccess { movieDetails ->

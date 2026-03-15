@@ -2,6 +2,8 @@ package jsanzo.movies.ui.screens.details
 
 import androidx.compose.runtime.Immutable
 import jsanzo.movies.domain.model.DomainMovieDetails
+import java.text.NumberFormat
+import java.util.Locale
 
 @Immutable
 data class MovieDetailsUi(
@@ -9,18 +11,18 @@ data class MovieDetailsUi(
     val title: String,
     val originalTitle: String,
     val originalLanguage: String,
-    val overview: String?,
-    val tagline: String?,
-    val posterPath: String?,
-    val backdropPath: String?,
+    val overview: String,
+    val tagline: String,
+    val posterPath: String,
+    val backdropPath: String,
     val releaseDate: String,
     val status: String,
-    val homepage: String?,
-    val runtime: Int?,
+    val homepage: String,
+    val runtime: Int,
     val budget: Int,
-    val revenue: Long,
+    val revenue: String,
     val popularity: Double,
-    val voteAverage: Double,
+    val voteAverage: String,
     val voteCount: Int,
     val adult: Boolean,
     val video: Boolean,
@@ -44,9 +46,9 @@ fun DomainMovieDetails.toMovieDetailsUi() = MovieDetailsUi(
     homepage = homepage,
     runtime = runtime,
     budget = budget,
-    revenue = revenue,
+    revenue = revenue.format(),
     popularity = popularity,
-    voteAverage = voteAverage,
+    voteAverage = String.format(Locale.getDefault(), "%.${2}f", voteAverage),
     voteCount = voteCount,
     adult = adult,
     video = video,
@@ -55,3 +57,10 @@ fun DomainMovieDetails.toMovieDetailsUi() = MovieDetailsUi(
     productionCompanies = productionCompanies.joinToString(", ") { it.name },
     productionCountries = productionCountries.joinToString(", ") { it.name },
 )
+
+private fun Long.format(): String {
+    val formatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    formatter.minimumFractionDigits = 0
+    formatter.maximumFractionDigits = 2
+    return formatter.format(this)
+}

@@ -3,7 +3,7 @@ package jsanzo.movies.data.model
 import jsanzo.movies.domain.model.DomainMovie
 
 internal val dataMovie = DataMovie(
-    posterPath = null,
+    posterPath = "",
     adult = false,
     overview = "",
     releaseDate = "",
@@ -12,7 +12,7 @@ internal val dataMovie = DataMovie(
     originalTitle = "",
     originalLanguage = "",
     title = "",
-    backdropPath = null,
+    backdropPath = "",
     popularity = 0.0,
     voteCount = 0,
     video = false,
@@ -21,7 +21,7 @@ internal val dataMovie = DataMovie(
 
 internal val dataMovieDetails = DataMovieDetails(
     adult = false,
-    backdropPath = null,
+    backdropPath = "",
     belongsToCollection = DataMovieCollection(
         id = 1,
         name = "Collection",
@@ -30,23 +30,23 @@ internal val dataMovieDetails = DataMovieDetails(
     ),
     budget = 0,
     genres = listOf(DataMovieGenre(id = 1, name = "Action")),
-    homepage = null,
+    homepage = "",
     id = 1,
-    imdbId = null,
+    imdbId = "",
     originCountry = listOf(""),
     originalLanguage = "",
     originalTitle = "",
-    overview = null,
+    overview = "",
     popularity = 0.0,
-    posterPath = null,
+    posterPath = "",
     productionCompanies = listOf(DataMovieProductionCompany(name = "Warner", id = 1, logoPath = null, originCountry = "US")),
     productionCountries = listOf(DataMovieProductionCountry(iso = "US", name = "United States")),
     releaseDate = "",
     revenue = 0,
-    runtime = null,
+    runtime = 0,
     spokenLanguages = listOf(DataMovieSpokenLanguage(englishName = "name", iso = "en", name = "English")),
     status = "",
-    tagline = null,
+    tagline = "",
     title = "",
     video = false,
     voteAverage = 0.0,
@@ -54,7 +54,7 @@ internal val dataMovieDetails = DataMovieDetails(
 )
 
 internal val domainMovie = DomainMovie(
-    posterPath = null,
+    posterPath = "",
     adult = false,
     overview = "",
     releaseDate = "",
@@ -63,7 +63,7 @@ internal val domainMovie = DomainMovie(
     originalTitle = "",
     originalLanguage = "",
     title = "",
-    backdropPath = null,
+    backdropPath = "",
     popularity = 0.0,
     voteCount = 0,
     video = false,
