@@ -1,21 +1,29 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# --- General Android & Kotlin ---
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
+-dontwarn javax.annotation.**
+-dontwarn org.jetbrains.annotations.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- Koin ---
+# Keep Koin annotations and classes using them
+-keep @org.koin.core.annotation.* class * { *; }
+-keepclassmembers class * {
+    @org.koin.core.annotation.* *;
+}
+# Keep constructors for Koin injection to work via reflection/scanning
+-keepclassmembers class jsanzo.movies.** {
+    public <init>(...);
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# --- Compose ---
+-keep class androidx.compose.runtime.Recomposer { *; }
+-keep class androidx.compose.ui.platform.AbstractComposeView { *; }
+-keep @androidx.compose.runtime.Composable class * { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# --- Lottie ---
+-keep class com.airbnb.lottie.** { *; }
+
+# --- Firebase ---
+-keep class com.google.firebase.** { *; }
+
+# --- Preserve line numbers for Crashlytics ---
+-keepattributes SourceFile,LineNumberTable

@@ -6,6 +6,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import java.io.File
+import java.util.Properties
 
 class SetupAndroidApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -36,6 +37,21 @@ private fun Project.apply() {
             resValues = true
         }
 
+        val keystorePropertiesFile = rootProject.file("keystore.properties")
+        val keystoreProperties = Properties()
+        if (keystorePropertiesFile.exists()) {
+            keystoreProperties.load(keystorePropertiesFile.inputStream())
+        }
+
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProperties["KEY_ALIAS"] as String?
+                keyPassword = keystoreProperties["KEY_PASSWORD"] as String?
+                storeFile = keystoreProperties["STORE_FILE"]?.let { rootProject.file(it) }
+                storePassword = keystoreProperties["KEYSTORE_PASSWORD"] as String?
+            }
+        }
+
         buildTypes {
             getByName("debug") {
                 applicationIdSuffix = ".debug"
@@ -43,6 +59,7 @@ private fun Project.apply() {
             getByName("release") {
                 isMinifyEnabled = true
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                signingConfig = signingConfigs.getByName("release")
             }
         }
 
@@ -109,5 +126,3 @@ private fun Project.apply() {
         "debugImplementation"(libs().getLibrary("leakcanary"))
     }
 }
-
-
