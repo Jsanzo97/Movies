@@ -67,7 +67,7 @@ Dao and database implementations to persist the data locally. Only movies clicke
 
 ### Networking & persistence
 - **Retrofit 3 + OkHttp 5** — REST client with Kotlinx Serialization converter
-- **Room 2.8** — local persistence with KSP-generated DAOs
+- **Room 2.8.4** — local persistence with KSP-generated DAOs
 - **DataStore Preferences** — persists user preferences across sessions
 - **Kotlinx Serialization** — JSON parsing across all modules
 

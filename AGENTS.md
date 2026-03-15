@@ -12,30 +12,30 @@ Multi-module Android application built with Kotlin that displays movies using Th
 
 ## Tech Stack
 
-| Area | Technology | Notes |
-|---|---|---|
-| Language | Kotlin 2.3.10 | |
-| UI | Jetpack Compose | Migration from XML/Fragments complete |
-| Architecture | MVVM + Clean Architecture | |
-| DI | Koin 4.1.1 | Using Koin Annotations for DI |
-| Navigation | Navigation3 1.0.1 | Migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack` |
-| Networking | Retrofit 3.0.0 + OkHttp 5.3.2 | |
-| Serialization | Kotlinx Serialization 1.10.0 | Applied via CommonSetupPlugin to all modules |
-| Database | Room 2.8.4 | |
-| Async | Coroutines 1.10.2 + Flow + StateFlow | |
-| Image loading | Coil 2.7.0 | Replaced Glide |
-| Error handling | Arrow 2.2.1.1 (Either, Option) | Under evaluation, may be removed |
-| Analytics & Crashlytics | Firebase BOM 34.9.0 | Crashlytics + Analytics + Remote Config with DebugView |
-| Splash + ForceUpdate | Lottie 6.6.6 | Animated splash screen + force update screen with JSON animations |
-| HTTP inspector | Chucker | debugImplementation only, no-op in release |
-| Performance | Develocity 4.3.2 | Build scans, build cache and performance insights |
-| Memory Leaks | LeakCanary 2.14 | Automated detection in debug builds |
-| Compose stability | compose-stability-analyzer 0.7.0 | Gradle plugin + IDE plugin. Gradle task: `stabilityCheck`. Baseline commited in `app/stability/` |
-| Static analysis | Detekt 1.23.8 | |
-| Build system | Gradle 9.3.1 (Kotlin DSL) | |
-| Min SDK | 26 | |
-| Target/Compile SDK | 36 | |
-| Java compatibility | Java 21 | |
+| Area                    | Technology                           | Notes                                                                                            |
+|-------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------|
+| Language                | Kotlin 2.3.10                        |                                                                                                  |
+| UI                      | Jetpack Compose                      | Migration from XML/Fragments complete                                                            |
+| Architecture            | MVVM + Clean Architecture            |                                                                                                  |
+| DI                      | Koin 4.1.1                           | Using Koin Annotations for DI                                                                    |
+| Navigation              | Navigation3 1.0.1                    | Migrated from Navigation Compose. `NavDisplay` + `rememberNavBackStack`                          |
+| Networking              | Retrofit 3.0.0 + OkHttp 5.3.2        |                                                                                                  |
+| Serialization           | Kotlinx Serialization 1.10.0         | Applied via CommonSetupPlugin to all modules                                                     |
+| Database                | Room 2.8.4                           |                                                                                                  |
+| Async                   | Coroutines 1.10.2 + Flow + StateFlow |                                                                                                  |
+| Image loading           | Coil 2.7.0                           | Replaced Glide                                                                                   |
+| Error handling          | Arrow 2.2.2  (Either, Option)        |
+| Analytics & Crashlytics | Firebase BOM 34.10.0                 | Crashlytics + Analytics + Remote Config with DebugView                                           |
+| Splash + ForceUpdate    | Lottie 6.7.1                         | Animated splash screen + force update screen with JSON animations                                |
+| HTTP inspector          | Chucker                              | debugImplementation only, no-op in release                                                       |
+| Performance             | Develocity 4.3.2                     | Build scans, build cache and performance insights                                                |
+| Memory Leaks            | LeakCanary 2.14                      | Automated detection in debug builds                                                              |
+| Compose stability       | compose-stability-analyzer 0.7.0     | Gradle plugin + IDE plugin. Gradle task: `stabilityCheck`. Baseline commited in `app/stability/` |
+| Static analysis         | Detekt 1.23.8                        |                                                                                                  |
+| Build system            | Gradle 9.3.1 (Kotlin DSL)            |                                                                                                  |
+| Min SDK                 | 26                                   |                                                                                                  |
+| Target/Compile SDK      | 36                                   |                                                                                                  |
+| Java compatibility      | Java 21                              |                                                                                                  |
 
 ---
 
