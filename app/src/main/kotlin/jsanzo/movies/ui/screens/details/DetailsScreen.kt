@@ -79,12 +79,12 @@ private fun DetailsLayout(
     state: DetailsViewState,
     modifier: Modifier = Modifier,
 ) {
-    val movieDetailsTitle = stringResource(R.string.movie_details_title)
+    val screenName = stringResource(R.string.details_name)
 
     Surface(
         modifier = modifier
             .semantics {
-                paneTitle = if (state is DetailsSuccess) state.movieDetails.title else movieDetailsTitle
+                paneTitle = if (state is DetailsSuccess) state.movieDetails.title else screenName
             },
         color = MaterialTheme.colorScheme.background,
     ) {

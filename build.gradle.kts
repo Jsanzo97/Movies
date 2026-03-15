@@ -15,7 +15,6 @@ plugins {
 
 apply(plugin = "jacoco")
 
-
 tasks.register("detektAll") {
     group = "verification"
     dependsOn(subprojects.mapNotNull { it.tasks.findByName("detekt") })

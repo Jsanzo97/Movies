@@ -1,5 +1,10 @@
 <resources>
-    <string name="application_name" translatable="false">Movie List</string>
+    <string name="app_name" translatable="false">Movies</string>
+
+    <string name="splash_name">Splash</string>
+    <string name="home_name">Home</string>
+    <string name="details_name">Details</string>
+    <string name="force_update_name">Force Update</string>
 
     <string name="home_screen_movie_title">Title</string>
     <string name="home_screen_movie_score">Score</string>
