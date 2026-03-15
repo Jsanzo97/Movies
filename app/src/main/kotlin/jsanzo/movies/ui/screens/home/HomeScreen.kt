@@ -8,14 +8,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -35,7 +32,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,9 +49,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -67,11 +61,13 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.SubcomposeAsyncImage
 import com.skydoves.compose.stability.runtime.IgnoreStabilityReport
 import jsanzo.movies.R
 import jsanzo.movies.presentation.HomeViewModel
 import jsanzo.movies.ui.PreviewOnDevices
+import jsanzo.movies.ui.screens.common.HorizontalInfo
+import jsanzo.movies.ui.screens.common.LoadingIndicator
+import jsanzo.movies.ui.screens.common.MovieImage
 import jsanzo.movies.ui.theme.MoviesTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -145,10 +141,13 @@ private fun HomeContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             HomeSearchBar(
+                modifier = Modifier.fillMaxWidth(),
                 searchQuery = searchQuery,
                 onSearchQueryChange = onSearchQueryChange,
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             HomeLayout(
                 state = state,
                 layoutMode = layoutMode,
@@ -165,6 +164,7 @@ private fun HomeContent(
 private fun HomeSearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     SearchBar(
         inputField = {
@@ -188,11 +188,12 @@ private fun HomeSearchBar(
         colors = SearchBarDefaults.colors(
             containerColor = MaterialTheme.colorScheme.background,
         ),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         content = {},
     )
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun HomeLayout(
     state: HomeViewState,
@@ -200,7 +201,6 @@ private fun HomeLayout(
     onMovieClick: (MovieUi) -> Unit,
     onLastVisibleIndex: (Int) -> Unit,
     onLayoutModeChange: (LayoutModeUi) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val listLayoutState = rememberLazyGridState()
 
@@ -214,19 +214,17 @@ private fun HomeLayout(
 
     when (state) {
         is Loading -> {
-            val loadingMessage = stringResource(R.string.home_screen_loading_movies)
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(
-                    modifier = modifier.semantics { contentDescription = loadingMessage },
-                )
-            }
+            LoadingIndicator(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentDescription = stringResource(R.string.home_screen_loading_movies),
+            )
         }
 
         is MovieListComplete -> {
             MoviesLayout(
+                modifier = Modifier
+                    .fillMaxSize(),
                 movies = state.movies,
                 layoutMode = layoutMode,
                 layoutState = listLayoutState,
@@ -238,6 +236,8 @@ private fun HomeLayout(
         is MoviesSearch -> {
             if (state.movies.isNotEmpty()) {
                 MoviesLayout(
+                    modifier = Modifier
+                        .fillMaxSize(),
                     movies = state.movies,
                     layoutMode = layoutMode,
                     layoutState = LazyGridState(),
@@ -245,16 +245,24 @@ private fun HomeLayout(
                     onLayoutModeChange = onLayoutModeChange,
                 )
             } else {
-                EmptySearch()
+                EmptySearch(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                )
             }
         }
 
         is MoviesError -> {
-            Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error,
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = state.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
 }
@@ -266,6 +274,7 @@ private fun MoviesLayout(
     layoutState: LazyGridState,
     onMovieClick: (MovieUi) -> Unit,
     onLayoutModeChange: (LayoutModeUi) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     AnimatedContent(
         targetState = layoutMode,
@@ -280,7 +289,7 @@ private fun MoviesLayout(
                 ) + fadeOut(tween(LAYOUT_TRANSITION_DURATION))
         },
         label = "layout_mode_transition",
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
     ) { currentLayoutMode ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(currentLayoutMode.columns),
@@ -296,6 +305,8 @@ private fun MoviesLayout(
                 key = { movie -> movie.id },
             ) { movie ->
                 MovieItem(
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     movie = movie,
                     currentLayoutMode = currentLayoutMode,
                     onClick = { onMovieClick(movie) },
@@ -305,7 +316,6 @@ private fun MoviesLayout(
     }
 }
 
-@Suppress("LongMethod")
 @Composable
 private fun MovieItem(
     movie: MovieUi,
@@ -316,7 +326,7 @@ private fun MovieItem(
     val movieDescription = stringResource(
         R.string.home_screen_movie_item_description,
         movie.title,
-        movie.voteAverage.toString(),
+        movie.voteAverage,
         movie.releaseDate,
     )
 
@@ -324,57 +334,39 @@ private fun MovieItem(
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier
-            .fillMaxWidth()
             .semantics(mergeDescendants = true) {
                 contentDescription = movieDescription
             },
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            SubcomposeAsyncImage(
-                model = movie.posterPath,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_error_load),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                        )
-                    }
-                },
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+        ) {
+            MovieImage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f / 3f)
                     .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+                posterPath = movie.posterPath,
             )
 
             when (currentLayoutMode) {
                 LayoutModeUi.Grid2 -> {
-                    MovieInfoColumn(
-                        movie = movie,
+                    MovieInfo(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
+                        movie = movie,
                     )
                 }
 
                 LayoutModeUi.Grid3 -> {
-                    LabeledText(
+                    HorizontalInfo(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
                         label = stringResource(R.string.home_screen_movie_score),
-                        value = movie.voteAverage.toString(),
+                        value = movie.voteAverage,
                     )
                 }
 
@@ -385,7 +377,7 @@ private fun MovieItem(
 }
 
 @Composable
-private fun MovieInfoColumn(
+private fun MovieInfo(
     movie: MovieUi,
     modifier: Modifier = Modifier,
 ) {
@@ -395,20 +387,26 @@ private fun MovieInfoColumn(
     ) {
         Text(
             text = movie.title,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        LabeledText(
+        HorizontalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
             label = stringResource(R.string.home_screen_movie_score),
-            value = movie.voteAverage.toString(),
+            value = movie.voteAverage,
         )
-        LabeledText(
+        HorizontalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
             label = stringResource(R.string.home_screen_movie_date),
             value = movie.releaseDate,
         )
-        LabeledText(
+        HorizontalInfo(
+            modifier = Modifier
+                .fillMaxWidth(),
             label = stringResource(R.string.home_screen_movie_language),
             value = movie.originalLanguage.uppercase(),
         )
@@ -416,35 +414,12 @@ private fun MovieInfoColumn(
 }
 
 @Composable
-private fun LabeledText(
-    label: String,
-    value: String,
+private fun EmptySearch(
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "$label:",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun EmptySearch() {
     val noResultsDescription = stringResource(R.string.home_screen_no_results)
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .semantics(mergeDescendants = true) {
                 contentDescription = noResultsDescription
             },
@@ -561,7 +536,7 @@ private class HomeViewStateProvider : PreviewParameterProvider<HomeViewState> {
         MovieListComplete(
             movies = persistentListOf(
                 MovieUi(
-                    posterPath = null,
+                    posterPath = "",
                     adult = false,
                     overview = "Overview",
                     releaseDate = "2024-01-01",
@@ -570,11 +545,11 @@ private class HomeViewStateProvider : PreviewParameterProvider<HomeViewState> {
                     originalTitle = "Original Title",
                     originalLanguage = "en",
                     title = "Movie Title",
-                    backdropPath = null,
+                    backdropPath = "",
                     popularity = 8.0,
                     voteCount = 100,
                     video = false,
-                    voteAverage = 8.2,
+                    voteAverage = "8.2",
                 ),
             ),
         ),

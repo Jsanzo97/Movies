@@ -20,17 +20,17 @@ data class GetMoviesDetailsResponse(
     val belongsToCollection: GetMoviesDetailCollection?,
     val budget: Int,
     val genres: List<GetMoviesGenre>,
-    val homepage: String?,
+    val homepage: String,
     val id: Int,
     @SerialName("imdb_id")
-    val imdbId: String?,
+    val imdbId: String,
     @SerialName("origin_country")
     val originCountry: List<String>,
     @SerialName("original_language")
     val originalLanguage: String,
     @SerialName("original_title")
     val originalTitle: String,
-    val overview: String?,
+    val overview: String,
     val popularity: Double,
     @SerialName("poster_path")
     val posterPath: String?,
@@ -41,11 +41,11 @@ data class GetMoviesDetailsResponse(
     @SerialName("release_date")
     val releaseDate: String,
     val revenue: Long,
-    val runtime: Int?,
+    val runtime: Int,
     @SerialName("spoken_languages")
     val spokenLanguages: List<GetMoviesSpokenLanguage>,
     val status: String,
-    val tagline: String?,
+    val tagline: String,
     val title: String,
     val video: Boolean,
     @SerialName("vote_average")

@@ -1,12 +1,13 @@
 package jsanzo.movies.ui.screens.update
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import android.R.attr.onClick
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -37,18 +38,41 @@ import jsanzo.movies.ui.PreviewOnDevices
 import jsanzo.movies.ui.theme.MoviesTheme
 
 @Composable
-fun ForceUpdateScreen(modifier: Modifier = Modifier) {
+fun ForceUpdateScreen(
+    modifier: Modifier = Modifier,
+) {
     val uriHandler = LocalUriHandler.current
 
-    ForceUpdateContent(
+    ForceUpdateLayout(
         onUpdateClick = {
             runCatching { uriHandler.openUri("market://details?id=jsanzo.movies") }
         },
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize(),
     )
 }
 
-@Suppress("LongMethod")
+@Composable
+private fun ForceUpdateLayout(
+    onUpdateClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val updateTitle = stringResource(R.string.force_update_title)
+    Surface(
+        modifier = modifier
+            .semantics { paneTitle = updateTitle },
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        ForceUpdateContent(
+            onUpdateClick = onUpdateClick,
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 24.dp),
+        )
+    }
+}
+
 @Composable
 private fun ForceUpdateContent(
     onUpdateClick: () -> Unit,
@@ -62,68 +86,51 @@ private fun ForceUpdateContent(
         iterations = LottieConstants.IterateForever,
     )
 
-    val updateTitle = stringResource(R.string.force_update_title)
-    Surface(
+    Column(
         modifier = modifier
-            .fillMaxSize()
-            .semantics { paneTitle = updateTitle },
-        color = MaterialTheme.colorScheme.background,
+            .semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp),
+                .fillMaxWidth(0.8f)
+                .aspectRatio(1f),
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.force_update_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.semantics { heading() },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.force_update_description),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(16.dp).weight(1f))
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            onClick = onUpdateClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .semantics(mergeDescendants = true) {},
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                LottieAnimation(
-                    composition = composition,
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .aspectRatio(1f),
-                )
-
-                Text(
-                    text = updateTitle,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.semantics { heading() },
-                )
-
-                Text(
-                    text = stringResource(R.string.force_update_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            Button(
-                onClick = onUpdateClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
-            ) {
-                Text(
-                    text = stringResource(R.string.force_update_button),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            Text(
+                text = stringResource(R.string.force_update_button),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -131,6 +138,6 @@ private fun ForceUpdateContent(
 @Composable
 private fun ForceUpdateScreenPreview() {
     MoviesTheme {
-        ForceUpdateContent(onUpdateClick = {})
+        ForceUpdateLayout(onUpdateClick = {})
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import jsanzo.movies.domain.model.DomainMovie
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import java.util.Locale
 
 @Immutable
 data class MovieUi(
@@ -12,11 +13,11 @@ data class MovieUi(
     val originalTitle: String,
     val originalLanguage: String,
     val overview: String,
-    val posterPath: String?,
-    val backdropPath: String?,
+    val posterPath: String,
+    val backdropPath: String,
     val releaseDate: String,
     val popularity: Double,
-    val voteAverage: Double,
+    val voteAverage: String,
     val voteCount: Int,
     val adult: Boolean,
     val video: Boolean,
@@ -35,7 +36,7 @@ private fun DomainMovie.toMovieUi() = MovieUi(
     backdropPath = backdropPath,
     releaseDate = releaseDate,
     popularity = popularity,
-    voteAverage = voteAverage,
+    voteAverage = String.format(Locale.getDefault(), "%.${2}f", voteAverage),
     voteCount = voteCount,
     adult = adult,
     video = video,
@@ -52,7 +53,7 @@ fun MovieUi.toDomainMovieResult() = DomainMovie(
     backdropPath = backdropPath,
     releaseDate = releaseDate,
     popularity = popularity,
-    voteAverage = voteAverage,
+    voteAverage = voteAverage.toDoubleOrNull() ?: 0.0,
     voteCount = voteCount,
     adult = adult,
     video = video,

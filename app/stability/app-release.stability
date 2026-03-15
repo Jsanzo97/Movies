@@ -5,7 +5,7 @@
 //   ./gradlew :app:stabilityDump
 
 @Composable
-public fun jsanzo.movies.ui.ComposeActivity.RequestNotificationPermission(): kotlin.Unit
+public fun jsanzo.movies.ui.MainActivity.RequestNotificationPermission(): kotlin.Unit
   skippable: true
   restartable: true
   params:

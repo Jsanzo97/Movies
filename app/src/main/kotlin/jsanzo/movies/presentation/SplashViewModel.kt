@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import org.koin.core.annotation.Named
 
 @KoinViewModel
 class SplashViewModel(
+    @Named("actualVersion") private val actualVersion: String,
     private val mustUpdateUseCase: MustUpdateUseCase,
     private val firebaseTracker: MovieTracker,
 ) : ViewModel() {
@@ -29,7 +31,7 @@ class SplashViewModel(
         firebaseTracker.trackSplashShown()
     }
 
-    fun mustUpdate(actualVersion: String) = viewModelScope.launch {
+    fun mustUpdate() = viewModelScope.launch {
         mustUpdateUseCase(actualVersion)
             .onSuccess { mustUpdate ->
                 if (mustUpdate) {

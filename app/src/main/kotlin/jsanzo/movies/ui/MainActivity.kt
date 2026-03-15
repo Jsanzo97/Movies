@@ -16,7 +16,7 @@ import jsanzo.movies.BuildConfig
 import jsanzo.movies.ui.navigation.AppNavigation
 import jsanzo.movies.ui.theme.MoviesTheme
 
-class ComposeActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
     primaryKeys = ["id"],
 )
 data class MovieEntity(
-    val posterPath: String?,
+    val posterPath: String,
     val adult: Boolean,
     val overview: String,
     val releaseDate: String,
@@ -21,7 +21,7 @@ data class MovieEntity(
     val originalTitle: String,
     val originalLanguage: String,
     val title: String,
-    val backdropPath: String?,
+    val backdropPath: String,
     val popularity: Double,
     val voteCount: Int,
     val video: Boolean,

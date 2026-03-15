@@ -38,7 +38,7 @@ class SplashViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        splashViewModel = SplashViewModel(mockedMustUpdateUseCase, mockedTracker)
+        splashViewModel = SplashViewModel(actualVersion, mockedMustUpdateUseCase, mockedTracker)
     }
 
     @AfterEach
@@ -72,7 +72,7 @@ class SplashViewModelTest {
         splashViewModel.state.test {
             awaitItem() shouldBe SplashLoading
 
-            splashViewModel.mustUpdate(actualVersion)
+            splashViewModel.mustUpdate()
 
             awaitItem() shouldBe MustUpdate
 
@@ -88,7 +88,7 @@ class SplashViewModelTest {
         splashViewModel.state.test {
             awaitItem() shouldBe SplashLoading
 
-            splashViewModel.mustUpdate(actualVersion)
+            splashViewModel.mustUpdate()
 
             awaitItem() shouldBe MustUpdate
 
@@ -105,7 +105,7 @@ class SplashViewModelTest {
         splashViewModel.state.test {
             awaitItem() shouldBe SplashLoading
 
-            splashViewModel.mustUpdate(actualVersion)
+            splashViewModel.mustUpdate()
 
             awaitItem() shouldBe UpToDate
 
@@ -121,7 +121,7 @@ class SplashViewModelTest {
         splashViewModel.state.test {
             awaitItem() shouldBe SplashLoading
 
-            splashViewModel.mustUpdate(actualVersion)
+            splashViewModel.mustUpdate()
 
             awaitItem() shouldBe UpToDate
 
@@ -137,7 +137,7 @@ class SplashViewModelTest {
         splashViewModel.state.test {
             awaitItem() shouldBe SplashLoading
 
-            splashViewModel.mustUpdate(actualVersion)
+            splashViewModel.mustUpdate()
 
             awaitItem() shouldBe UpToDate
 

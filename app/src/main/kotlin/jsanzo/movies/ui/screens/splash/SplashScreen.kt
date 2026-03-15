@@ -12,7 +12,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
@@ -39,7 +38,6 @@ fun SplashScreen(
     viewModel: SplashViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.trackScreenView()
@@ -59,17 +57,15 @@ fun SplashScreen(
     val animationState = animateLottieCompositionAsState(composition = composition)
 
     if (animationState.isAtEnd && animationState.isPlaying) {
-        val version = context.packageManager
-            .getPackageInfo(context.packageName, 0)
-            .versionName
-            ?: "1.0.0"
-        viewModel.mustUpdate(version)
+        viewModel.mustUpdate()
     }
 
     SplashContent(
         composition = composition,
         progress = { animationState.progress },
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
     )
 }
 
@@ -83,8 +79,6 @@ private fun SplashContent(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .semantics {
                 contentDescription = appName
                 paneTitle = appName
