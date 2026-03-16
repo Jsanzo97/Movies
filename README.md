@@ -11,6 +11,7 @@
 ![Develocity](https://img.shields.io/badge/Develocity-4.3.2-grey?style=flat&logo=gradle&logoColor=white&labelColor=blue)
 ![LeakCanary](https://img.shields.io/badge/LeakCanary-2.14-grey?style=flat&logo=square&logoColor=white&labelColor=yellow)
 [![Coverage](https://img.shields.io/codecov/c/github/Jsanzo97/Movies/develop?style=flat&logo=codecov&logoColor=white&labelColor=f01f7a&color=grey)](https://codecov.io/gh/Jsanzo97/Movies)
+![Fastlane](https://img.shields.io/badge/Fastlane-2.232.2-grey?style=flat&logo=fastlane&logoColor=white&labelColor=00F2FF)
 ![License](https://img.shields.io/badge/License-MIT-grey?style=flat&labelColor=yellow)
 
 Android application that lists and displays movie details using [The Movie Database (TMDB) API](https://www.themoviedb.org/). Built as a reference project to showcase modern Android architecture and engineering practices.
@@ -166,6 +167,7 @@ Three GitHub Actions workflows:
 PR:      check (Detekt + Spotless) → stability-check (stabilityCheck) + build-and-test (assembleDebug + jacocoMergedCoverageVerification + Codecov)
 develop: coverage (jacocoMergedReport + Codecov)
 Manual:  Deploy to Firebase (assembleVariant + incrementVersion + Firebase App Distribution)
+Manual:  Deploy to Google Play (Full verification + Fastlane upload to internal/beta/production tracks)
 ```
 **Quality Gate**: Code coverage from merged report must be over 95%. Compose stability baseline must not regress.
 
@@ -180,20 +182,38 @@ Manual:  Deploy to Firebase (assembleVariant + incrementVersion + Firebase App D
 
 **Approximate times (after Gradle cache is written):** `check` ~1 min · `stability-check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
 
+### Despliegue Continuo (Fastlane)
+
+Se ha configurado **Fastlane** para automatizar el ciclo de lanzamiento a Google Play.
+
+*   **Gestión de Metadatos**: Los textos de la tienda (Título, Descripciones) se gestionan como código en `fastlane/metadata/android/`.
+*   **Firma Automática**: Integrado con el sistema de Gradle para usar `keystore.properties` y generar bundles firmados.
+*   **Sincronización Multi-idioma**: Soporte configurado para español (`es-ES`) e inglés (`en-GB`).
+
+#### Comandos principales:
+*   **bundle exec fastlane deploy_internal**: Subir nueva versión a Pruebas Internas (Compila + Firma + Sube)
+*   **bundle exec fastlane download_metadata**: Descargar textos e imágenes actuales de la consola
+*   **bundle exec fastlane build_release**: Solo generar el bundle (.aab) firmado localmente
+*   **bundle exec fastlane deploy_play_store track:internal**: Ejecuta verificaciones (check), compila el bundle de release y lo sube al track especificado de Google Play.
+
 ### Secrets
-All sensitive values are stored as GitHub Actions Secrets:
+All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
 
 | Secret | Usage |
 |---|---|
-| `SERVER_API_KEY` | TMDB API key |
-| `SERVER_ENDPOINT` | TMDB base URL |
-| `GOOGLE_SERVICES_JSON` | Content of `google-services.json` |
-| `CODECOV_TOKEN` | Codecov upload token |
-| `GH_PAT` | Personal Access Token for automated version commits |
-| `RELEASE_KEYSTORE` | Base64-encoded `.jks` file |
-| `FIREBASE_SERVICE_ACCOUNT_KEY` | Firebase Service Account JSON |
-| `FIREBASE_APP_ID_DEBUG/RELEASE` | Firebase App identifiers |
-
+| `SERVER_API_KEY` | TMDB API key, injected via `BuildConfig` |
+| `SERVER_ENDPOINT` | TMDB base URL, injected via `BuildConfig` |
+| `GOOGLE_SERVICES_JSON` | Base64-encoded `google-services.json`, decoded before build |
+| `GOOGLE_PLAY_JSON` | Service Account JSON key for Google Play API access (Base64) |
+| `CODECOV_TOKEN` | Codecov upload token for coverage reporting |
+| `RELEASE_KEYSTORE` | Base64-encoded `.jks` file for app signing |
+| `RELEASE_KEYSTORE_PASSWORD` | Password for the release keystore |
+| `RELEASE_KEY_ALIAS` | Alias for the release signing key |
+| `RELEASE_KEY_PASSWORD` | Password for the release signing key |
+| `FIREBASE_APP_ID_DEBUG` | Firebase App ID for the debug build |
+| `FIREBASE_APP_ID_RELEASE` | Firebase App ID for the release build |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Service Account key for Firebase services/App Distribution |
+| `GH_PAT` | GitHub Personal Access Token for CI/CD workflows |
 ---
 
 ## 🔥 Firebase

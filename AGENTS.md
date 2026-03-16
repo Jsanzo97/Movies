@@ -36,6 +36,7 @@ Multi-module Android application built with Kotlin that displays movies using Th
 | Min SDK                 | 26                                   |                                                                                                  |
 | Target/Compile SDK      | 36                                   |                                                                                                  |
 | Java compatibility      | Java 21                              |                                                                                                  |
+| Automation              | Fastlane                             | CD and Play Store metadata management                                                            |
 
 ---
 
@@ -1262,6 +1263,22 @@ org.gradle.daemon=false
 - `org.gradle.configuration-cache=true` — enabled globally, applies to both local and CI
 - `org.gradle.caching=true` — build cache enabled globally
 
+### Fastlane (CD)
+
+El proyecto utiliza Fastlane para automatizar los despliegues y la gestión de metadatos.
+
+| Lane | Descripción |
+|---|---|
+| `deploy_internal` | Compila el bundle de release y lo sube al track de Pruebas Internas de Google Play. |
+| `download_metadata` | Sincroniza los textos e imágenes desde Google Play Console al proyecto local. |
+| `build_release` | Genera el App Bundle (.aab) firmado localmente. |
+
+**Archivos clave:**
+- `fastlane/Appfile`: Configuración del package name y ruta de la llave JSON.
+- `fastlane/Fastfile`: Definición de las tareas de automatización.
+- `fastlane/metadata/`: Almacena los textos de la tienda (títulos, descripciones, changelogs) en `es-ES` y `en-GB`.
+- `Gemfile`: Gestiona la versión de Fastlane y sus dependencias en Ruby.
+
 ---
 
 ## Git Hooks
@@ -1350,6 +1367,9 @@ The app is signed using a Keystore managed locally via `keystore.properties` (ig
 
 ### Automated Versioning
 CI/CD automates version bumping in `gradle/libs.versions.toml`. It supports `major`, `minor`, and `patch` increments.
+
+### Google Play Deployment (Fastlane)
+Manual GitHub Actions workflow (`google-play-deploy.yml`) that triggers Fastlane's `deploy_play_store` lane. It allows choosing the target track (`internal`, `beta`, `production`). It performs full project verification (`check` task) and builds the AAB before uploading. Metadata, image, and screenshot uploads are skipped to allow manual management of "What's New" and store assets directly in the Google Play Console.
 
 ---
 

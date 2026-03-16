@@ -1,0 +1,4 @@
+- Initial release of Movies App.
+- Popular and upcoming movies listing.
+- Detailed movie information.
+- Dark mode support.
