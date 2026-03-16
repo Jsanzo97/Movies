@@ -29,21 +29,30 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.0'
-          bundler-cache: true
+          ruby-version: '3.3'
+          bundler-cache: false
+
+      - name: Install Bundler and Dependencies
+        run: |
+          gem install bundler
+          bundle update --bundler
+          bundle install
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Remove Gradle Daemon JVM restrictions
+        run: rm -f gradle/gradle-daemon-jvm.properties
+
       - name: Decode Google Play Key
-        run: echo "${{ secrets.PLAY_STORE_JSON_KEY }}" | base64 --decode > fastlane/google-play-key.json
+        run: echo "${{ secrets.PLAY_STORE_JSON_KEY }}" | base64 -d > fastlane/google-play-key.json
 
       - name: Decode google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > release.jks
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > release.jks
           echo "KEYSTORE_PASSWORD=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" > keystore.properties
           echo "KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> keystore.properties
           echo "KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> keystore.properties
@@ -58,3 +67,5 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_android_toolchainDetectionEnabled: "false"
+          GRADLE_OPTS: "-Dorg.gradle.java.installations.auto-download=false -Dorg.gradle.java.installations.auto-detect=true -Dorg.gradle.java.installations.fromEnv=JAVA_HOME"

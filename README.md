@@ -5,7 +5,10 @@
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-grey?style=flat&logo=jetpackcompose&logoColor=white&labelColor=blue)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26-grey?style=flat&labelColor=green)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-grey?style=flat&logo=githubactions&logoColor=white&labelColor=yellow)
-![Firebase](https://img.shields.io/badge/Firebase-Crashlytics%20%2B%20Analytics%20%2B%20RemoteConfig-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-Crashlytics-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-Analytics-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-RemoteConfig-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
+![Firebase](https://img.shields.io/badge/Firebase-AppDistribution-grey?style=flat&logo=firebase&logoColor=white&labelColor=orange)
 ![JUnit5](https://img.shields.io/badge/JUnit5-1.3.0-grey?style=flat&logo=junit5&logoColor=white&labelColor=green)
 ![JaCoCo](https://img.shields.io/badge/JaCoCo-0.8.12-grey?style=flat&labelColor=green)
 ![Develocity](https://img.shields.io/badge/Develocity-4.3.2-grey?style=flat&logo=gradle&logoColor=white&labelColor=blue)
@@ -204,7 +207,7 @@ All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
 | `SERVER_API_KEY` | TMDB API key, injected via `BuildConfig` |
 | `SERVER_ENDPOINT` | TMDB base URL, injected via `BuildConfig` |
 | `GOOGLE_SERVICES_JSON` | Base64-encoded `google-services.json`, decoded before build |
-| `GOOGLE_PLAY_JSON` | Service Account JSON key for Google Play API access (Base64) |
+| `PLAY_STORE_JSON_KEY` | Service Account JSON key for Google Play API access (Base64) |
 | `CODECOV_TOKEN` | Codecov upload token for coverage reporting |
 | `RELEASE_KEYSTORE` | Base64-encoded `.jks` file for app signing |
 | `RELEASE_KEYSTORE_PASSWORD` | Password for the release keystore |
