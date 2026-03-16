@@ -55,11 +55,13 @@ private fun Project.apply() {
         buildTypes {
             getByName("debug") {
                 applicationIdSuffix = ".debug"
+                resValue("string", "app_name", "MoviesDebug")
             }
             getByName("release") {
                 isMinifyEnabled = true
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
                 signingConfig = signingConfigs.getByName("release")
+                resValue("string", "app_name", "Movies")
             }
         }
 

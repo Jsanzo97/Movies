@@ -1329,6 +1329,41 @@ Secrets are injected as environment variables in the `build-and-test` job only (
 
 ---
 
+---
+
+## Obfuscation & ProGuard
+
+- **Modularization**: Each module defines its own `proguard-rules.pro` and exports them via `consumerProguardFiles` in `SetupAndroidLibraryPlugin`.
+- **Minification**: Only enabled in the `:app` module (`isMinifyEnabled = true` for `release` build type). Libraries do not minify themselves to avoid "missing classes" errors during consolidation of generated code (Koin KSP, Room).
+- **Key Rules**:
+    - `:remote`: Protects Retrofit interfaces and Kotlinx Serialization DTOs.
+    - `:database`: Protects Room entities and DAOs.
+    - `:domain`: Protects Arrow types.
+    - `:app`: Protects Koin injection, Compose runtime, Lottie, and Firebase.
+
+---
+
+## Release Management
+
+### Release Signing
+The app is signed using a Keystore managed locally via `keystore.properties` (ignored from Git). A `keystore.properties.example` is provided as a template.
+
+### Automated Versioning
+CI/CD automates version bumping in `gradle/libs.versions.toml`. It supports `major`, `minor`, and `patch` increments.
+
+---
+
+## CI/CD (Firebase Deployment)
+
+A manual GitHub Actions workflow allows deploying `debug` or `release` builds to Firebase App Distribution.
+
+**Features:**
+- **Manual Trigger**: Uses `workflow_dispatch` with inputs for `variant` and `version_type`.
+- **Automatic Bumping**: Increments version and commits changes back to the repository using a Personal Access Token (`GH_PAT`) to bypass branch protection.
+- **Release Notes**: Automatically generates release notes by collecting commit messages since the last `chore: bump version` commit.
+- **Security**: Handles Keystore, `google-services.json`, and Firebase Service Account JSON via GitHub Secrets.
+- **Robustness**: Version bump is committed only after a successful deployment.
+
 ## Version Catalog
 
 | Library | Version |

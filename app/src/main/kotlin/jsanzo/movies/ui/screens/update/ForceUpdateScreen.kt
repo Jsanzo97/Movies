@@ -57,10 +57,11 @@ private fun ForceUpdateLayout(
     onUpdateClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val updateTitle = stringResource(R.string.force_update_title)
+    val screenName = stringResource(R.string.force_update_name)
+
     Surface(
         modifier = modifier
-            .semantics { paneTitle = updateTitle },
+            .semantics { paneTitle = screenName },
         color = MaterialTheme.colorScheme.background,
     ) {
         ForceUpdateContent(

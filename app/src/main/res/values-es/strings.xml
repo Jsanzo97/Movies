@@ -1,4 +1,9 @@
 <resources>
+    <string name="splash_name">Splash</string>
+    <string name="home_name">Home</string>
+    <string name="details_name">Detalles</string>
+    <string name="force_update_name">Actualizacion Obligatoria</string>
+
     <string name="home_screen_movie_title">Título</string>
     <string name="home_screen_movie_score">Puntuación</string>
     <string name="home_screen_movie_language">Idioma</string>

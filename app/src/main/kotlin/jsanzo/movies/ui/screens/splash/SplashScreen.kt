@@ -75,13 +75,13 @@ private fun SplashContent(
     progress: () -> Float,
     modifier: Modifier = Modifier,
 ) {
-    val appName = stringResource(R.string.application_name)
+    val screenName = stringResource(R.string.splash_name)
 
     Box(
         modifier = modifier
             .semantics {
-                contentDescription = appName
-                paneTitle = appName
+                contentDescription = screenName
+                paneTitle = screenName
             },
         contentAlignment = Alignment.Center,
     ) {

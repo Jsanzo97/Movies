@@ -128,11 +128,11 @@ private fun HomeContent(
     onLayoutModeChange: (LayoutModeUi) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val appName = stringResource(R.string.application_name)
+    val screenName = stringResource(R.string.home_name)
 
     Surface(
         modifier = modifier
-            .semantics { paneTitle = appName },
+            .semantics { paneTitle = screenName },
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(

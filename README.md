@@ -139,13 +139,33 @@ The home screen supports three grid densities: **Grid2**, **Grid3**, and **Grid4
 
 ---
 
+## 📫 Release Management
+
+### Release Signing
+The app is signed using a Keystore managed locally via `keystore.properties` (ignored from Git).
+
+### Automated Versioning
+Deploy pipeline automates version bumping in `gradle/libs.versions.toml`. It follows Semantic Versioning (SemVer) rules.
+
+### Firebase Deployment
+A manual workflow allows deploying `debug` or `release` builds to Firebase App Distribution with automatic version bumping and release notes generation.
+
+---
+
+## 🛡️ Obfuscation & ProGuard
+
+The project uses a **modularized ProGuard** configuration. Each module defines its own rules in `proguard-rules.pro` and exports them to the consumer (`:app`) via `consumerProguardFiles`. R8 minification is only enabled in the `:app` module for `release` builds.
+
+---
+
 ## 🚀 CI/CD
 
-Two GitHub Actions workflows:
+Three GitHub Actions workflows:
 
 ```
 PR:      check (Detekt + Spotless) → stability-check (stabilityCheck) + build-and-test (assembleDebug + jacocoMergedCoverageVerification + Codecov)
 develop: coverage (jacocoMergedReport + Codecov)
+Manual:  Deploy to Firebase (assembleVariant + incrementVersion + Firebase App Distribution)
 ```
 **Quality Gate**: Code coverage from merged report must be over 95%. Compose stability baseline must not regress.
 
@@ -157,19 +177,22 @@ develop: coverage (jacocoMergedReport + Codecov)
 | Configuration cache | Enabled globally, persisted between runs |
 | Parallel jobs | `stability-check` and `build-and-test` run in parallel after `check` |
 | Separate coverage workflow | Avoids re-running full pipeline on develop after merge |
-| Codecov PR comments | Disabled via `comment: false` |
 
 **Approximate times (after Gradle cache is written):** `check` ~1 min · `stability-check` ~1 min · `build-and-test` ~2 min · `coverage` <1 min
 
 ### Secrets
-All sensitive values are stored as GitHub Actions Secrets — never hardcoded:
+All sensitive values are stored as GitHub Actions Secrets:
 
 | Secret | Usage |
 |---|---|
-| `SERVER_API_KEY` | TMDB API key, injected via `BuildConfig` |
-| `SERVER_ENDPOINT` | TMDB base URL, injected via `BuildConfig` |
-| `GOOGLE_SERVICES_JSON` | Base64-encoded `google-services.json`, decoded before build |
-| `CODECOV_TOKEN` | Codecov upload token for coverage reporting |
+| `SERVER_API_KEY` | TMDB API key |
+| `SERVER_ENDPOINT` | TMDB base URL |
+| `GOOGLE_SERVICES_JSON` | Content of `google-services.json` |
+| `CODECOV_TOKEN` | Codecov upload token |
+| `GH_PAT` | Personal Access Token for automated version commits |
+| `RELEASE_KEYSTORE` | Base64-encoded `.jks` file |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Firebase Service Account JSON |
+| `FIREBASE_APP_ID_DEBUG/RELEASE` | Firebase App identifiers |
 
 ---
 
@@ -189,7 +212,7 @@ Debug Analytics events can be monitored in Firebase DebugView using Gradle tasks
 
 ---
 
-## 🚀 Force Update Screen
+## 🛠️ Force Update Screen
 
 Shown when the app version is below `minVersion` from Remote Config. The user cannot navigate back — `Splash` is removed from the backstack before `ForceUpdate` is pushed.
 
