@@ -17,8 +17,9 @@ platform :android do
     gradle(task: "bundle", build_type: "Release")
 
     upload_to_play_store(
+      json_key: 'fastlane/google-play-key.json',
       track: track,
-      release_status: 'completed',
+      release_status: 'draft',
       aab: 'app/build/outputs/bundle/release/app-release.aab',
       skip_upload_metadata: true,
       skip_upload_images: true,

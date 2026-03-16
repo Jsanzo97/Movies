@@ -1,4 +1,4 @@
-- Initial release of Movies App.
-- Popular and upcoming movies listing.
-- Detailed movie information.
-- Dark mode support.
+- Lanzamiento inicial de la aplicación Movies.
+- Listado de películas populares y próximas.
+- Información detallada de cada película.
+- Soporte para modo oscuro.
