@@ -79,16 +79,7 @@ jobs:
           sed -i "s/versionPatch = \"[^\"]*\"/versionPatch = \"$PATCH\"/" $TOML_FILE
           
           echo "NEW_VERSION=$MAJOR.$MINOR.$PATCH" >> $GITHUB_ENV
-          echo "✅ Version updated to $MAJOR.$MINOR.$PATCH"
-
-      - name: Commit version bump
-        if: github.event.inputs.version_type != 'none'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add gradle/libs.versions.toml
-          git commit -m "chore: bump version (${{ env.NEW_VERSION }})"
-          git push
+          echo "✅ Version updated locally to $MAJOR.$MINOR.$PATCH"
 
       - name: Decode google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
@@ -115,3 +106,12 @@ jobs:
           args: appdistribution:distribute app/build/outputs/apk/${{ github.event.inputs.variant }}/app-${{ github.event.inputs.variant }}.apk --app ${{ github.event.inputs.variant == 'release' && secrets.FIREBASE_APP_ID_RELEASE || secrets.FIREBASE_APP_ID_DEBUG }} --groups "testers" --release-notes-file "release_notes.txt"
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Commit version bump
+        if: success() && github.event.inputs.version_type != 'none'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add gradle/libs.versions.toml
+          git commit -m "chore: bump version (${{ env.NEW_VERSION }}) [skip ci]"
+          git push
