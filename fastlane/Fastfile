@@ -1,0 +1,28 @@
+default_platform(:android)
+
+platform :android do
+
+  desc "Ejecuta todas las verificaciones"
+  lane :verify do
+    gradle(task: "clean")
+    gradle(task: "check")
+  end
+
+  desc "Build and upload to Google Play"
+  lane :deploy_play_store do |options|
+    verify
+
+    track = options[:track] || 'internal'
+
+    gradle(task: "bundle", build_type: "Release")
+
+    upload_to_play_store(
+      track: track,
+      release_status: 'completed',
+      aab: 'app/build/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

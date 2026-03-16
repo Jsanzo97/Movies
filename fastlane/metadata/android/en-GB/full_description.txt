@@ -1,0 +1,5 @@
+Welcome to Movies App!
+The ultimate application for cinema lovers.
+
+Check out upcoming releases, popular movies, and complete details of your favorite films.
+Everything with a modern and fast interface using Material 3.

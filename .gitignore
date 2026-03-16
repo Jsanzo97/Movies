@@ -16,3 +16,9 @@ keystore.jks
 keystore.properties
 *.jks
 app/google-services.json
+fastlane/google-play-key.json
+/fastlane/metadata/android/**/images/
+/fastlane/metadata/android/**/screenshots/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
