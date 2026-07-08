@@ -1,12 +1,17 @@
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
-import com.google.devtools.ksp.gradle.KspExtension
+import org.gradle.kotlin.dsl.configure
 
 internal fun Project.setupKoin() {
-    pluginManager.apply("com.google.devtools.ksp")
+    pluginManager.apply("io.insert-koin.compiler.plugin")
 
-    extensions.configure<KspExtension>("ksp") {
-        arg("KOIN_DEFAULT_MODULE", "false")
+    val isApp = pluginManager.hasPlugin("com.android.application")
+
+    extensions.findByName("koinCompiler")?.let { extension ->
+        val method = extension.javaClass.getMethod("getCompileSafety")
+        @Suppress("UNCHECKED_CAST")
+        val property = method.invoke(extension) as? org.gradle.api.provider.Property<Boolean>
+        property?.set(isApp)
     }
 
     dependencies {
@@ -14,8 +19,6 @@ internal fun Project.setupKoin() {
         "implementation"(libs().getLibrary("koin.core"))
         "implementation"(libs().getLibrary("koin.android"))
         "implementation"(libs().getLibrary("koin.annotations"))
-        "ksp"(libs().getLibrary("koin.ksp.compiler"))
-
     }
 }
 

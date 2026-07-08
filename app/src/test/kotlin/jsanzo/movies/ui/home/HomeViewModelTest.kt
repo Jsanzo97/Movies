@@ -45,6 +45,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalCoroutinesApi
 class HomeViewModelTest {
@@ -72,12 +74,12 @@ class HomeViewModelTest {
         coEvery { mockedGetLayoutModeUseCase() } returns flowOf(DomainLayoutModePreference.Grid2)
 
         homeViewModel = HomeViewModel(
-            mockedGetMoviesUseCase,
-            mockedSaveMovieUseCase,
-            mockedSearchMoviesUseCase,
-            mockedGetLayoutModeUseCase,
-            mockedSaveLayoutModeUseCase,
-            mockedMovieTracker,
+            getMoviesUseCase = mockedGetMoviesUseCase,
+            saveMovieUseCase = mockedSaveMovieUseCase,
+            searchMoviesUseCase = mockedSearchMoviesUseCase,
+            getLayoutModeUseCase = mockedGetLayoutModeUseCase,
+            saveLayoutModeUseCase = mockedSaveLayoutModeUseCase,
+            firebaseTracker = mockedMovieTracker,
         )
     }
 
@@ -99,8 +101,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe LayoutModeUi.Grid2
         }
 
-        verify(exactly = 1) { mockedGetLayoutModeUseCase() }
-        confirmVerified(mockedGetLayoutModeUseCase)
+        verify(exactly = 1) { mockedGetLayoutModeUseCase.invoke() }
     }
 
     @Test
@@ -160,7 +161,7 @@ class HomeViewModelTest {
     @Test
     fun `Given loading in progress, When getMovies is called again, Then use case is called only once`() = runTest {
         coEvery { mockedGetMoviesUseCase(validPage) } coAnswers {
-            delay(1_000)
+            delay(1.seconds)
             listOfDomainMovie.right()
         }
 
@@ -344,6 +345,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
@@ -367,6 +369,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesError(InvalidParametersError.toString())
@@ -390,6 +393,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesError(InvalidParametersError.toString())
@@ -415,11 +419,13 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
 
             homeViewModel.onSearchQueryChange("")
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
@@ -442,6 +448,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())
@@ -470,6 +477,7 @@ class HomeViewModelTest {
             awaitItem() shouldBe MovieListComplete(listOfDomainMovie.toMovieUi())
 
             homeViewModel.onSearchQueryChange(searchQuery)
+            testDispatcher.scheduler.advanceTimeBy(501.milliseconds)
 
             awaitItem() shouldBe Loading
             awaitItem() shouldBe MoviesSearch(searchResults.toMovieUi())

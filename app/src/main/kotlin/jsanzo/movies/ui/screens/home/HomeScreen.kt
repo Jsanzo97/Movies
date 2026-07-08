@@ -279,14 +279,18 @@ private fun MoviesLayout(
     AnimatedContent(
         targetState = layoutMode,
         transitionSpec = {
-            scaleIn(
-                animationSpec = tween(LAYOUT_TRANSITION_DURATION, easing = EaseInOut),
-                initialScale = 0.9f,
-            ) + fadeIn(tween(LAYOUT_TRANSITION_DURATION)) togetherWith
-                scaleOut(
+            (
+                scaleIn(
                     animationSpec = tween(LAYOUT_TRANSITION_DURATION, easing = EaseInOut),
-                    targetScale = 0.9f,
-                ) + fadeOut(tween(LAYOUT_TRANSITION_DURATION))
+                    initialScale = 0.9f,
+                ) + fadeIn(tween(LAYOUT_TRANSITION_DURATION))
+                ) togetherWith
+                (
+                    scaleOut(
+                        animationSpec = tween(LAYOUT_TRANSITION_DURATION, easing = EaseInOut),
+                        targetScale = 0.9f,
+                    ) + fadeOut(tween(LAYOUT_TRANSITION_DURATION))
+                    )
         },
         label = "layout_mode_transition",
         modifier = modifier,

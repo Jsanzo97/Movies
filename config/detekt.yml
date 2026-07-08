@@ -1,18 +1,6 @@
-build:
-  maxIssues: 0
-  excludeCorrectable: false
-  weights:
-  # complexity: 2
-  # LongParameterList: 1
-  # style: 1
-  # comments: 1
-
+# when writing own rules with new properties, exclude the property path e.g.: 'my_rule_set,.*>.*>[my_property]'
 config:
-  validation: true
-  warningsAsErrors: false
-  checkExhaustiveness: false
-  # when writing own rules with new properties, exclude the property path e.g.: 'my_rule_set,.*>.*>[my_property]'
-  excludes: ''
+  excludes: []
 
 processors:
   active: false
@@ -27,15 +15,6 @@ console-reports:
     - 'FileBasedFindingsReport'
   #  - 'LiteFindingsReport'
 
-output-reports:
-  active: true
-  exclude:
-  # - 'TxtOutputReport'
-  # - 'XmlOutputReport'
-  # - 'HtmlOutputReport'
-  # - 'MdOutputReport'
-  # - 'SarifOutputReport'
-
 comments:
   active: false
 
@@ -43,19 +22,19 @@ complexity:
   active: true
   CognitiveComplexMethod:
     active: false
-    threshold: 15
+    allowedComplexity: 15
   ComplexCondition:
     active: true
-    threshold: 4
+    allowedConditions: 4
   ComplexInterface:
     active: false
-    threshold: 26
+    allowedDefinitions: 26
     includeStaticDeclarations: false
     includePrivateDeclarations: false
     ignoreOverloaded: false
   CyclomaticComplexMethod:
     active: true
-    threshold: 15
+    allowedComplexity: 15
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: true
     ignoreNestingFunctions: false
@@ -74,17 +53,17 @@ complexity:
     ignoredLabels: []
   LargeClass:
     active: true
-    threshold: 600
+    allowedLines: 600
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
   LongMethod:
     active: true
-    threshold: 60
+    allowedLines: 60
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
   LongParameterList:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
-    functionThreshold: 6
-    constructorThreshold: 12
+    allowedFunctionParameters: 6
+    allowedConstructorParameters: 12
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotatedParameter: []
@@ -95,17 +74,17 @@ complexity:
       - 'androidx.compose.runtime.Composable'
   MethodOverloading:
     active: false
-    threshold: 6
+    allowedOverloads: 6
   NamedArguments:
     active: true
-    threshold: 5
+    allowedArguments: 5
     ignoreArgumentsMatchingNames: false
   NestedBlockDepth:
     active: true
-    threshold: 4
+    allowedDepth: 4
   NestedScopeFunctions:
     active: false
-    threshold: 1
+    allowedDepth: 1
     functions:
       - 'kotlin.apply'
       - 'kotlin.run'
@@ -117,18 +96,18 @@ complexity:
   StringLiteralDuplication:
     active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
-    threshold: 3
+    allowedDuplications: 3
     ignoreAnnotation: true
-    excludeStringsWithLessThan5Characters: true
+    allowedWithLengthLessThan: 5
     ignoreStringsRegex: '$^'
   TooManyFunctions:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
-    thresholdInFiles: 26
-    thresholdInClasses: 26
-    thresholdInInterfaces: 26
-    thresholdInObjects: 11
-    thresholdInEnums: 11
+    allowedFunctionsPerFile: 26
+    allowedFunctionsPerClass: 26
+    allowedFunctionsPerInterface: 26
+    allowedFunctionsPerObject: 11
+    allowedFunctionsPerEnum: 11
     ignoreDeprecated: false
     ignorePrivate: false
     ignoreOverridden: false
@@ -149,6 +128,7 @@ coroutines:
       - 'Main'
     ignoreAnnotated:
       - 'dagger.Provides'
+      - 'org.koin.core.annotation.Single'
   RedundantSuspendModifier:
     active: true
   SleepInsteadOfDelay:
@@ -184,7 +164,7 @@ empty-blocks:
     active: true
   EmptyInitBlock:
     active: true
-  EmptyKtFile:
+  EmptyKotlinFile:
     active: true
   EmptySecondaryConstructor:
     active: true
@@ -286,10 +266,10 @@ naming:
   ForbiddenClassName:
     active: false
     forbiddenName: []
-  FunctionMaxLength:
+  FunctionNameMaxLength:
     active: false
     maximumFunctionNameLength: 30
-  FunctionMinLength:
+  FunctionNameMinLength:
     active: false
     minimumFunctionNameLength: 3
   FunctionNaming:
@@ -351,7 +331,7 @@ performance:
     active: true
   CouldBeSequence:
     active: true
-    threshold: 3
+    allowedOperations: 3
   ForEachOnRange:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
@@ -561,7 +541,7 @@ style:
     allowedPatterns: ''
   ForbiddenImport:
     active: true
-    imports:
+    forbiddenImports:
       - reason: 'On this project we use JUnit 5 instead of JUnit 4'
         value: 'org.junit.Before'
       - reason: 'On this project we use JUnit 5 instead of JUnit 4'
@@ -597,7 +577,7 @@ style:
 # Activate after compose migration
 #      - reason: 'Avoid creating new fragments and use compose instead'
 #        value: 'androidx.fragment.app.Fragment'
-    forbiddenPatterns: ''
+    allowedImports: []
     excludes: [ '**/androidTest/**' ]
   ForbiddenMethodCall:
     active: true
@@ -628,9 +608,9 @@ style:
         value: 'java.util.Locale.Builder.<init>'
       - reason: 'Avoid creating your own ImageLoader and use the singleton instance defined on LidlApp.kt'
         value: 'coil3.ImageLoader.Builder.<init>'
-      - reason: 'Use dagger to inject an OkHttpClient and create a newBuilder from it'
+      - reason: 'Use dagger to inject an OkHttpClient and create a newBuilder from it (or use @Single in Koin)'
         value: 'okhttp3.OkHttpClient.Builder.<init>'
-      - reason: 'Use dagger to inject an OkHttpClient and create a newBuilder from it'
+      - reason: 'Use dagger to inject an OkHttpClient and create a newBuilder from it (or use @Single in Koin)'
         value: 'okhttp3.OkHttpClient.<init>'
       - reason: 'Use `BundleCompat.getParcelable` or `getParcelableCompat` (from :commons-resourceslibrary) instead'
         value: 'android.os.Bundle.getParcelable'
@@ -690,7 +670,7 @@ style:
     excludeImportStatements: true
     excludeCommentStatements: false
     excludeRawStrings: true
-  MayBeConst:
+  MayBeConstant:
     active: true
   ModifierOrder:
     active: false # ktlint
@@ -716,15 +696,15 @@ style:
     active: true
   OptionalUnit:
     active: false
-  PreferToOverPairSyntax:
-    active: true
+  RangeUntilInsteadOfRangeTo:
+    active: false
   ProtectedMemberInFinalClass:
     active: true
   RedundantExplicitType:
     active: false
   RedundantHigherOrderMapUsage:
     active: true
-  RedundantVisibilityModifierRule:
+  RedundantVisibilityModifier:
     active: false
   ReturnCount:
     active: true
@@ -738,7 +718,7 @@ style:
     active: true
   SerialVersionUIDInSerializableClass:
     active: true
-  SpacingBetweenPackageAndImports:
+  SpacingAfterPackageAndImports:
     active: false
   StringShouldBeRawString:
     active: true
@@ -759,85 +739,10 @@ style:
     active: true
     acceptableLength: 4
     allowNonStandardGrouping: false
-  UnnecessaryAbstractClass:
-    active: true
-  UnnecessaryAnnotationUseSiteTarget:
-    active: true
-  UnnecessaryApply:
-    active: true
-  UnnecessaryBackticks:
-    active: true
-  UnnecessaryBracesAroundTrailingLambda:
-    active: true
-  UnnecessaryFilter:
-    active: true
-  UnnecessaryInheritance:
-    active: true
   UnnecessaryInnerClass:
     active: true
-  UnnecessaryLet:
+  UnnecessaryAny:
     active: true
-  UnnecessaryParentheses:
-    active: true
-    allowForUnclearPrecedence: true
-  UntilInsteadOfRangeTo:
-    active: false
-  UnusedImports:
-    active: false
-  UnusedParameter:
-    active: true
-    allowedNames: 'ignored|expected'
-  UnusedPrivateClass:
-    active: true
-  UnusedPrivateMember:
-    active: true
-    allowedNames: ''
-    ignoreAnnotated:
-      - 'PreviewOnDevices'
-  UnusedPrivateProperty:
-    active: true
-    allowedNames: '_|ignored|expected|serialVersionUID'
-  UseAnyOrNoneInsteadOfFind:
-    active: true
-  UseArrayLiteralsInAnnotations:
-    active: true
-  UseCheckNotNull:
-    active: true
-  UseCheckOrError:
-    active: true
-  UseDataClass:
-    active: false
-    allowVars: false
-  UseEmptyCounterpart:
-    active: false
-  UseIfEmptyOrIfBlank:
-    active: true
-  UseIfInsteadOfWhen:
-    active: false
-    ignoreWhenContainingVariableDeclaration: true
-  UseIsNullOrEmpty:
-    active: true
-  UseLet:
-    active: false
-  UseOrEmpty:
-    active: false
-  UseRequire:
-    active: true
-  UseRequireNotNull:
-    active: true
-  UseSumOfInsteadOfFlatMapSize:
-    active: true
-  UselessCallOnNotNull:
-    active: true
-  UtilityClassWithPublicConstructor:
-    active: true
-  VarCouldBeVal:
-    active: true
-    ignoreLateinitVar: false
-  WildcardImport:
-    active: false # ktlint
-    excludeImports:
-      - 'java.util.*'
 
 Compose:
   CompositionLocalAllowlist:

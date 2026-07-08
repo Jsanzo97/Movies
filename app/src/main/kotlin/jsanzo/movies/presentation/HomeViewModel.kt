@@ -36,7 +36,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.android.annotation.KoinViewModel
+import org.koin.core.annotation.KoinViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val PAGINATION_THRESHOLD = 10
 
@@ -46,7 +47,7 @@ class HomeViewModel(
     private val getMoviesUseCase: GetMoviesUseCase,
     private val saveMovieUseCase: SaveMovieUseCase,
     private val searchMoviesUseCase: SearchMoviesUseCase,
-    private val getLayoutModeUseCase: GetLayoutModeUseCase,
+    getLayoutModeUseCase: GetLayoutModeUseCase,
     private val saveLayoutModeUseCase: SaveLayoutModeUseCase,
     private val firebaseTracker: MovieTracker,
 ) : ViewModel() {
@@ -71,7 +72,7 @@ class HomeViewModel(
 
     init {
         _searchQuery
-            .debounce(500L)
+            .debounce(500.milliseconds)
             .distinctUntilChanged()
             .onEach { query ->
                 if (query.isBlank()) {
@@ -96,7 +97,7 @@ class HomeViewModel(
     }
 
     private fun checkNeedNewPage() {
-        if (_state.value is MovieListComplete && lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size) {
+        if (_state.value is MovieListComplete && (lastVisible + PAGINATION_THRESHOLD >= moviesRetrieved.size)) {
             loadPage(nextPageToRetrieve)
         }
     }
@@ -108,7 +109,7 @@ class HomeViewModel(
                 if (page == 1) _state.update { Loading }
                 getMoviesUseCase(page)
                     .onSuccess { movies ->
-                        val existingIds = moviesRetrieved.map { it.id }.toSet()
+                        val existingIds = moviesRetrieved.asSequence().map { it.id }.toSet()
                         moviesRetrieved.addAll(movies.filter { it.id !in existingIds })
                         nextPageToRetrieve++
                         firebaseTracker.trackPageLoaded(page)

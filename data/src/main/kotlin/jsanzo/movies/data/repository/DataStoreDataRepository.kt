@@ -14,5 +14,5 @@ class DataStoreDataRepository(
 
     override fun getLayoutMode(): Flow<DomainLayoutModePreference> = dataStoreStorage.getLayoutMode().map { it.toDomain() }
 
-    override suspend fun saveLayoutMode(mode: DomainLayoutModePreference) = dataStoreStorage.saveLayoutMode(mode.toData())
+    override suspend fun saveLayoutMode(mode: DomainLayoutModePreference): Unit = dataStoreStorage.saveLayoutMode(mode.toData())
 }

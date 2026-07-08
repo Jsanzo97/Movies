@@ -29,6 +29,7 @@ class NetworkModule {
 
     @Single
     @Named(BASIC_OK_HTTP_CLIENT)
+    @Suppress("ForbiddenMethodCall")
     fun basicOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
         .readTimeout(TIMEOUT, TimeUnit.SECONDS)

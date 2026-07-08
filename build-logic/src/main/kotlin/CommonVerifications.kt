@@ -1,7 +1,7 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.spotless.LineEnding
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.configure
@@ -12,7 +12,7 @@ import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
 
 internal fun Project.setupDetekt() {
-    pluginManager.apply("io.gitlab.arturbosch.detekt")
+    pluginManager.apply("dev.detekt")
 
     dependencies {
         "detektPlugins"(libs().getLibrary("detekt-rules-compose"))
@@ -20,13 +20,15 @@ internal fun Project.setupDetekt() {
 
     extensions.configure<DetektExtension> {
         config.setFrom("$rootDir/config/detekt.yml")
-        source.setFrom(fileTree("src") {
-            include("**/*.kt")
-        })
+        source.setFrom(
+            fileTree("src") {
+                include("**/*.kt")
+            },
+        )
     }
 
     tasks.withType<Detekt>().configureEach {        
-        jvmTarget = "17"
+        jvmTarget.set("17")
         exclude { it.file.absolutePath.contains("/build/generated") }        
     }
 }
@@ -68,7 +70,7 @@ internal fun Project.setupSpotless() {
 internal fun Project.setupCheck() {
     afterEvaluate {
         tasks.named("check").configure {
-            setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "detekt" })
+            setDependsOn(dependsOn.filterNot { (it is TaskProvider<*>) && (it.name == "detekt") })
             dependsOn(tasks.withType<Detekt>())
             dependsOn(tasks.named("spotlessCheck"))
         }
@@ -121,7 +123,7 @@ internal fun Project.setupJacocoReport() {
     afterEvaluate {
         val excludes = if (rootProject.extra.has("jacocoExcludes")) {
             @Suppress("UNCHECKED_CAST")
-            rootProject.extra.get("jacocoExcludes") as List<String>
+            rootProject.extra["jacocoExcludes"] as List<String>
         } else {
             emptyList()
         }
@@ -158,24 +160,26 @@ internal fun Project.setupJacocoReport() {
                         html.required.set(true)
                     }
 
-                    val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/$variant/classes") {
+                    val buildDir = layout.buildDirectory
+
+                    val javaClasses = fileTree(buildDir.dir("intermediates/javac/$variant/classes")) {
                         exclude(excludes)
                     }
 
-                    val kotlinClasses = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/$variant") {
+                    val kotlinClasses = fileTree(buildDir.dir("tmp/kotlin-classes/$variant")) {
                         exclude(excludes)
                     }
 
-                    val kotlincClasses = fileTree("${layout.buildDirectory.get()}/intermediates/built_in_kotlinc/$variant/compile${variantName}Kotlin/classes") {
+                    val kotlincClasses = fileTree(buildDir.dir("intermediates/built_in_kotlinc/$variant/compile${variantName}Kotlin/classes")) {
                         exclude(excludes)
                     }
 
                     classDirectories.setFrom(files(javaClasses, kotlinClasses, kotlincClasses))
                     sourceDirectories.setFrom(files("src/main/kotlin", "src/main/java"))
                     executionData.setFrom(
-                        fileTree(layout.buildDirectory.get()) {
+                        fileTree(buildDir) {
                             include("**/*.exec", "**/*.ec")
-                        }
+                        },
                     )
                 }
             }

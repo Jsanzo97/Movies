@@ -1,7 +1,9 @@
+import dev.detekt.gradle.Detekt
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
+    jacoco
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.ksp) apply false
@@ -11,16 +13,17 @@ plugins {
     alias(libs.plugins.firebase.google.services) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.stability.analyzer) apply false
+    alias(libs.plugins.koin.compiler) apply false
 }
 
-apply(plugin = "jacoco")
-
 tasks.register("detektAll") {
+    description = "Run detekt on all modules"
     group = "verification"
-    dependsOn(subprojects.mapNotNull { it.tasks.findByName("detekt") })
+    dependsOn(subprojects.flatMap { it.tasks.withType<Detekt>() })
 }
 
 tasks.register("testAll") {
+    description = "Run unit tests on all modules"
     group = "verification"
     dependsOn(subprojects.mapNotNull { it.tasks.findByName("testDebugUnitTest") })
 }
@@ -37,20 +40,20 @@ val jacocoExcludes = listOf(
     "**/*_Factory*.*",
     "**/generated/**",
     "**/ksp/**",
-    "**/*\$lambda$*",
-    "**/*\$inlined$*",
-    "**/*\$default$*",
-    "**/*\$sam$*",
-    "**/*\$*Function*",
-    "**/*\$1*",
-    "**/*\$2*",
-    "**/*\$3*",
-    "**/*\$4*",
-    "**/*\$5*",
-    "**/*\$6*",
-    "**/*\$7*",
-    "**/*\$8*",
-    "**/*\$9*",
+    $$"**/*$lambda$*",
+    $$"**/*$inlined$*",
+    $$"**/*$default$*",
+    $$"**/*$sam$*",
+    "**/*$*Function*",
+    $$"**/*$1*",
+    $$"**/*$2*",
+    $$"**/*$3*",
+    $$"**/*$4*",
+    $$"**/*$5*",
+    $$"**/*$6*",
+    $$"**/*$7*",
+    $$"**/*$8*",
+    $$"**/*$9*",
     "**/*ComposableSingletons*",
     "**/*WhenMappings*",
     "**/*DefaultImpls*",
@@ -66,11 +69,12 @@ val jacocoExcludes = listOf(
 )
 
 allprojects {
-    extra.set("jacocoExcludes", jacocoExcludes)
+    extra["jacocoExcludes"] = jacocoExcludes
 }
 
 tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"
+    description = "Generate a merged JaCoCo coverage report from all modules"
     dependsOn("testAll")
     reports {
         xml.required.set(true)
@@ -101,22 +105,31 @@ gradle.projectsEvaluated {
             val variantName = variant.replaceFirstChar { it.uppercase() }
 
             subprojects.forEach { subproject ->
-                if (subproject.plugins.hasPlugin("com.android.library") || subproject.plugins.hasPlugin("com.android.application")) {
+                val isAndroid = subproject.plugins.hasPlugin("com.android.library") ||
+                    subproject.plugins.hasPlugin("com.android.application")
+
+                if (isAndroid) {
+                    val buildDir = subproject.layout.buildDirectory
                     classDirectories.from(
-                        subproject.fileTree("${subproject.layout.buildDirectory.get()}/intermediates/javac/$variant/classes") {
+                        subproject.fileTree(buildDir.dir("intermediates/javac/$variant/classes")) {
                             exclude(jacocoExcludes)
                         },
-                        subproject.fileTree("${subproject.layout.buildDirectory.get()}/tmp/kotlin-classes/$variant") {
+                        subproject.fileTree(buildDir.dir("tmp/kotlin-classes/$variant")) {
                             exclude(jacocoExcludes)
                         },
-                        subproject.fileTree("${subproject.layout.buildDirectory.get()}/intermediates/built_in_kotlinc/$variant/compile${variantName}Kotlin/classes") {
+                        subproject.fileTree(buildDir.dir("intermediates/built_in_kotlinc/$variant/compile${variantName}Kotlin/classes")) {
                             exclude(jacocoExcludes)
-                        }
+                        },
                     )
-                    sourceDirectories.from(subproject.files("${subproject.projectDir}/src/main/kotlin", "${subproject.projectDir}/src/main/java"))
-                    executionData.from(subproject.fileTree(subproject.layout.buildDirectory.get()) {
-                        include("outputs/unit_test_code_coverage/$variant/test${variantName}UnitTest.exec", "jacoco/test${variantName}UnitTest.exec")
-                    })
+                    sourceDirectories.from(subproject.files("src/main/kotlin", "src/main/java"))
+                    executionData.from(
+                        subproject.fileTree(buildDir) {
+                            include(
+                                "outputs/unit_test_code_coverage/$variant/test${variantName}UnitTest.exec",
+                                "jacoco/test${variantName}UnitTest.exec",
+                            )
+                        },
+                    )
                 }
             }
         }
@@ -124,6 +137,7 @@ gradle.projectsEvaluated {
 }
 
 tasks.register("installGitHooks", Copy::class) {
+    description = "Install git hooks from config/git-hooks"
     group = "setup"
     from("config/git-hooks")
     into(".git/hooks")

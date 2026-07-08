@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.ksp.gradle.plugin)
     implementation(libs.detekt.rules.compose)
+    implementation(libs.koin.compiler.gradle)
 }
 
 gradlePlugin {
