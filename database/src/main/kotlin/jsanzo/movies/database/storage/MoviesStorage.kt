@@ -25,6 +25,8 @@ class MoviesStorage(
     override suspend fun getMovies(): Either<DataError, List<DataMovie>> {
         return try {
             moviesDao.getMovies().toDataMovie().right()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             ReadingError.left()
         }
@@ -33,6 +35,8 @@ class MoviesStorage(
     override suspend fun getMovieDetails(movieId: Int): Either<DataError, DataMovieDetails> {
         return try {
             moviesDao.getMovieDetails(movieId).toDataMovieDetails().right()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             ReadingError.left()
         }
@@ -42,6 +46,8 @@ class MoviesStorage(
         return try {
             moviesDao.saveMovie(dataMovie.toMovieEntity())
             None
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             WritingError.some()
         }
@@ -51,6 +57,8 @@ class MoviesStorage(
         return try {
             moviesDao.saveMovieDetails(dataMovieDetails.toMovieDetailsEntity())
             None
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             WritingError.some()
         }
@@ -59,6 +67,8 @@ class MoviesStorage(
     override suspend fun searchMovies(query: String): Either<DataError, List<DataMovie>> {
         return try {
             moviesDao.searchMovies(query).toDataMovie().right()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             ReadingError.left()
         }

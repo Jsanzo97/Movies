@@ -17,15 +17,82 @@ public fun jsanzo.movies.ui.navigation.AppNavigation(): kotlin.Unit
   params:
 
 @Composable
-private fun jsanzo.movies.ui.screens.details.DetailSection(title: kotlin.String, body: kotlin.String): kotlin.Unit
+public fun jsanzo.movies.ui.navigation.getWindowNavigationInsets(): androidx.compose.foundation.layout.WindowInsets
   skippable: true
   restartable: true
   params:
-    - title: STABLE (String is immutable)
-    - body: STABLE (String is immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.details.DetailsContent(movieDetails: jsanzo.movies.ui.screens.details.MovieDetailsUi, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+internal fun jsanzo.movies.ui.screens.common.HorizontalInfo(label: kotlin.String, value: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (String is immutable)
+    - value: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun jsanzo.movies.ui.screens.common.LoadingIndicator(contentDescription: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - contentDescription: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun jsanzo.movies.ui.screens.common.MovieImage(posterPath: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - posterPath: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun jsanzo.movies.ui.screens.common.VerticalInfo(label: kotlin.String, value: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (String is immutable)
+    - value: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun jsanzo.movies.ui.screens.details.DetailsBody(overview: kotlin.String, productionCompanies: kotlin.String, productionCountries: kotlin.String, status: kotlin.String, revenue: kotlin.String, homePage: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - overview: STABLE (String is immutable)
+    - productionCompanies: STABLE (String is immutable)
+    - productionCountries: STABLE (String is immutable)
+    - status: STABLE (String is immutable)
+    - revenue: STABLE (String is immutable)
+    - homePage: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun jsanzo.movies.ui.screens.details.DetailsContent(state: jsanzo.movies.ui.screens.details.DetailsViewState): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - state: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun jsanzo.movies.ui.screens.details.DetailsHeader(posterPath: kotlin.String, title: kotlin.String, tagLine: kotlin.String, voteAverage: kotlin.String, releaseDate: kotlin.String, spokenLanguages: kotlin.String, runtime: kotlin.Int, genres: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - posterPath: STABLE (String is immutable)
+    - title: STABLE (String is immutable)
+    - tagLine: STABLE (String is immutable)
+    - voteAverage: STABLE (String is immutable)
+    - releaseDate: STABLE (String is immutable)
+    - spokenLanguages: STABLE (String is immutable)
+    - runtime: STABLE (primitive type)
+    - genres: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun jsanzo.movies.ui.screens.details.DetailsInformation(movieDetails: jsanzo.movies.ui.screens.details.MovieDetailsUi, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -33,7 +100,7 @@ private fun jsanzo.movies.ui.screens.details.DetailsContent(movieDetails: jsanzo
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.details.DetailsScreenContent(state: jsanzo.movies.ui.screens.details.DetailsViewState, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun jsanzo.movies.ui.screens.details.DetailsLayout(state: jsanzo.movies.ui.screens.details.DetailsViewState, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -41,18 +108,19 @@ private fun jsanzo.movies.ui.screens.details.DetailsScreenContent(state: jsanzo.
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.details.InfoChip(label: kotlin.String, value: kotlin.String): kotlin.Unit
+private fun jsanzo.movies.ui.screens.details.WebInfo(homePage: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
-    - label: STABLE (String is immutable)
-    - value: STABLE (String is immutable)
+    - homePage: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.home.EmptySearch(): kotlin.Unit
+private fun jsanzo.movies.ui.screens.home.EmptySearch(modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
+    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 private fun jsanzo.movies.ui.screens.home.HomeContent(state: jsanzo.movies.ui.screens.home.HomeViewState, layoutMode: jsanzo.movies.ui.screens.home.LayoutModeUi, searchQuery: kotlin.String, onSearchQueryChange: kotlin.Function1<kotlin.String, kotlin.Unit>, onMovieClick: kotlin.Function1<jsanzo.movies.ui.screens.home.MovieUi, kotlin.Unit>, onLastVisibleIndex: kotlin.Function1<kotlin.Int, kotlin.Unit>, onLayoutModeChange: kotlin.Function1<jsanzo.movies.ui.screens.home.LayoutModeUi, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
@@ -69,7 +137,7 @@ private fun jsanzo.movies.ui.screens.home.HomeContent(state: jsanzo.movies.ui.sc
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.home.HomeLayout(state: jsanzo.movies.ui.screens.home.HomeViewState, layoutMode: jsanzo.movies.ui.screens.home.LayoutModeUi, onMovieClick: kotlin.Function1<jsanzo.movies.ui.screens.home.MovieUi, kotlin.Unit>, onLastVisibleIndex: kotlin.Function1<kotlin.Int, kotlin.Unit>, onLayoutModeChange: kotlin.Function1<jsanzo.movies.ui.screens.home.LayoutModeUi, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun jsanzo.movies.ui.screens.home.HomeLayout(state: jsanzo.movies.ui.screens.home.HomeViewState, layoutMode: jsanzo.movies.ui.screens.home.LayoutModeUi, onMovieClick: kotlin.Function1<jsanzo.movies.ui.screens.home.MovieUi, kotlin.Unit>, onLastVisibleIndex: kotlin.Function1<kotlin.Int, kotlin.Unit>, onLayoutModeChange: kotlin.Function1<jsanzo.movies.ui.screens.home.LayoutModeUi, kotlin.Unit>): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -78,27 +146,18 @@ private fun jsanzo.movies.ui.screens.home.HomeLayout(state: jsanzo.movies.ui.scr
     - onMovieClick: STABLE (function type)
     - onLastVisibleIndex: STABLE (function type)
     - onLayoutModeChange: STABLE (function type)
-    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.home.HomeSearchBar(searchQuery: kotlin.String, onSearchQueryChange: kotlin.Function1<kotlin.String, kotlin.Unit>): kotlin.Unit
+private fun jsanzo.movies.ui.screens.home.HomeSearchBar(searchQuery: kotlin.String, onSearchQueryChange: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - searchQuery: STABLE (String is immutable)
     - onSearchQueryChange: STABLE (function type)
-
-@Composable
-private fun jsanzo.movies.ui.screens.home.LabeledText(label: kotlin.String, value: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: true
-  restartable: true
-  params:
-    - label: STABLE (String is immutable)
-    - value: STABLE (String is immutable)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.home.MovieInfoColumn(movie: jsanzo.movies.ui.screens.home.MovieUi, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun jsanzo.movies.ui.screens.home.MovieInfo(movie: jsanzo.movies.ui.screens.home.MovieUi, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -116,7 +175,7 @@ private fun jsanzo.movies.ui.screens.home.MovieItem(movie: jsanzo.movies.ui.scre
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun jsanzo.movies.ui.screens.home.MoviesLayout(movies: kotlinx.collections.immutable.ImmutableList<jsanzo.movies.ui.screens.home.MovieUi>, layoutMode: jsanzo.movies.ui.screens.home.LayoutModeUi, layoutState: androidx.compose.foundation.lazy.grid.LazyGridState, onMovieClick: kotlin.Function1<jsanzo.movies.ui.screens.home.MovieUi, kotlin.Unit>, onLayoutModeChange: kotlin.Function1<jsanzo.movies.ui.screens.home.LayoutModeUi, kotlin.Unit>): kotlin.Unit
+private fun jsanzo.movies.ui.screens.home.MoviesLayout(movies: kotlinx.collections.immutable.ImmutableList<jsanzo.movies.ui.screens.home.MovieUi>, layoutMode: jsanzo.movies.ui.screens.home.LayoutModeUi, layoutState: androidx.compose.foundation.lazy.grid.LazyGridState, onMovieClick: kotlin.Function1<jsanzo.movies.ui.screens.home.MovieUi, kotlin.Unit>, onLayoutModeChange: kotlin.Function1<jsanzo.movies.ui.screens.home.LayoutModeUi, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -125,18 +184,27 @@ private fun jsanzo.movies.ui.screens.home.MoviesLayout(movies: kotlinx.collectio
     - layoutState: STABLE (marked @Stable or @Immutable)
     - onMovieClick: STABLE (function type)
     - onLayoutModeChange: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 private fun jsanzo.movies.ui.screens.splash.SplashContent(composition: com.airbnb.lottie.LottieComposition?, progress: kotlin.Function0<kotlin.Float>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - composition: UNSTABLE (has mutable properties or unstable members)
+    - composition: UNKNOWN (interface or non-final class; concrete implementation unknown)
     - progress: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 private fun jsanzo.movies.ui.screens.update.ForceUpdateContent(onUpdateClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - onUpdateClick: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun jsanzo.movies.ui.screens.update.ForceUpdateLayout(onUpdateClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:

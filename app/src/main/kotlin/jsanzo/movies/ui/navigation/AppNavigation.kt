@@ -35,8 +35,7 @@ fun AppNavigation() {
         onBack = { backStack.removeLastOrNull() },
         transitionSpec = {
             val directionMultiplier = if (isRtl) -1 else 1
-            val destination = targetState.key
-            when (destination) {
+            when (targetState.key) {
                 is AppDestinations.Home, is AppDestinations.ForceUpdate -> {
                     fadeIn(
                         animationSpec = tween(300),
@@ -69,10 +68,10 @@ fun AppNavigation() {
         predictivePopTransitionSpec = {
             val directionMultiplier = if (isRtl) -1 else 1
             slideInHorizontally(
-                initialOffsetX = { -it * directionMultiplier },
+                initialOffsetX = { offsetX -> -offsetX * directionMultiplier },
                 animationSpec = tween(300),
             ) togetherWith slideOutHorizontally(
-                targetOffsetX = { it * directionMultiplier },
+                targetOffsetX = { offsetX -> offsetX * directionMultiplier },
                 animationSpec = tween(300),
             )
         },
@@ -117,7 +116,7 @@ fun getWindowNavigationInsets(): WindowInsets {
 
     val gestureInsets = insets.getInsets(WindowInsetsCompat.Type.systemGestures())
 
-    return if (gestureInsets.left > 0 || gestureInsets.right > 0) {
+    return if ((gestureInsets.left > 0) || (gestureInsets.right > 0)) {
         WindowInsets.statusBars
     } else {
         WindowInsets.safeDrawing

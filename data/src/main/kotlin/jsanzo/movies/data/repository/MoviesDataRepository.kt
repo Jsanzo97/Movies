@@ -37,9 +37,9 @@ class MoviesDataRepository(
 
     override suspend fun getMovieDetails(movieId: Int): Either<MovieError, DomainMovieDetails> = withContext(dispatcher) {
         localMoviesDatastore.getMovieDetails(movieId)
-            .recover {
+            .recover { localError ->
                 remoteMoviesDatastore.getMovieDetails(movieId)
-                    .onSuccess { localMoviesDatastore.saveMovieDetails(it) }
+                    .onSuccess { movieDetails -> localMoviesDatastore.saveMovieDetails(movieDetails) }
                     .mapLeft { remoteError -> remoteError.toMovieError() }
                     .bind()
             }

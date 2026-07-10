@@ -18,12 +18,15 @@ class RemoteConfigService(
     private val json: Json,
 ) : RemoteConfigDataStore {
 
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override suspend fun getMinVersion(): Either<DataError, MinVersionDataConfig> {
         return try {
             firebaseRemoteConfig.fetchAndActivate().await()
             val jsonString = firebaseRemoteConfig.getString("min_version")
             json.decodeFromString<MinVersionDataConfig>(jsonString).right()
-        } catch (_: Exception) {
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
             UnknownError.left()
         }
     }

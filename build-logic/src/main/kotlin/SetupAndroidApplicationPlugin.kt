@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 import com.android.build.api.dsl.ApplicationExtension
-import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -27,7 +26,7 @@ private fun Project.apply() {
         defaultConfig {
             minSdk = sdkMin
             targetSdk = sdkTarget
-            versionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPatch
+            versionCode = (versionMajor * 1_000_000) + (versionMinor * 1_000) + versionPatch
             versionName = "$versionMajor.$versionMinor.$versionPatch"
         }
 
@@ -91,7 +90,8 @@ private fun Project.apply() {
             }
             getByName("main") {
                 val addResources: (Array<File>) -> Unit = { files: Array<File> ->
-                    files.filter { it.exists() }
+                    files.asSequence()
+                        .filter { it.exists() }
                         .mapNotNull { it.listFiles { file: File -> file.isDirectory } }
                         .forEach { folders -> res.srcDirs(*folders) }
                 }
@@ -100,11 +100,6 @@ private fun Project.apply() {
                 addResources(arrayOf(resScreens))
             }
         }
-    }
-
-    extensions.configure<KspExtension>("ksp") {
-        arg("KOIN_CONFIG_CHECK", "true")
-        arg("KOIN_DEFAULT_MODULE", "false")
     }
 
     dependencies {

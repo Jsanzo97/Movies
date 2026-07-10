@@ -16,6 +16,6 @@ class MustUpdateUseCase(
     private fun mustUpdate(actualVersion: String, minVersion: String): Boolean {
         val actual = actualVersion.split('.').map { it.toInt() }
         val min = minVersion.split('.').map { it.toInt() }
-        return actual.zip(min).firstOrNull { (actual, min) -> actual != min }?.let { (actual, min) -> actual < min } ?: false
+        return actual.zip(min).firstOrNull { (actual, min) -> actual != min }?.let { (actual, min) -> actual < min } == true
     }
 }
